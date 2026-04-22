@@ -41,7 +41,7 @@ html, body {
 .content {
   flex: 1;
   height: 100vh;
-  background: white;
+  background: rgb(236, 233, 233);
   overflow: hidden;
 }
 </style>
