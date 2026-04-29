@@ -2,6 +2,9 @@
 import DropDownMenu from './components/DropDownMenu.vue';
 import Header from "./components/Header.vue";
 
+onMounted(() => {
+  authStore.initializeAuth()
+})
 </script>
 
 <template>
