@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { RatingsModule } from './ratings/ratings.module';
 
 const databaseImports =
   process.env.NODE_ENV === 'test'
@@ -21,12 +22,7 @@ const databaseImports =
     ];
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
-    ...databaseImports,
-  ],
+  imports: [],
   controllers: [AppController],
   providers: [AppService],
 })
