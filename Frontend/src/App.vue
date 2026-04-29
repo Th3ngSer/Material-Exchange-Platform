@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import DropDownMenu from './components/DropDownMenu.vue';
+import Header from "./components/Header.vue";
 
 </script>
 
@@ -10,7 +11,3 @@ import DropDownMenu from './components/DropDownMenu.vue';
     </transition>
   </router-view>
 </template>
-
-<script setup lang="ts">
-import Header from "./components/Header.vue"
-</script>
