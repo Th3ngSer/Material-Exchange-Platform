@@ -1,6 +1,12 @@
 <script setup lang="ts">
-import DropDownMenu from './components/DropDownMenu.vue';
+import { onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 
+const authStore = useAuthStore()
+
+onMounted(() => {
+  authStore.initializeAuth()
+})
 </script>
 
 <template>
@@ -10,7 +16,3 @@ import DropDownMenu from './components/DropDownMenu.vue';
     </transition>
   </router-view>
 </template>
-
-<script setup lang="ts">
-import Header from "./components/Header.vue"
-</script>

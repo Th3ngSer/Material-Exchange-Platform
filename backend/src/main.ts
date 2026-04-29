@@ -7,11 +7,11 @@ import { join } from 'path'
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule)
 
-  // Global validation pipe — auto-validates all DTOs
+  // Global validation pipe -- auto-validates all DTOs
   app.useGlobalPipes(new ValidationPipe({
-    whitelist:        true,   // strip unknown fields
+    whitelist: true,   // strip unknown fields
     forbidNonWhitelisted: false,
-    transform:        true,   // auto-cast types
+    transform: true,   // auto-cast types
   }))
 
   app.enableCors()
@@ -22,6 +22,6 @@ async function bootstrap() {
   })
 
   await app.listen(process.env.PORT ?? 3000)
-  console.log(`🚀 Server running on http://localhost:${process.env.PORT ?? 3000}`)
+  console.log(`Server running on http://localhost:${process.env.PORT ?? 3000}`)
 }
-void bootstrap();
+void bootstrap()
