@@ -1,0 +1,31 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: materialx-mongo
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all', '--port', '27017']
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          "mongosh --quiet --eval \"db.adminCommand('ping').ok\" | grep 1",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mongo-init:
+    image: mongo:7
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: 'no'
+    volumes:
+      - ./scripts:/scripts
+    entrypoint: ['bash', '-c', 'mongosh --host mongo:27017 /scripts/init-replica.js']
+
+volumes:
+  mongo_data:

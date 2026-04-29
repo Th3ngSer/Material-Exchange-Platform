@@ -1,14 +1,33 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { PostsModule } from './posts/posts.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+
+const databaseImports =
+  process.env.NODE_ENV === 'test'
+    ? []
+    : [
+      MongooseModule.forRootAsync({
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          uri: configService.get<string>(
+            'MONGODB_URI',
+            'mongodb://localhost:27017/material_xchange?replicaSet=rs0',
+          ),
+        }),
+      }),
+    ];
 
 @Module({
   imports: [
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    ConfigModule.forRoot({ isGlobal: true }),
-    MongooseModule.forRoot(process.env.MONGO_URI!),
-    PostsModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    ...databaseImports,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

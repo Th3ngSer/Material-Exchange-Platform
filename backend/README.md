@@ -25,6 +25,34 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## MongoDB setup (shared database baseline)
+
+1. Copy environment variables:
+
+```bash
+cp .env.example .env
+```
+
+2. Start local MongoDB (single-node replica set for development):
+
+```bash
+docker compose -f docker-compose.mongo.yml up -d
+```
+
+3. Start backend:
+
+```bash
+npm run start:dev
+```
+
+Default connection string:
+
+```bash
+MONGODB_URI=mongodb://localhost:27017/material_xchange?replicaSet=rs0
+```
+
+For production/shared environments (e.g. MongoDB Atlas cluster), set `MONGODB_URI` to the cluster URI and keep the same variable name.
+
 ## Project setup
 
 ```bash
