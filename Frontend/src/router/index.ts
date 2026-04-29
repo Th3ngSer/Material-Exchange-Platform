@@ -9,9 +9,16 @@ import Language from '@/userprofileVue/LangaugeInformation.vue'
 import Payment from '@/userprofileVue/PaymentInformation.vue'
 import Tracker from '@/userprofileVue/TrackingInformation.vue'
 
-
 const routes = [
   {
+<<<<<<< HEAD
+=======
+    path: '/',
+    name: 'home',
+    component: () => import('../views/HomeView.vue'),
+  },
+  {
+>>>>>>> 22ba39e092f0dcdea113cbabd72dfa23960a172b
     path: "/chat",
     name: "chat",
     component: Chat
@@ -54,6 +61,7 @@ const routes = [
     path: '/payments',
     name: 'Payment',
     component: Payment
+<<<<<<< HEAD
   },
   {
     path: '/',
@@ -67,6 +75,13 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: routes,
-})
+=======
+  }
 
-export default router
+]
+
+export const router = createRouter({
+  history: createWebHistory(),
+  routes
+>>>>>>> 22ba39e092f0dcdea113cbabd72dfa23960a172b
+})

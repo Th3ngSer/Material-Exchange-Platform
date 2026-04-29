@@ -33,10 +33,10 @@
 cp .env.example .env
 ```
 
-2. Start local MongoDB (single-node replica set for development):
+2. Start local MongoDB:
 
 ```bash
-docker compose -f docker-compose.mongo.yml up -d
+docker compose up -d
 ```
 
 3. Start backend:
@@ -48,10 +48,59 @@ npm run start:dev
 Default connection string:
 
 ```bash
-MONGODB_URI=mongodb://localhost:27017/material_xchange?replicaSet=rs0
+MONGODB_URI=mongodb://127.0.0.1:27018/material_xchange?directConnection=true
 ```
 
 For production/shared environments (e.g. MongoDB Atlas cluster), set `MONGODB_URI` to the cluster URI and keep the same variable name.
+
+Auth environment variables:
+
+```bash
+JWT_SECRET=replace_with_strong_secret
+JWT_EXPIRES_IN=1d
+```
+
+## Auth API
+
+Base path: `/auth`
+
+- `POST /auth/register`
+  - body: `{ "email": "user@example.com", "password": "123456", "name": "User" }`
+- `POST /auth/login`
+  - body: `{ "email": "user@example.com", "password": "123456" }`
+- `GET /auth/me`
+  - header: `Authorization: Bearer <accessToken>`
+
+## Docker setup
+
+### Option A: Mongo in Docker, backend on host
+
+```bash
+docker context use default
+docker compose up -d
+cp .env.example .env
+npm run start:dev
+```
+
+### Option B: Combined backend + Mongo in Docker
+
+```bash
+docker context use default
+docker compose up --build -d
+```
+
+API endpoint:
+
+```bash
+http://localhost:3000
+```
+
+Stop services:
+
+```bash
+docker compose down
+docker compose -f docker-compose.mongo.yml down
+```
 
 ## Project setup
 
