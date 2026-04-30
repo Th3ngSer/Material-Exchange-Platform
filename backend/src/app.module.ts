@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { RatingsModule } from './ratings/ratings.module';
+import { AuthModule } from './auth/auth.module';
 
 const databaseImports =
   process.env.NODE_ENV === 'test'
@@ -15,14 +15,19 @@ const databaseImports =
         useFactory: (configService: ConfigService) => ({
           uri: configService.get<string>(
             'MONGODB_URI',
-            'mongodb://localhost:27017/material_xchange?replicaSet=rs0',
+            'mongodb://127.0.0.1:27018/material_xchange?directConnection=true',
           ),
         }),
       }),
     ];
 
 @Module({
-  imports: [],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    ...databaseImports,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
