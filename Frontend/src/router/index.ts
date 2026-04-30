@@ -7,6 +7,7 @@ import HelpInfo from '@/userprofileVue/HelpInformation.vue'
 import LogoutInfo from '@/userprofileVue/LogoutInformation.vue'
 import Language from '@/userprofileVue/LangaugeInformation.vue'
 import Payment from '@/userprofileVue/PaymentInformation.vue'
+import Tracker from '@/userprofileVue/TrackingInformation.vue'
 
 const routes = [
   {
@@ -47,6 +48,11 @@ const routes = [
     path: '/language',
     name: 'Language',
     component: Language
+  },
+  {
+  path: '/tracker',
+  name: 'tracker',
+  component: Tracker
   },
   {
     path: '/payments',
