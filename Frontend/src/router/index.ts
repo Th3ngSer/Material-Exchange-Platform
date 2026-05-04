@@ -8,6 +8,8 @@ import LogoutInfo from '@/userprofileVue/LogoutInformation.vue'
 import Language from '@/userprofileVue/LangaugeInformation.vue'
 import Payment from '@/userprofileVue/PaymentInformation.vue'
 import Tracker from '@/userprofileVue/TrackingInformation.vue'
+import Notification from '@/components/Notificationsview.vue'
+import Report from '@/views/ReportView.vue'
 
 const routes = [
   {
@@ -58,7 +60,17 @@ const routes = [
     path: '/payments',
     name: 'Payment',
     component: Payment
-  }
+  },
+
+  {
+    path: '/notification',
+    name: 'Notification',
+    component: Notification
+  },
+
+  { path: '/report', 
+    name : 'Report',
+    component: Report  }
 
 ]
 
