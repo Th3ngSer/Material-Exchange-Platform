@@ -21,19 +21,12 @@ interface MaterialItem {
   avatar?: string
 }
 
-const categories: Category[] = ['All', 'Sell', 'Exchange', 'Borrow']
-const sortOptions = ['Category', 'Newest', 'Price low to high', 'Price high to low']
-
-const selectedCategory = ref<Category>('All')
-const selectedSort = ref<string>(sortOptions[0] ?? 'Category')
-
-function handleCategoryUpdate(value: string) {
-  if (categories.includes(value as Category)) {
-    selectedCategory.value = value as Category
-  }
+interface Props {
+  materials?: MaterialItem[]
 }
 
-const materials: MaterialItem[] = [
+const props = withDefaults(defineProps<Props>(), {
+  materials: () => [
   { id: 1, title: 'Sofa Chair', price: '75', location: 'Singapore Hub', category: 'Sell', tone: 'orange', seller: 'Ly Thong', rating: 5.0 },
   { id: 2, title: 'Wooden Desk', price: '120', location: 'Hong Kong Hub', category: 'Exchange', tone: 'gold', seller: 'John Doe', rating: 4.8 },
   { id: 3, title: 'Desk Lamp', price: '18', location: 'Remote Friendly', category: 'Borrow', tone: 'rose', seller: 'Jane Smith', rating: 4.9 },
@@ -46,13 +39,26 @@ const materials: MaterialItem[] = [
   { id: 10, title: 'Storage Rack', price: '68', location: 'Singapore Hub', category: 'Sell', tone: 'orange', seller: 'Tom Wilson', rating: 5.0 },
   { id: 11, title: 'Whiteboard', price: '29', location: 'Metro Hub', category: 'Exchange', tone: 'gold', seller: 'Rachel Green', rating: 4.8 },
   { id: 12, title: 'Standing Mat', price: '22', location: 'Office Circle', category: 'Borrow', tone: 'rose', seller: 'Chris Evans', rating: 4.9 },
-]
+  ],
+})
+
+const categories: Category[] = ['All', 'Sell', 'Exchange', 'Borrow']
+const sortOptions = ['Category', 'Newest', 'Price low to high', 'Price high to low']
+
+const selectedCategory = ref<Category>('All')
+const selectedSort = ref<string>(sortOptions[0] ?? 'Category')
+
+function handleCategoryUpdate(value: string) {
+  if (categories.includes(value as Category)) {
+    selectedCategory.value = value as Category
+  }
+}
 
 const filteredMaterials = computed(() => {
   const pool =
     selectedCategory.value === 'All'
-      ? materials
-      : materials.filter((item) => item.category === selectedCategory.value)
+      ? props.materials
+      : props.materials.filter((item) => item.category === selectedCategory.value)
 
   const sortedPool = [...pool]
 
