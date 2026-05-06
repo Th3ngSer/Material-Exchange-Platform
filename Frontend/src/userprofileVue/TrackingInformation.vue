@@ -6,7 +6,7 @@
       <h2 class="title">Transaction of Item</h2>
 
       <!-- ITEMS -->
-      <div v-for="item in items" :key="item.id" class="item-card">
+      <div v-for="item in items" :key="item._id" class="item-card">
 
         <h3>{{ item.name }}</h3>
 
@@ -40,7 +40,6 @@
             Completed
           </button>
 
-          <!-- CANCEL BUTTON -->
           <button
             :class="['btn', { active: item.status === 'Cancelled' }]"
             @click="openCancelModal(item)"
@@ -88,72 +87,80 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import Sidebar from '@/userprofileComponent/Sidebar.vue'
+import { getItems, updateStatus as apiUpdateStatus } from '@/services/trackitemuser'
 
-/* ITEMS */
-const items = reactive([
-  { id: 1, name: 'MacBook Pro 2019', status: 'Available', history: [] },
-  { id: 2, name: 'iPhone 13', status: 'Pending', history: [] },
-  { id: 3, name: 'Canon Camera', status: 'Accepted', history: [] },
-  { id: 4, name: 'Headphones Sony', status: 'Completed', history: [] }
-])
-
-/* NORMAL STATUS UPDATE */
-const updateStatus = (item, newStatus) => {
-  item.status = newStatus
-
-  item.history.unshift({
-    status: newStatus,
-    time: new Date().toLocaleString()
-  })
-}
-
-/* STATUS COLOR */
-const statusClass = (status) => {
-  return {
-    available: status === 'Available',
-    pending: status === 'Pending',
-    accepted: status === 'Accepted',
-    completed: status === 'Completed',
-    cancelled: status === 'Cancelled'
-  }
-}
-
-/* CANCEL MODAL STATE */
+/* STATE */
+const items = ref([])
 const showCancelModal = ref(false)
 const selectedReason = ref('')
 const selectedItem = ref(null)
 
-/* OPEN MODAL */
+/* LOAD ITEMS */
+const loadItems = async () => {
+  try {
+    const res = await getItems()
+    items.value = res.data
+  } catch (err) {
+    console.error('Load error:', err)
+  }
+}
+
+/* UPDATE STATUS */
+const updateStatus = async (item, newStatus) => {
+  try {
+    await apiUpdateStatus(item._id, {
+      status: newStatus
+    })
+
+    await loadItems()
+  } catch (err) {
+    console.error('Update error:', err)
+  }
+}
+
+/* CANCEL MODAL */
 const openCancelModal = (item) => {
   selectedItem.value = item
   selectedReason.value = ''
   showCancelModal.value = true
 }
 
-/* CLOSE MODAL */
 const closeModal = () => {
   showCancelModal.value = false
 }
 
-/* CONFIRM CANCEL */
-const confirmCancel = () => {
+const confirmCancel = async () => {
   if (!selectedReason.value) {
-    alert("Please select a reason")
+    alert('Please select a reason')
     return
   }
 
-  selectedItem.value.status = 'Cancelled'
+  try {
+    await apiUpdateStatus(selectedItem.value._id, {
+      status: 'Cancelled',
+      reason: selectedReason.value
+    })
 
-  selectedItem.value.history.unshift({
-    status: 'Cancelled',
-    reason: selectedReason.value,
-    time: new Date().toLocaleString()
-  })
-
-  showCancelModal.value = false
+    showCancelModal.value = false
+    await loadItems()
+  } catch (err) {
+    console.error('Cancel error:', err)
+  }
 }
+
+/* STATUS COLORS */
+const statusClass = (status) => ({
+  available: status === 'Available',
+  pending: status === 'Pending',
+  accepted: status === 'Accepted',
+  completed: status === 'Completed',
+  cancelled: status === 'Cancelled'
+})
+
+/* INIT */
+onMounted(loadItems)
 </script>
 
 <style scoped>
@@ -173,7 +180,7 @@ const confirmCancel = () => {
   margin-bottom: 20px;
 }
 
-/* ITEM CARD */
+/* ITEM */
 .item-card {
   background: #f4f4f4;
   padding: 16px;
@@ -195,10 +202,9 @@ const confirmCancel = () => {
   border-radius: 6px;
   cursor: pointer;
   background: #e5e7eb;
-  color: black;
 }
 
-/* ACTIVE BUTTON COLORS */
+/* ACTIVE COLORS */
 .btn.active:nth-child(1) { background: orange; color: white; }
 .btn.active:nth-child(2) { background: blue; color: white; }
 .btn.active:nth-child(3) { background: green; color: white; }
@@ -212,7 +218,7 @@ const confirmCancel = () => {
   border: 1px solid #ddd;
 }
 
-/* STATUS TEXT COLORS */
+/* STATUS COLORS */
 .available { color: green; }
 .pending { color: orange; }
 .accepted { color: blue; }
@@ -222,10 +228,7 @@ const confirmCancel = () => {
 /* MODAL */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background: rgba(0,0,0,0.4);
   display: flex;
   justify-content: center;
@@ -249,12 +252,5 @@ const confirmCancel = () => {
   margin-top: 15px;
   display: flex;
   justify-content: space-between;
-}
-
-.modal-actions button {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
 }
 </style>

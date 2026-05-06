@@ -4,6 +4,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { TrackitemuserModule } from './trackitemuser/trackitemuser.module';
+
 
 const databaseImports =
   process.env.NODE_ENV === 'test'
@@ -28,6 +30,7 @@ const databaseImports =
     }),
     ...databaseImports,
     AuthModule,
+    TrackitemuserModule,
   ],
   controllers: [AppController],
   providers: [AppService],
