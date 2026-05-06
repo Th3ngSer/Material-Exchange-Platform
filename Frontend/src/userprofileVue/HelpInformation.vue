@@ -20,7 +20,6 @@
       <section class="contact-form">
         <h2>Contact Us</h2>
 
-        <!-- ✅ SUCCESS MESSAGE -->
         <p v-if="submitted" class="success-msg">
           Thank you for your submit!! We will check as soon as possible.
         </p>
@@ -60,7 +59,6 @@
             <textarea v-model="form.request"></textarea>
           </label>
 
-          <!-- ✅ Disabled until all fields filled -->
           <button
             type="submit"
             class="submit-btn"
@@ -91,7 +89,6 @@ const form = reactive({
 /* submit state */
 const submitted = ref(false)
 
-/* ✅ VALIDATION */
 const isFormValid = computed(() => {
   return (
     form.firstName &&

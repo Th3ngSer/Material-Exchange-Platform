@@ -16,7 +16,11 @@ async function bootstrap() {
     }),
   );
 
-  app.enableCors();
+   app.enableCors({
+    origin: 'http://localhost:5173', // your Vue frontend
+    methods: 'GET,POST,PUT,PATCH,DELETE',
+    credentials: true,
+  });
 
   // Serve uploaded images as static: GET /uploads/filename.jpg
   app.useStaticAssets(
