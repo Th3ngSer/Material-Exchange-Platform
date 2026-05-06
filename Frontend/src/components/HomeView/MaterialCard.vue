@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import chairImage from '@/assets/images/vergilChair.webp'
 
 type Tone = 'gold' | 'orange' | 'rose'
 
@@ -13,8 +12,29 @@ defineProps<{
     seller?: string
     rating?: number
     avatar?: string
+    image?: string
+    postedTime?: string
   }
 }>()
+
+function getTimeAgo(dateString: string | undefined): string {
+  if (!dateString) return 'Just now'
+  
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffSecs = Math.floor(diffMs / 1000)
+  const diffMins = Math.floor(diffSecs / 60)
+  const diffHours = Math.floor(diffMins / 60)
+  const diffDays = Math.floor(diffHours / 24)
+  
+  if (diffSecs < 60) return 'Just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays < 7) return `${diffDays}d ago`
+  
+  return date.toLocaleDateString()
+}
 </script>
 
 <template>
@@ -33,22 +53,32 @@ defineProps<{
       
       <!-- Product Image -->
       <img
-        :src="chairImage"
+        :src="item.image"
         alt="Product item"
         class="h-full w-full object-contain"
       />
     </div>
 
     <!-- Bottom Section with Info -->
-    <div class="bg-[#23216e] text-white p-5 flex flex-col flex-1">
+    <div class="bg-[#23216e] text-white p-4 flex flex-col flex-1">
       <!-- Title and Price -->
-      <div class="flex justify-between items-start mb-3">
+      <div class="flex justify-between items-start mb-2">
         <h3 class="text-lg font-bold leading-tight flex-1">{{ item.title }}</h3>
-        <span v-if="item.category === 'Sell'" class="text-2xl font-bold text-right ml-2">${{ item.price }}</span>
+        <span
+          class="ml-2 min-w-[72px] text-2xl font-bold text-right"
+          :class="item.category === 'Sell' ? 'visible' : 'invisible'"
+        >
+          ${{ item.price }}
+        </span>
+      </div>
+
+      <!-- Posted Time -->
+      <div class="text-xs text-gray-400 mb-2">
+        Posted {{ getTimeAgo(item.postedTime) }}
       </div>
 
       <!-- Location -->
-      <div class="flex items-center gap-2 text-sm text-gray-300 mb-4">
+      <div class="flex items-center gap-2 text-sm text-gray-300 mb-2">
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
         </svg>
@@ -56,10 +86,10 @@ defineProps<{
       </div>
 
       <!-- Divider -->
-      <div class="border-t border-gray-600 my-3"></div>
+      <div class="border-t border-gray-600 my-2"></div>
 
       <!-- Seller Info -->
-      <div class="flex items-center justify-between">
+      <div class="mt-auto flex items-center justify-between">
         <div class="flex items-center gap-2">
           <!-- Avatar -->
           <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
