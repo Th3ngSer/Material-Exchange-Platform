@@ -3,8 +3,6 @@ import { Document } from 'mongoose';
 
 export type MessageDocument = Message & Document;
 
-export type MessageType = 'text' | 'image' | 'voice';
-
 @Schema({ timestamps: true })
 export class Message {
   @Prop({ required: true })
@@ -13,8 +11,8 @@ export class Message {
   @Prop({ required: true })
   receiverId: string;
 
-  @Prop({ required: true, enum: ['text', 'image', 'voice'] })
-  type: MessageType;
+  @Prop({ enum: ['text', 'image', 'voice'], default: 'text' })
+  type: string;
 
   @Prop({ required: true })
   content: string;

@@ -10,11 +10,8 @@ export class ChatService {
     private messageModel: Model<MessageDocument>,
   ) {}
 
-  async sendMessage(
-    senderId: string,
-    receiverId: string,
-    content: string,
-  ) {
+  // ✔ Send message
+  async sendMessage(senderId: string, receiverId: string, content: string) {
     return this.messageModel.create({
       senderId,
       receiverId,
@@ -23,6 +20,19 @@ export class ChatService {
     });
   }
 
+  // ✔ FIXED: full chat (A ↔ B)
+  async getHistory(user1: string, user2: string) {
+    return this.messageModel
+      .find({
+        $or: [
+          { senderId: user1, receiverId: user2 },
+          { senderId: user2, receiverId: user1 },
+        ],
+      })
+      .sort({ createdAt: 1 });
+  }
+
+  // ✔ user messages
   async getMessages(userId: string) {
     return this.messageModel.find({
       $or: [{ senderId: userId }, { receiverId: userId }],
