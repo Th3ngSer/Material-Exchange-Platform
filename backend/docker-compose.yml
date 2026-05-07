@@ -4,7 +4,7 @@ services:
     container_name: materialx-mongo
     command: ['mongod', '--replSet', 'rs0', '--bind_ip_all', '--port', '27017']
     ports:
-      - '27018:27017'
+      - '27017:27017'
     volumes:
       - mongo_data:/data/db
     healthcheck:
