@@ -22,12 +22,9 @@ export function validateEmail(email: string): string {
 }
 
 /**
- * Validate password strength
- * Requirements:
+ * Validate password length
+ * Requirement:
  * - Minimum 8 characters
- * - At least one uppercase letter
- * - At least one lowercase letter
- * - At least one number
  * @param password - Password to validate
  * @returns Error message or empty string if valid
  */
@@ -38,18 +35,6 @@ export function validatePassword(password: string): string {
 
     if (password.length < 8) {
         return 'Password must be at least 8 characters'
-    }
-
-    if (!/[A-Z]/.test(password)) {
-        return 'Password must contain at least one uppercase letter'
-    }
-
-    if (!/[a-z]/.test(password)) {
-        return 'Password must contain at least one lowercase letter'
-    }
-
-    if (!/[0-9]/.test(password)) {
-        return 'Password must contain at least one number'
     }
 
     return ''

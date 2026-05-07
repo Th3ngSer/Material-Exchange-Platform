@@ -27,7 +27,7 @@ import { UpdatePostDto } from './dto/update-post.dto';
 // ── Multer storage config (reused for both create & update) ──────────────────
 function multerStorage() {
   const dir = process.env.UPLOAD_DIR ?? 'uploads';
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
   return diskStorage({
     destination: (_req, _file, cb) => cb(null, dir),
@@ -48,7 +48,7 @@ const imageFilePipe = new ParseFilePipe({
 export class PostsController {
   private readonly logger = new Logger(PostsController.name);
 
-  constructor(private readonly postsService: PostsService) {}
+  constructor(private readonly postsService: PostsService) { }
 
   // ─── HEALTH CHECK ──────────────────────────────────────────────────────────
   @Get('health/db')
@@ -85,12 +85,13 @@ export class PostsController {
     @UploadedFiles(imageFilePipe) files: Express.Multer.File[],
     @Body() dto: CreatePostDto,
   ) {
-    files.forEach((file) => {
+    const normalizedFiles = files ?? [];
+    normalizedFiles.forEach((file) => {
       if (!file.mimetype.startsWith('image/')) {
         throw new Error('Invalid file type');
       }
     });
-    return this.postsService.create(dto, files ?? []);
+    return this.postsService.create(dto, normalizedFiles);
   }
 
   // ─── GET /posts ────────────────────────────────────────────────────────────
@@ -122,7 +123,13 @@ export class PostsController {
     @Body() dto: UpdatePostDto,
     @UploadedFiles(imageFilePipe) files: Express.Multer.File[],
   ) {
-    return this.postsService.update(id, dto, files ?? []);
+    const normalizedFiles = files ?? [];
+    normalizedFiles.forEach((file) => {
+      if (!file.mimetype.startsWith('image/')) {
+        throw new Error('Invalid file type');
+      }
+    });
+    return this.postsService.update(id, dto, normalizedFiles);
   }
 
   // ─── DELETE /posts/:id ─────────────────────────────────────────────────────
