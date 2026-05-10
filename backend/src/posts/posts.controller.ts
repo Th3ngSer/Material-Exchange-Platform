@@ -48,7 +48,7 @@ const imageFilePipe = new ParseFilePipe({
 export class PostsController {
   private readonly logger = new Logger(PostsController.name);
 
-  constructor(private readonly postsService: PostsService) { }
+  constructor(private readonly postsService: PostsService) {}
 
   // ─── HEALTH CHECK ──────────────────────────────────────────────────────────
   @Get('health/db')

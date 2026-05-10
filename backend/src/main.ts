@@ -19,9 +19,12 @@ async function bootstrap() {
   app.enableCors();
 
   // Serve uploaded images as static: GET /uploads/filename.jpg
-  app.useStaticAssets(join(process.cwd(), process.env.UPLOAD_DIR ?? 'uploads'),{
-    prefix: '/uploads',
-  });
+  app.useStaticAssets(
+    join(process.cwd(), process.env.UPLOAD_DIR ?? 'uploads'),
+    {
+      prefix: '/uploads',
+    },
+  );
 
   await app.listen(process.env.PORT ?? 3000);
   console.log(`Server running on http://localhost:${process.env.PORT ?? 3000}`);
