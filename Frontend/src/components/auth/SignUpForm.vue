@@ -6,10 +6,10 @@
  * Connects to POST /auth/register endpoint
  */
 
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { validateEmail, validatePassword, validatePasswordMatch, checkPasswordStrength } from '@/utils/validation'
+import { validateEmail, validatePassword, validatePasswordMatch } from '@/utils/validation'
 import type { RegisterCredentials } from '@/types/auth'
 
 const router = useRouter()
@@ -24,23 +24,17 @@ const confirmPassword = ref('')
 const emailError = ref('')
 const passwordError = ref('')
 const confirmPasswordError = ref('')
+const successMessage = ref('')
 
 // Form state
 const isSubmitting = ref(false)
-
-// Password strength
-const passwordStrength = computed(() => checkPasswordStrength(password.value))
-const strengthColor = computed(() => {
-  if (passwordStrength.value === 'weak') return '#e74c3c'
-  if (passwordStrength.value === 'medium') return '#f39c12'
-  return '#27ae60'
-})
+const hasSubmitted = ref(false)
 
 /**
  * Validate email input
  */
 function validateEmailInput() {
-  emailError.value = validateEmail(email.value)
+  emailError.value = validateEmail(email.value.trim())
 }
 
 /**
@@ -61,6 +55,8 @@ function validateConfirmPasswordInput() {
  * Handle form submission
  */
 async function handleSubmit() {
+  hasSubmitted.value = true
+  successMessage.value = ''
   // Validate all fields
   validateEmailInput()
   validatePasswordInput()
@@ -75,7 +71,7 @@ async function handleSubmit() {
 
   try {
     const credentials: RegisterCredentials = {
-      email: email.value,
+      email: email.value.trim(),
       password: password.value,
       confirmPassword: confirmPassword.value,
     }
@@ -87,8 +83,12 @@ async function handleSubmit() {
     password.value = ''
     confirmPassword.value = ''
 
-    // Redirect to home or dashboard
-    await router.push({ name: 'home' })
+    successMessage.value = 'Account created successfully. Redirecting to login...'
+
+    // Redirect to login after successful sign-up
+    setTimeout(() => {
+      router.push({ name: 'login' })
+    }, 1200)
   } catch (err) {
     // Error is already set in authStore.error
     console.error('Registration error:', err)
@@ -100,16 +100,21 @@ async function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit" class="signup-form">
-    <h2>Create Account</h2>
+    <h1 style="font-weight: bold;">Create Account</h1>
 
     <!-- Error Display -->
     <div v-if="authStore.error" class="error-message" role="alert">
       {{ authStore.error }}
     </div>
 
+    <!-- Success Display -->
+    <div v-if="successMessage" class="success-message" role="status">
+      {{ successMessage }}
+    </div>
+
     <!-- Email Input -->
     <div class="form-group">
-      <label for="email">Email Address</label>
+      <label for="email">Enter your Email</label>
       <input
         id="email"
         v-model="email"
@@ -117,13 +122,14 @@ async function handleSubmit() {
         placeholder="Enter your email"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validateEmailInput"
+        @input="emailError = ''"
       />
-      <span v-if="emailError" class="field-error">{{ emailError }}</span>
+      <span v-if="emailError && hasSubmitted" class="field-error">{{ emailError }}</span>
     </div>
 
-    <!-- Password Input with Strength Indicator -->
+    <!-- Password Input -->
     <div class="form-group">
-      <label for="password">Password</label>
+      <label for="password">Enter your Password</label>
       <input
         id="password"
         v-model="password"
@@ -131,23 +137,9 @@ async function handleSubmit() {
         placeholder="Enter your password"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validatePasswordInput"
+        @input="passwordError = ''"
       />
-      <span v-if="passwordError" class="field-error">{{ passwordError }}</span>
-
-      <!-- Password Strength Indicator -->
-      <div v-if="password" class="strength-indicator">
-        <div class="strength-bar">
-          <div
-            class="strength-fill"
-            :style="{ width: passwordStrength === 'weak' ? '33%' : passwordStrength === 'medium' ? '66%' : '100%', backgroundColor: strengthColor }"
-          ></div>
-        </div>
-        <span class="strength-label" :style="{ color: strengthColor }">
-          Strength:
-          <strong>{{ passwordStrength }}</strong>
-        </span>
-      </div>
-
+      <span v-if="passwordError && hasSubmitted" class="field-error">{{ passwordError }}</span>
     </div>
 
     <!-- Confirm Password Input -->
@@ -160,8 +152,9 @@ async function handleSubmit() {
         placeholder="Confirm your password"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validateConfirmPasswordInput"
+        @input="confirmPasswordError = ''"
       />
-      <span v-if="confirmPasswordError" class="field-error">{{ confirmPasswordError }}</span>
+      <span v-if="confirmPasswordError && hasSubmitted" class="field-error">{{ confirmPasswordError }}</span>
     </div>
 
     <!-- Submit Button -->
@@ -186,19 +179,19 @@ async function handleSubmit() {
 
 <style scoped>
 .signup-form {
-  max-width: 500px;
-  margin: 0 auto;
+  max-width: 360px;
+  margin: 0;
   padding: 2rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 5px;
+  border-radius: 16px;
+  background-color: #e7ecf1;
+  box-shadow: 0 16px 30px rgba(8, 10, 40, 0.25);
 }
 
-h2 {
+h1 {
   text-align: center;
   margin-bottom: 1.5rem;
-  color: #333;
+  color: #1b1b1b;
   font-size: 1.5rem;
 }
 
@@ -217,16 +210,16 @@ input {
   width: 100%;
   padding: 0.75rem;
   font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: none;
+  border-radius: 8px;
   box-sizing: border-box;
   transition: border-color 0.3s;
+  background-color: #f7f9fb;
 }
 
 input:focus {
   outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+  box-shadow: 0 0 0 3px rgba(28, 31, 88, 0.15);
 }
 
 input:disabled {
@@ -243,81 +236,26 @@ input:disabled {
 }
 
 .error-message {
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  background-color: #ffeef2;
+  border: 1px solid #f7c6d3;
+  border-radius: 12px;
+  color: #8a1d3f;
+  font-size: 0.9rem;
+  box-shadow: 0 8px 16px rgba(138, 29, 63, 0.08);
+}
+
+.success-message {
   padding: 0.75rem;
   margin-bottom: 1rem;
-  background-color: #fee;
-  border: 1px solid #fcc;
+  background-color: #e9f7ef;
+  border: 1px solid #c9efd9;
   border-radius: 4px;
-  color: #c00;
+  color: #1e7e34;
   font-size: 0.9rem;
 }
 
-.strength-indicator {
-  margin-top: 0.75rem;
-}
-
-.strength-bar {
-  height: 4px;
-  background-color: #e0e0e0;
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 0.5rem;
-}
-
-.strength-fill {
-  height: 100%;
-  transition: width 0.3s, background-color 0.3s;
-}
-
-.strength-label {
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.requirements {
-  margin-top: 0.75rem;
-  padding: 0.75rem;
-  background-color: #f9f9f9;
-  border-radius: 4px;
-}
-
-.requirement-title {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #666;
-}
-
-.requirements ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.requirements li {
-  font-size: 0.85rem;
-  color: #999;
-  margin: 0.25rem 0;
-  position: relative;
-  padding-left: 1.5rem;
-}
-
-.requirements li:before {
-  content: '○';
-  position: absolute;
-  left: 0;
-  color: #ccc;
-}
-
-.requirements li.met {
-  color: #27ae60;
-  font-weight: 500;
-}
-
-.requirements li.met:before {
-  content: '✓';
-  color: #27ae60;
-}
 
 .submit-button {
   width: 100%;
@@ -327,7 +265,7 @@ input:disabled {
   color: white;
   background-color: #4a90e2;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s;
   display: flex;
