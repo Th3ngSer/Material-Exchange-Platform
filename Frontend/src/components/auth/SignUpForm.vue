@@ -9,11 +9,18 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { validateEmail, validatePassword, validatePasswordMatch, checkPasswordStrength } from '@/utils/validation'
+import { useLanguageStore } from '@/stores/language'
+import {
+  validateEmail,
+  validatePassword,
+  validatePasswordMatch,
+  checkPasswordStrength,
+} from '@/utils/validation'
 import type { RegisterCredentials } from '@/types/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const languageStore = useLanguageStore()
 
 // Form data
 const email = ref('')
@@ -100,7 +107,7 @@ async function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit" class="signup-form">
-    <h2>Create Account</h2>
+    <h2>{{ languageStore.t('createAccount') }}</h2>
 
     <!-- Error Display -->
     <div v-if="authStore.error" class="error-message" role="alert">
@@ -109,12 +116,12 @@ async function handleSubmit() {
 
     <!-- Email Input -->
     <div class="form-group">
-      <label for="email">Email Address</label>
+      <label for="email">{{ languageStore.t('emailAddress') }}</label>
       <input
         id="email"
         v-model="email"
         type="email"
-        placeholder="Enter your email"
+        :placeholder="languageStore.t('emailAddress')"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validateEmailInput"
       />
@@ -123,12 +130,12 @@ async function handleSubmit() {
 
     <!-- Password Input with Strength Indicator -->
     <div class="form-group">
-      <label for="password">Password</label>
+      <label for="password">{{ languageStore.t('password') }}</label>
       <input
         id="password"
         v-model="password"
         type="password"
-        placeholder="Enter your password"
+        :placeholder="languageStore.t('password')"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validatePasswordInput"
       />
@@ -139,25 +146,32 @@ async function handleSubmit() {
         <div class="strength-bar">
           <div
             class="strength-fill"
-            :style="{ width: passwordStrength === 'weak' ? '33%' : passwordStrength === 'medium' ? '66%' : '100%', backgroundColor: strengthColor }"
+            :style="{
+              width:
+                passwordStrength === 'weak'
+                  ? '33%'
+                  : passwordStrength === 'medium'
+                    ? '66%'
+                    : '100%',
+              backgroundColor: strengthColor,
+            }"
           ></div>
         </div>
         <span class="strength-label" :style="{ color: strengthColor }">
-          Strength:
-          <strong>{{ passwordStrength }}</strong>
+          {{ languageStore.t('strength') }}:
+          <strong>{{ languageStore.t(passwordStrength) }}</strong>
         </span>
       </div>
-
     </div>
 
     <!-- Confirm Password Input -->
     <div class="form-group">
-      <label for="confirmPassword">Confirm Password</label>
+      <label for="confirmPassword">{{ languageStore.t('confirmPassword') }}</label>
       <input
         id="confirmPassword"
         v-model="confirmPassword"
         type="password"
-        placeholder="Confirm your password"
+        :placeholder="languageStore.t('confirmPassword')"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validateConfirmPasswordInput"
       />
@@ -165,20 +179,16 @@ async function handleSubmit() {
     </div>
 
     <!-- Submit Button -->
-    <button
-      type="submit"
-      :disabled="isSubmitting || authStore.isLoading"
-      class="submit-button"
-    >
+    <button type="submit" :disabled="isSubmitting || authStore.isLoading" class="submit-button">
       <span v-if="isSubmitting || authStore.isLoading" class="loading-spinner"></span>
-      {{ isSubmitting || authStore.isLoading ? 'Creating Account...' : 'Sign Up' }}
+      {{ isSubmitting || authStore.isLoading ? languageStore.t('creatingAccount') : languageStore.t('createAccount') }}
     </button>
 
     <!-- Link to Login -->
     <div class="form-footer">
       <p>
-        Already have an account?
-        <RouterLink to="/login">Login here</RouterLink>
+        {{ languageStore.t('alreadyHaveAccount') }}
+        <RouterLink to="/login">{{ languageStore.t('loginHere') }}</RouterLink>
       </p>
     </div>
   </form>
@@ -266,7 +276,9 @@ input:disabled {
 
 .strength-fill {
   height: 100%;
-  transition: width 0.3s, background-color 0.3s;
+  transition:
+    width 0.3s,
+    background-color 0.3s;
 }
 
 .strength-label {

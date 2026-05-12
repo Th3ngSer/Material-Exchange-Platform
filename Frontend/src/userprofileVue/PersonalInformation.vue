@@ -3,28 +3,28 @@
     <Sidebar />
 
     <div class="content">
-      <h2 class="title">Personal Profile</h2>
+      <h2 class="title">{{ languageStore.t('personalInformation') }}</h2>
 
       <div class="info-form">
         <!-- Left column -->
         <div class="form-column">
           <div class="field">
-            <span>First Name</span>
+            <span>{{ languageStore.t('firstName') }}</span>
             <p>{{ form.firstName }}</p>
           </div>
 
           <div class="field">
-            <span>Birth of date</span>
+            <span>{{ languageStore.t('birthDate') }}</span>
             <p>{{ form.birthDate }}</p>
           </div>
 
           <div class="field">
-            <span>Nationality</span>
+            <span>{{ languageStore.t('nationality') }}</span>
             <p>{{ form.nationality }}</p>
           </div>
 
           <div class="field">
-            <span>Username</span>
+            <span>{{ languageStore.t('username') }}</span>
             <p>{{ form.username }}</p>
           </div>
         </div>
@@ -32,31 +32,29 @@
         <!-- Right column -->
         <div class="form-column">
           <div class="field">
-            <span>Last Name</span>
+            <span>{{ languageStore.t('lastName') }}</span>
             <p>{{ form.lastName }}</p>
           </div>
 
           <div class="field">
-            <span>Gender</span>
+            <span>{{ languageStore.t('gender') }}</span>
             <p>{{ form.gender }}</p>
           </div>
 
           <div class="field">
-            <span>Phone Number</span>
+            <span>{{ languageStore.t('phoneNumber') }}</span>
             <p>{{ form.phone }}</p>
           </div>
 
           <div class="field">
-            <span>Email</span>
+            <span>{{ languageStore.t('email') }}</span>
             <p>{{ form.email }}</p>
           </div>
         </div>
       </div>
 
       <div class="form-actions">
-        <button class="btn edit" type="button" @click="goToEdit">
-          Edit Profile
-        </button>
+        <button class="btn edit" type="button" @click="goToEdit">{{ languageStore.t('editProfile') }}</button>
       </div>
     </div>
   </div>
@@ -65,9 +63,11 @@
 <script setup>
 import { reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import Sidebar from '@/userprofileComponent/Sidebar.vue'
+import Sidebar from '../userprofileComponent/Sidebar.vue'
+import { useLanguageStore } from '../stores/language'
 
 const router = useRouter()
+const languageStore = useLanguageStore()
 
 const form = reactive({
   firstName: '',
@@ -77,7 +77,7 @@ const form = reactive({
   username: '',
   gender: '',
   phone: '',
-  email: ''
+  email: '',
 })
 
 /* Load data from localStorage */

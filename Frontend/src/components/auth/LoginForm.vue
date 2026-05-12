@@ -8,11 +8,13 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useLanguageStore } from '@/stores/language'
 import { validateEmail } from '@/utils/validation'
 import type { LoginCredentials } from '@/types/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const languageStore = useLanguageStore()
 
 // Form data
 const email = ref('')
@@ -37,7 +39,7 @@ function validateEmailInput() {
  */
 function validatePasswordInput() {
   if (!password.value) {
-    passwordError.value = 'Password is required'
+    passwordError.value = languageStore.t('passwordRequired')
   } else {
     passwordError.value = ''
   }
@@ -83,7 +85,7 @@ async function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit" class="login-form">
-    <h2>Login</h2>
+    <h2>{{ languageStore.t('login') }}</h2>
 
     <!-- Error Display -->
     <div v-if="authStore.error" class="error-message" role="alert">
@@ -92,12 +94,12 @@ async function handleSubmit() {
 
     <!-- Email Input -->
     <div class="form-group">
-      <label for="email">Email Address</label>
+      <label for="email">{{ languageStore.t('emailAddress') }}</label>
       <input
         id="email"
         v-model="email"
         type="email"
-        placeholder="Enter your email"
+        :placeholder="languageStore.t('emailAddress')"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validateEmailInput"
       />
@@ -106,12 +108,12 @@ async function handleSubmit() {
 
     <!-- Password Input -->
     <div class="form-group">
-      <label for="password">Password</label>
+      <label for="password">{{ languageStore.t('password') }}</label>
       <input
         id="password"
         v-model="password"
         type="password"
-        placeholder="Enter your password"
+        :placeholder="languageStore.t('password')"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validatePasswordInput"
       />
@@ -119,20 +121,16 @@ async function handleSubmit() {
     </div>
 
     <!-- Submit Button -->
-    <button
-      type="submit"
-      :disabled="isSubmitting || authStore.isLoading"
-      class="submit-button"
-    >
+    <button type="submit" :disabled="isSubmitting || authStore.isLoading" class="submit-button">
       <span v-if="isSubmitting || authStore.isLoading" class="loading-spinner"></span>
-      {{ isSubmitting || authStore.isLoading ? 'Logging in...' : 'Login' }}
+      {{ isSubmitting || authStore.isLoading ? languageStore.t('loggingIn') : languageStore.t('login') }}
     </button>
 
     <!-- Link to Sign-Up -->
     <div class="form-footer">
       <p>
-        Don't have an account?
-        <RouterLink to="/signup">Sign up here</RouterLink>
+        {{ languageStore.t('dontHaveAccount') }}
+        <RouterLink to="/signup">{{ languageStore.t('signUpHere') }}</RouterLink>
       </p>
     </div>
   </form>

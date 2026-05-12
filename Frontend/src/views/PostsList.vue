@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import axios from 'axios'
+import { useLanguageStore } from '@/stores/language'
 
 interface Post {
   _id: string
@@ -28,6 +29,7 @@ const posts = ref<Post[]>([])
 const total = ref(0)
 const isLoading = ref(false)
 const errorMessage = ref('')
+const languageStore = useLanguageStore()
 
 const hasPosts = computed(() => posts.value.length > 0)
 
@@ -58,20 +60,20 @@ async function loadPosts() {
     posts.value = data.posts ?? []
     total.value = data.total ?? posts.value.length
   } catch (error: any) {
-    errorMessage.value = error?.response?.data?.message ?? 'Unable to load saved posts.'
+    errorMessage.value = error?.response?.data?.message ?? languageStore.t('loadingPosts')
   } finally {
     isLoading.value = false
   }
 }
 
 async function deletePost(postId: string, title: string) {
-  if (!confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
+  if (!confirm(`${languageStore.t('confirmDelete')} "${title}"? ${languageStore.t('cannotBeUndone')}`)) {
     return
   }
 
   try {
     await axios.delete(`${apiBaseUrl}/posts/${postId}`)
-    posts.value = posts.value.filter(p => p._id !== postId)
+    posts.value = posts.value.filter((p) => p._id !== postId)
     total.value = Math.max(0, total.value - 1)
   } catch (error: any) {
     const msg = error?.response?.data?.message ?? 'Failed to delete post.'
@@ -87,43 +89,60 @@ onMounted(loadPosts)
     <section class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
       <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p class="text-sm font-semibold uppercase tracking-[0.28em] text-[#0f5e66]">Saved listings</p>
-          <h1 class="mt-2 text-3xl font-black text-slate-900 sm:text-4xl">Browse the posts you already saved</h1>
+          <p class="text-sm font-semibold uppercase tracking-[0.28em] text-[#0f5e66]">
+            {{ languageStore.t('savedListings') }}
+          </p>
+          <h1 class="mt-2 text-3xl font-black text-slate-900 sm:text-4xl">
+            {{ languageStore.t('browseSavedPosts') }}
+          </h1>
         </div>
 
         <router-link
           to="/create"
           class="inline-flex items-center justify-center rounded-full bg-[#FF8C00] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600"
         >
-          Create a post
+          {{ languageStore.t('createPost') }}
         </router-link>
       </div>
 
-      <div class="mb-6 flex items-center justify-between rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm backdrop-blur">
+      <div
+        class="mb-6 flex items-center justify-between rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm backdrop-blur"
+      >
         <p class="text-sm text-slate-600">
           <span class="font-semibold text-slate-900">{{ total }}</span>
-          post{{ total === 1 ? '' : 's' }} saved
+          {{ languageStore.t('postsSaved') }}
         </p>
         <button
           type="button"
           class="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
           @click="loadPosts"
         >
-          Refresh
+          {{ languageStore.t('refresh') }}
         </button>
       </div>
 
-      <div v-if="isLoading" class="rounded-3xl border border-dashed border-slate-300 bg-white/70 p-10 text-center text-slate-500">
-        Loading posts...
+      <div
+        v-if="isLoading"
+        class="rounded-3xl border border-dashed border-slate-300 bg-white/70 p-10 text-center text-slate-500"
+      >
+        {{ languageStore.t('loadingPosts') }}
       </div>
 
-      <div v-else-if="errorMessage" class="rounded-3xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+      <div
+        v-else-if="errorMessage"
+        class="rounded-3xl border border-red-200 bg-red-50 p-6 text-sm text-red-700"
+      >
         {{ errorMessage }}
       </div>
 
-      <div v-else-if="!hasPosts" class="rounded-3xl border border-dashed border-slate-300 bg-white/70 p-10 text-center">
-        <p class="text-lg font-semibold text-slate-900">No saved posts yet</p>
-        <p class="mt-2 text-sm text-slate-600">Create the first listing and it will show up here.</p>
+      <div
+        v-else-if="!hasPosts"
+        class="rounded-3xl border border-dashed border-slate-300 bg-white/70 p-10 text-center"
+      >
+        <p class="text-lg font-semibold text-slate-900">{{ languageStore.t('noSavedPostsYet') }}</p>
+        <p class="mt-2 text-sm text-slate-600">
+          {{ languageStore.t('createFirstListing') }}
+        </p>
       </div>
 
       <div v-else class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -150,7 +169,9 @@ onMounted(loadPosts)
                 <h2 class="text-lg font-bold text-slate-900">{{ post.title }}</h2>
                 <p class="mt-1 text-sm text-slate-500">{{ post.category }} · {{ post.location }}</p>
               </div>
-              <span class="shrink-0 rounded-full bg-[#1A174A] px-3 py-1 text-xs font-semibold text-[#FF8C00]">
+              <span
+                class="shrink-0 rounded-full bg-[#1A174A] px-3 py-1 text-xs font-semibold text-[#FF8C00]"
+              >
                 {{ formatType(post.type) }}
               </span>
             </div>
@@ -166,8 +187,11 @@ onMounted(loadPosts)
               <span class="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
                 {{ formatPrice(post) }}
               </span>
-              <span v-if="post.exchangeFor" class="rounded-full bg-indigo-50 px-3 py-1 font-medium text-indigo-700">
-                Wants: {{ post.exchangeFor }}
+              <span
+                v-if="post.exchangeFor"
+                class="rounded-full bg-indigo-50 px-3 py-1 font-medium text-indigo-700"
+              >
+                {{ languageStore.t('wants') }} {{ post.exchangeFor }}
               </span>
             </div>
 
@@ -176,14 +200,14 @@ onMounted(loadPosts)
                 :to="`/edit/${post._id}`"
                 class="flex-1 rounded-lg bg-[#1A174A] px-3 py-2 text-center text-sm font-medium text-[#FF8C00] transition hover:bg-[#221f5a]"
               >
-                Edit
+                {{ languageStore.t('edit') }}
               </router-link>
               <button
                 type="button"
                 class="flex-1 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-700"
                 @click="deletePost(post._id, post.title)"
               >
-                Delete
+                {{ languageStore.t('delete') }}
               </button>
             </div>
           </div>

@@ -9,16 +9,16 @@
  * @returns Error message or empty string if valid
  */
 export function validateEmail(email: string): string {
-    if (!email) {
-        return 'Email is required'
-    }
+  if (!email) {
+    return 'Email is required'
+  }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-        return 'Please enter a valid email address'
-    }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) {
+    return 'Please enter a valid email address'
+  }
 
-    return ''
+  return ''
 }
 
 /**
@@ -32,27 +32,27 @@ export function validateEmail(email: string): string {
  * @returns Error message or empty string if valid
  */
 export function validatePassword(password: string): string {
-    if (!password) {
-        return 'Password is required'
-    }
+  if (!password) {
+    return 'Password is required'
+  }
 
-    if (password.length < 8) {
-        return 'Password must be at least 8 characters'
-    }
+  if (password.length < 8) {
+    return 'Password must be at least 8 characters'
+  }
 
-    if (!/[A-Z]/.test(password)) {
-        return 'Password must contain at least one uppercase letter'
-    }
+  if (!/[A-Z]/.test(password)) {
+    return 'Password must contain at least one uppercase letter'
+  }
 
-    if (!/[a-z]/.test(password)) {
-        return 'Password must contain at least one lowercase letter'
-    }
+  if (!/[a-z]/.test(password)) {
+    return 'Password must contain at least one lowercase letter'
+  }
 
-    if (!/[0-9]/.test(password)) {
-        return 'Password must contain at least one number'
-    }
+  if (!/[0-9]/.test(password)) {
+    return 'Password must contain at least one number'
+  }
 
-    return ''
+  return ''
 }
 
 /**
@@ -61,22 +61,22 @@ export function validatePassword(password: string): string {
  * @returns Strength level: 'weak', 'medium', or 'strong'
  */
 export function checkPasswordStrength(password: string): 'weak' | 'medium' | 'strong' {
-    if (!password) return 'weak'
+  if (!password) return 'weak'
 
-    let strength = 0
+  let strength = 0
 
-    // Length
-    if (password.length >= 8) strength++
-    if (password.length >= 12) strength++
+  // Length
+  if (password.length >= 8) strength++
+  if (password.length >= 12) strength++
 
-    // Complexity
-    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++
-    if (/[0-9]/.test(password)) strength++
-    if (/[!@#$%^&*]/.test(password)) strength++
+  // Complexity
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++
+  if (/[0-9]/.test(password)) strength++
+  if (/[!@#$%^&*]/.test(password)) strength++
 
-    if (strength <= 2) return 'weak'
-    if (strength <= 4) return 'medium'
-    return 'strong'
+  if (strength <= 2) return 'weak'
+  if (strength <= 4) return 'medium'
+  return 'strong'
 }
 
 /**
@@ -86,13 +86,13 @@ export function checkPasswordStrength(password: string): 'weak' | 'medium' | 'st
  * @returns Error message or empty string if valid
  */
 export function validatePasswordMatch(password: string, confirmPassword: string): string {
-    if (!confirmPassword) {
-        return 'Please confirm your password'
-    }
+  if (!confirmPassword) {
+    return 'Please confirm your password'
+  }
 
-    if (password !== confirmPassword) {
-        return 'Passwords do not match'
-    }
+  if (password !== confirmPassword) {
+    return 'Passwords do not match'
+  }
 
-    return ''
+  return ''
 }

@@ -4,40 +4,57 @@
 
     <nav class="menu">
       <router-link to="/personal-info" class="nav-link">
-        <NavItem label="Personal Information" icon="userprofileImage/user.png"  />
+        <NavItem :label="languageStore.t('personalInformation')" icon="userprofileImage/user.png" />
       </router-link>
 
       <router-link to="/tracker" class="nav-link">
-        <NavItem label="Tracking Item" icon="userprofileImage/tracker.png" />
+        <NavItem :label="languageStore.t('trackingItem')" icon="userprofileImage/tracker.png" />
       </router-link>
 
       <router-link to="/payments" class="nav-link">
-        <NavItem label="Payments" icon="userprofileImage/wallet.png" />
+        <NavItem :label="languageStore.t('payments')" icon="userprofileImage/wallet.png" />
       </router-link>
 
       <router-link to="/language" class="nav-link">
-        <NavItem label="Language" icon="userprofileImage/globe.png" />
+        <NavItem :label="languageStore.t('language')" icon="userprofileImage/globe.png" />
       </router-link>
 
       <router-link to="/help" class="nav-link">
-        <NavItem label="Help" icon="userprofileImage/help.png" />
+        <NavItem :label="languageStore.t('help')" icon="userprofileImage/help.png" />
       </router-link>
 
       <router-link to="/logout" class="nav-link">
-        <NavItem label="Logout" icon="userprofileImage/logout.png" />
+        <NavItem :label="languageStore.t('logout')" icon="userprofileImage/logout.png" />
       </router-link>
     </nav>
   </aside>
 </template>
 
-<script setup>
-import UserAvatar from '@/userprofileComponent/UserAvatar.vue'
-import NavItem from '@/userprofileComponent/NavItem.vue'
+<script lang="ts">
+import { defineComponent } from 'vue'
+import UserAvatar from './UserAvatar.vue'
+import NavItem from './NavItem.vue'
+import { useLanguageStore } from '../stores/language'
 
-const user = {
-  name: 'Steav',
-  avatar: 'userprofileImage/avatar.png'
-}
+export default defineComponent({
+  components: {
+    UserAvatar,
+    NavItem,
+  },
+  setup() {
+    const languageStore = useLanguageStore()
+
+    const user = {
+      name: 'Steav',
+      avatar: 'userprofileImage/avatar.png',
+    }
+
+    return {
+      languageStore,
+      user,
+    }
+  },
+})
 </script>
 
 <style scoped>

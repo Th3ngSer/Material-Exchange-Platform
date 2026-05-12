@@ -1,23 +1,20 @@
 <template>
   <div class="payment-page">
-    
     <!-- Sidebar -->
     <Sidebar />
 
     <!-- Main Content -->
     <div class="content">
-      <h2 class="title">Payment Method</h2>
+      <h2 class="title">{{ languageStore.t('paymentMethod') }}</h2>
 
       <div class="payment-options">
-
         <!-- Bank Transfer -->
         <div class="option">
           <div class="option-row">
-
             <!-- LEFT: icon + title -->
             <div class="title-with-icon">
               <img class="method-icon" src="/userprofileImage/bank.png" alt="Bank Icon" />
-              <h3>Bank Transfer</h3>
+              <h3>{{ languageStore.t('bankTransfer') }}</h3>
             </div>
 
             <!-- RIGHT: bank logos -->
@@ -26,36 +23,34 @@
               <img src="/userprofileImage/acleda.png" alt="ACLEDA Bank" />
               <img src="/userprofileImage/canadia.png" alt="Canadia Bank" />
             </div>
-
           </div>
         </div>
 
         <!-- Card Payment -->
         <div class="option">
           <div class="option-row">
-
             <!-- LEFT: icon + title -->
             <div class="title-with-icon">
               <img class="method-icon" src="/userprofileImage/card.png" alt="Card Icon" />
-              <h3>Card Payment</h3>
+              <h3>{{ languageStore.t('cardPayment') }}</h3>
             </div>
 
             <!-- RIGHT: visa -->
             <div class="icons">
               <img src="/userprofileImage/visa.png" alt="VISA" />
             </div>
-
           </div>
         </div>
-
       </div>
     </div>
-
   </div>
 </template>
 
 <script setup>
-import Sidebar from '@/userprofileComponent/Sidebar.vue'
+import Sidebar from '../userprofileComponent/Sidebar.vue'
+import { useLanguageStore } from '../stores/language'
+
+const languageStore = useLanguageStore()
 </script>
 
 <style scoped>
@@ -74,7 +69,6 @@ import Sidebar from '@/userprofileComponent/Sidebar.vue'
   font-size: 24px;
   font-weight: bold;
   margin-bottom: 24px;
-  
 }
 
 /* cards */

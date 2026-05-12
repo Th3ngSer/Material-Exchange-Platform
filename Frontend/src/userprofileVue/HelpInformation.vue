@@ -6,66 +6,58 @@
     <!-- Main Content -->
     <div class="content">
       <section class="troubleshoot">
-        <h1>Troubleshoot</h1>
-        <p>Get help with common issues and troubleshoot unexpected behavior.</p>
+        <h1>{{ languageStore.t('troubleshoot') }}</h1>
+        <p>{{ languageStore.t('troubleshootDescription') }}</p>
       </section>
 
       <section class="support">
-        <h2>Work with Support</h2>
-        <p>
-          Submit a bug report, get help collecting log files, and find your system information.
-        </p>
+        <h2>{{ languageStore.t('support') }}</h2>
+        <p>{{ languageStore.t('supportDescription') }}</p>
       </section>
 
       <section class="contact-form">
-        <h2>Contact Us</h2>
+        <h2>{{ languageStore.t('contactUs') }}</h2>
 
         <p v-if="submitted" class="success-msg">
-          Thank you for your submit!! We will check as soon as possible.
+          {{ languageStore.t('successSubmit') }}
         </p>
 
         <form v-if="!submitted" @submit.prevent="submitForm">
           <div class="form-row">
             <label>
-              First Name
+              {{ languageStore.t('firstName') }}
               <input type="text" v-model="form.firstName" />
             </label>
 
             <label>
-              Last Name
+              {{ languageStore.t('lastName') }}
               <input type="text" v-model="form.lastName" />
             </label>
           </div>
 
           <div class="form-row">
             <label>
-              Email Address
+              {{ languageStore.t('emailAddress') }}
               <input type="email" v-model="form.email" />
             </label>
 
             <label>
-              Phone Number
+              {{ languageStore.t('phoneNumber') }}
               <input type="tel" v-model="form.phone" />
             </label>
           </div>
 
           <label>
-            How can we help you?
+            {{ languageStore.t('howCanWeHelp') }}
             <textarea v-model="form.message"></textarea>
           </label>
 
           <label>
-            What can we provide to you?
+            {{ languageStore.t('whatCanWeProvide') }}
             <textarea v-model="form.request"></textarea>
           </label>
 
-          <button
-            type="submit"
-            class="submit-btn"
-            :disabled="!isFormValid"
-          >
-            Submit
-          </button>
+          <button type="submit" class="submit-btn" :disabled="!isFormValid">{{ languageStore.t('submit') }}</button>
         </form>
       </section>
     </div>
@@ -74,7 +66,10 @@
 
 <script setup>
 import { reactive, ref, computed, onMounted } from 'vue'
-import Sidebar from '@/userprofileComponent/Sidebar.vue'
+import Sidebar from '../userprofileComponent/Sidebar.vue'
+import { useLanguageStore } from '../stores/language'
+
+const languageStore = useLanguageStore()
 
 /* form */
 const form = reactive({
@@ -83,21 +78,14 @@ const form = reactive({
   email: '',
   phone: '',
   message: '',
-  request: ''
+  request: '',
 })
 
 /* submit state */
 const submitted = ref(false)
 
 const isFormValid = computed(() => {
-  return (
-    form.firstName &&
-    form.lastName &&
-    form.email &&
-    form.phone &&
-    form.message &&
-    form.request
-  )
+  return form.firstName && form.lastName && form.email && form.phone && form.message && form.request
 })
 
 /* load user info */

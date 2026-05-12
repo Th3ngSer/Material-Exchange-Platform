@@ -3,17 +3,16 @@
     <Sidebar />
 
     <div class="content">
-      <h2 class="title">Transaction of Item</h2>
+      <h2 class="title">{{ languageStore.t('transactionOfItem') }}</h2>
 
       <!-- ITEMS -->
       <div v-for="item in items" :key="item._id" class="item-card">
-
         <h3>{{ item.name }}</h3>
 
         <p>
-          Status:
+          {{ languageStore.t('status') }}:
           <span :class="statusClass(item.status)">
-            {{ item.status }}
+            {{ translateStatus(item.status) }}
           </span>
         </p>
 
@@ -23,57 +22,56 @@
             :class="['btn', { active: item.status === 'Pending' }]"
             @click="updateStatus(item, 'Pending')"
           >
-            Pending
+            {{ languageStore.t('pending') }}
           </button>
 
           <button
             :class="['btn', { active: item.status === 'Accepted' }]"
             @click="updateStatus(item, 'Accepted')"
           >
-            Accepted
+            {{ languageStore.t('accepted') }}
           </button>
 
           <button
             :class="['btn', { active: item.status === 'Completed' }]"
             @click="updateStatus(item, 'Completed')"
           >
-            Completed
+            {{ languageStore.t('completed') }}
           </button>
 
           <button
             :class="['btn', { active: item.status === 'Cancelled' }]"
             @click="openCancelModal(item)"
           >
-            Cancelled
+            {{ languageStore.t('cancelled') }}
           </button>
         </div>
 
         <!-- HISTORY -->
         <div class="history">
-          <h4>History</h4>
+          <h4>{{ languageStore.t('history') }}</h4>
           <ul>
             <li v-for="(log, index) in item.history" :key="index">
               {{ log.time }} →
-              <strong>{{ log.status }}</strong>
+              <strong>{{ translateStatus(log.status) }}</strong>
               <span v-if="log.reason"> ({{ log.reason }})</span>
             </li>
           </ul>
         </div>
-
       </div>
     </div>
 
     <!-- CANCEL MODAL -->
     <div v-if="showCancelModal" class="modal-overlay">
       <div class="modal">
-        <h3>Why do you want to cancel?</h3>
+        <h3>{{ languageStore.t('whyCancel') }}</h3>
 
         <select v-model="selectedReason">
-          <option disabled value="">Select a reason</option>
-          <option>Item not available</option>
-          <option>Changed my mind</option>
-          <option>Wrong item selected</option>
-          <option>Other</option>
+          <option disabled value="">{{ languageStore.t('selectReason') }}</option>
+          <option>{{ languageStore.t('itemNotAvailable') }}</option>
+          <option>{{ languageStore.t('changedMyMind') }}</option>
+          <option>{{ languageStore.t('wrongItemSelected') }}</option>
+          <option>{{ languageStore.t('other') }}</option>
         </select>
 
         <div class="modal-actions">
@@ -82,14 +80,16 @@
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import Sidebar from '@/userprofileComponent/Sidebar.vue'
+import Sidebar from '../userprofileComponent/Sidebar.vue'
 import { getItems, updateStatus as apiUpdateStatus } from '@/services/trackitemuser'
+import { useLanguageStore } from '../stores/language'
+
+const languageStore = useLanguageStore()
 
 /* STATE */
 const items = ref([])
@@ -111,7 +111,7 @@ const loadItems = async () => {
 const updateStatus = async (item, newStatus) => {
   try {
     await apiUpdateStatus(item._id, {
-      status: newStatus
+      status: newStatus,
     })
 
     await loadItems()
@@ -140,7 +140,7 @@ const confirmCancel = async () => {
   try {
     await apiUpdateStatus(selectedItem.value._id, {
       status: 'Cancelled',
-      reason: selectedReason.value
+      reason: selectedReason.value,
     })
 
     showCancelModal.value = false
@@ -156,8 +156,13 @@ const statusClass = (status) => ({
   pending: status === 'Pending',
   accepted: status === 'Accepted',
   completed: status === 'Completed',
-  cancelled: status === 'Cancelled'
+  cancelled: status === 'Cancelled',
 })
+
+const translateStatus = (status) => {
+  const lowerStatus = status.toLowerCase()
+  return languageStore.t(lowerStatus) || status
+}
 
 /* INIT */
 onMounted(loadItems)
@@ -205,10 +210,22 @@ onMounted(loadItems)
 }
 
 /* ACTIVE COLORS */
-.btn.active:nth-child(1) { background: orange; color: white; }
-.btn.active:nth-child(2) { background: blue; color: white; }
-.btn.active:nth-child(3) { background: green; color: white; }
-.btn.active:nth-child(4) { background: red; color: white; }
+.btn.active:nth-child(1) {
+  background: orange;
+  color: white;
+}
+.btn.active:nth-child(2) {
+  background: blue;
+  color: white;
+}
+.btn.active:nth-child(3) {
+  background: green;
+  color: white;
+}
+.btn.active:nth-child(4) {
+  background: red;
+  color: white;
+}
 
 /* HISTORY */
 .history {
@@ -219,17 +236,27 @@ onMounted(loadItems)
 }
 
 /* STATUS COLORS */
-.available { color: green; }
-.pending { color: orange; }
-.accepted { color: blue; }
-.completed { color: purple; }
-.cancelled { color: red; }
+.available {
+  color: green;
+}
+.pending {
+  color: orange;
+}
+.accepted {
+  color: blue;
+}
+.completed {
+  color: purple;
+}
+.cancelled {
+  color: red;
+}
 
 /* MODAL */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
   align-items: center;

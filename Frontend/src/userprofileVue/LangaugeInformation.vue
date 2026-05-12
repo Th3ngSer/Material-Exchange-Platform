@@ -3,24 +3,24 @@
     <Sidebar />
 
     <div class="content">
-      <h2 class="title">Language</h2>
+      <h2 class="title">{{ languageStore.t('language') }}</h2>
 
       <form class="language-form" @submit.prevent="saveLanguage">
         <!-- Khmer option -->
         <label class="option">
           <input type="radio" value="Khmer" v-model="selectedLanguage" />
-          <span>Khmer</span>
+          <span>{{ languageStore.t('khmer') }}</span>
         </label>
 
         <!-- English option -->
         <label class="option">
           <input type="radio" value="English" v-model="selectedLanguage" />
-          <span>English</span>
+          <span>{{ languageStore.t('english') }}</span>
         </label>
 
         <!-- Save button -->
         <div class="form-actions">
-          <button class="btn save" type="submit">Save</button>
+          <button class="btn save" type="submit">{{ languageStore.t('save') }}</button>
         </div>
       </form>
 
@@ -30,26 +30,30 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue'
-import Sidebar from '@/userprofileComponent/Sidebar.vue'
+<script setup lang="ts">
+import { computed, ref, onMounted } from 'vue'
+import Sidebar from '../userprofileComponent/Sidebar.vue'
+import { useLanguageStore } from '../stores/language'
 
-const selectedLanguage = ref('English') // default
+const languageStore = useLanguageStore()
+const selectedLanguage = ref(languageStore.language)
 const message = ref('')
 
-// Load saved language on mount
+const selectedLabel = computed(() =>
+  selectedLanguage.value === 'Khmer'
+    ? languageStore.t('khmer')
+    : languageStore.t('english'),
+)
+
 onMounted(() => {
-  const saved = localStorage.getItem('language')
-  if (saved) {
-    selectedLanguage.value = saved
-  }
+  languageStore.initializeLanguage()
+  selectedLanguage.value = languageStore.language
 })
 
-// Save language to localStorage
 const saveLanguage = () => {
   if (!selectedLanguage.value) return
-  localStorage.setItem('language', selectedLanguage.value)
-  message.value = `Language changed to: ${selectedLanguage.value}`
+  languageStore.setLanguage(selectedLanguage.value)
+  message.value = `${languageStore.t('languageChanged')} ${selectedLabel.value}`
 }
 </script>
 
@@ -89,10 +93,12 @@ const saveLanguage = () => {
   font-size: 16px;
   font-weight: 500;
   color: #444343;
-  transition: border-color 0.3s ease, background 0.3s ease;
+  transition:
+    border-color 0.3s ease,
+    background 0.3s ease;
 }
 
-.option input[type="radio"] {
+.option input[type='radio'] {
   margin-right: 12px;
   accent-color: #000000; /* indigo radio button */
 }
@@ -102,7 +108,7 @@ const saveLanguage = () => {
   border-color: #000000;
 }
 
-.option input[type="radio"]:checked + span {
+.option input[type='radio']:checked + span {
   font-weight: bold;
   color: #1e1b4b;
 }
@@ -122,7 +128,9 @@ const saveLanguage = () => {
   background: #1e1b4b; /* dark indigo */
   color: #fff;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s ease;
+  transition:
+    background 0.3s ease,
+    transform 0.2s ease;
 }
 
 .btn.save:hover {

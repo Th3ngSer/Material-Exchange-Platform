@@ -35,7 +35,10 @@ const images = computed(() =>
         :class="index === 0 ? 'col-span-2 h-56' : ''"
       />
     </div>
-    <div v-else class="flex h-40 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+    <div
+      v-else
+      class="flex h-40 items-center justify-center rounded-xl bg-slate-100 text-slate-400"
+    >
       No images selected
     </div>
 

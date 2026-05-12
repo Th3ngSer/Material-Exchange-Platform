@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Delete,
+} from '@nestjs/common';
 import { TrackitemuserService } from './trackitemuser.service';
 import { CreateTrackItemUserDto } from './dto/create-trackitemuser.dto';
 import { UpdateTrackStatusUserDto } from './dto/update-trackstatususer.dto';
@@ -23,10 +31,7 @@ export class TrackitemuserController {
   }
 
   @Patch(':id')
-  updateStatus(
-    @Param('id') id: string,
-    @Body() dto: UpdateTrackStatusUserDto,
-  ) {
+  updateStatus(@Param('id') id: string, @Body() dto: UpdateTrackStatusUserDto) {
     return this.service.updateByCustomId(Number(id), dto);
   }
 

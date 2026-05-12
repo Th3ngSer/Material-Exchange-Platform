@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Get,
-  Param,
-  Query,
-} from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query } from '@nestjs/common';
 import { ChatService } from './chat.service';
 
 @Controller('chat')
@@ -31,10 +24,7 @@ export class ChatController {
 
   // ✔ chat history A ↔ B
   @Get('history')
-  getHistory(
-    @Query('user1') user1: string,
-    @Query('user2') user2: string,
-  ) {
+  getHistory(@Query('user1') user1: string, @Query('user2') user2: string) {
     return this.chatService.getHistory(user1, user2);
   }
 
