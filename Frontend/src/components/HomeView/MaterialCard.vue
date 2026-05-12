@@ -13,7 +13,7 @@ defineProps<{
     seller?: string
     rating?: number
     avatar?: string
-    image?: string
+    images?: string[]
     postedTime?: string
   }
 }>()
@@ -62,7 +62,11 @@ function getTimeAgo(dateString: string | undefined): string {
       </div>
 
       <!-- Product Image -->
-      <img :src="item.image" alt="Product item" class="h-full w-full object-contain" />
+      <img
+        :src="item.images?.[0] || ''"
+        alt="Product item"
+        class="h-full w-full object-contain"
+      />
     </div>
 
     <!-- Bottom Section with Info -->
@@ -74,7 +78,7 @@ function getTimeAgo(dateString: string | undefined): string {
           class="ml-2 min-w-[72px] text-2xl font-bold text-right"
           :class="item.category === 'Sell' ? 'visible' : 'invisible'"
         >
-          ${{ item.price }}
+          {{ item.price ? (item.price.startsWith('$') ? item.price : '$' + item.price) : '' }}
         </span>
       </div>
 

@@ -1,21 +1,9 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { useLanguageStore } from '@/stores/language'
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 
-const router = useRouter()
-const languageStore = useLanguageStore()
-
-function goMessages() {
-  router.push('/chat')
-}
-
-function goNotifications() {
-  router.push('/help')
-}
-
-function goLogin() {
-  router.push('/login')
-}
+const authStore = useAuthStore()
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 </script>
 
 <template>
@@ -35,12 +23,12 @@ function goLogin() {
         <a
           class="ml-20 text-[16px] font-bold text-[#201f62] no-underline text-center cursor-pointer hover:text-[#ff4b42] transition-colors duration-200"
           href="#categories"
-          >{{ languageStore.t('browse') }}</a
+          ><!-- {{ languageStore.t('browse') }} -->Browse</a
         >
         <RouterLink
           class="ml-20 text-[16px] font-bold text-[#201f62] no-underline text-center cursor-pointer hover:text-[#ff4b42] transition-colors duration-200"
           to="/create-post"
-          >{{ languageStore.t('post') }}</RouterLink
+          ><!-- {{ languageStore.t('post') }} -->Create Post</RouterLink
         >
       </nav>
 
@@ -48,21 +36,21 @@ function goLogin() {
         class="mx-auto grid w-full max-w-[452px] grid-cols-[118px_1fr_42px] items-center overflow-hidden rounded-[8px] border border-[#2b2f9161] bg-[#f4f5fb] max-[1100px]:max-w-none max-[1100px]:justify-self-stretch"
         role="search"
       >
-        <label class="sr-only" for="home-search">{{ languageStore.t('searchMaterials') }}</label>
+        <label class="sr-only" for="home-search">Search materials</label>
         <select
           id="home-search-type"
           aria-label="Search type"
           class="appearance-none border-0 border-r border-[#2b2f912e] bg-transparent px-3 text-[#7b7c98] outline-none cursor-pointer hover:text-[#201f62] transition-colors duration-200"
         >
-          <option>{{ languageStore.t('allTypes') }}</option>
-          <option>{{ languageStore.t('sell') }}</option>
-          <option>{{ languageStore.t('exchange') }}</option>
-          <option>{{ languageStore.t('borrow') }}</option>
+          <option>All Types</option>
+          <option>Sell</option>
+          <option>Exchange</option>
+          <option>Borrow</option>
         </select>
         <input
           id="home-search"
           type="search"
-          :placeholder="languageStore.t('searchMaterials')"
+          placeholder="Search materials"
           class="min-w-0 border-0 bg-transparent px-3 outline-none"
         />
         <button
@@ -79,12 +67,7 @@ function goLogin() {
       </form>
 
       <div class="inline-flex items-center justify-self-end gap-2">
-        <button
-          class="grid h-[34px] w-[34px] place-items-center rounded-full border-0 bg-transparent text-[#201f62] cursor-pointer hover:bg-[#f0f1ff] transition-colors duration-200"
-          type="button"
-          aria-label="Messages"
-          @click="goMessages"
-        >
+        <button class="grid h-[34px] w-[34px] place-items-center rounded-full border-0 bg-transparent text-[#201f62] cursor-pointer hover:bg-[#f0f1ff] transition-colors duration-200" type="button" aria-label="Messages" @click="">
           <svg viewBox="0 0 24 24" aria-hidden="true" class="h-[25px] w-[25px] fill-current">
             <path
               d="M20 4H4a2 2 0 0 0-2 2v13.17L5.17 16H20a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 10H4.34L4 14.34V6h16v8Z"
@@ -102,13 +85,23 @@ function goLogin() {
             />
           </svg>
         </button>
-        <button
-          class="whitespace-nowrap text-[16px] font-bold text-[#201f62] no-underline border-0 bg-transparent cursor-pointer hover:text-[#ff4b42] transition-colors duration-200"
-          type="button"
-          @click="goLogin"
+        <RouterLink
+          v-if="!isAuthenticated"
+          class="whitespace-nowrap text-[16px] font-bold text-[#201f62] no-underline"
+          to="/login"
         >
-          {{ languageStore.t('loginSignUp') }}
-        </button>
+          Login/Sign up
+        </RouterLink>
+        <RouterLink
+          v-else
+          class="grid h-[34px] w-[34px] place-items-center rounded-full border border-[#201f62] text-[#201f62]"
+          to="/profile"
+          aria-label="Profile"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="h-[20px] w-[20px] fill-current">
+            <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.33 0-8 1.67-8 5v1h16v-1c0-3.33-4.67-5-8-5Z" />
+          </svg>
+        </RouterLink>
       </div>
     </div>
   </header>

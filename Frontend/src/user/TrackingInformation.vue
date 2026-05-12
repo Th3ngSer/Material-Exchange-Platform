@@ -3,14 +3,14 @@
     <Sidebar />
 
     <div class="content">
-      <h2 class="title">{{ languageStore.t('transactionOfItem') }}</h2>
+      <h2 class="title"><!-- {{ languageStore.t('transactionOfItem') }} -->Transaction of Item</h2>
 
       <!-- ITEMS -->
       <div v-for="item in items" :key="item._id" class="item-card">
         <h3>{{ item.name }}</h3>
 
         <p>
-          {{ languageStore.t('status') }}:
+          <!-- {{ languageStore.t('status') }} -->Status:
           <span :class="statusClass(item.status)">
             {{ translateStatus(item.status) }}
           </span>
@@ -22,34 +22,34 @@
             :class="['btn', { active: item.status === 'Pending' }]"
             @click="updateStatus(item, 'Pending')"
           >
-            {{ languageStore.t('pending') }}
+            <!-- {{ languageStore.t('pending') }} -->Pending
           </button>
 
           <button
             :class="['btn', { active: item.status === 'Accepted' }]"
             @click="updateStatus(item, 'Accepted')"
           >
-            {{ languageStore.t('accepted') }}
+            <!-- {{ languageStore.t('accepted') }} -->Accepted
           </button>
 
           <button
             :class="['btn', { active: item.status === 'Completed' }]"
             @click="updateStatus(item, 'Completed')"
           >
-            {{ languageStore.t('completed') }}
+            <!-- {{ languageStore.t('completed') }} -->Completed
           </button>
 
           <button
             :class="['btn', { active: item.status === 'Cancelled' }]"
             @click="openCancelModal(item)"
           >
-            {{ languageStore.t('cancelled') }}
+            <!-- {{ languageStore.t('cancelled') }} -->Cancelled
           </button>
         </div>
 
         <!-- HISTORY -->
         <div class="history">
-          <h4>{{ languageStore.t('history') }}</h4>
+          <h4><!-- {{ languageStore.t('history') }} -->History</h4>
           <ul>
             <li v-for="(log, index) in item.history" :key="index">
               {{ log.time }} →
@@ -64,14 +64,14 @@
     <!-- CANCEL MODAL -->
     <div v-if="showCancelModal" class="modal-overlay">
       <div class="modal">
-        <h3>{{ languageStore.t('whyCancel') }}</h3>
+        <h3><!-- {{ languageStore.t('whyCancel') }} -->Why Cancel?</h3>
 
         <select v-model="selectedReason">
-          <option disabled value="">{{ languageStore.t('selectReason') }}</option>
-          <option>{{ languageStore.t('itemNotAvailable') }}</option>
-          <option>{{ languageStore.t('changedMyMind') }}</option>
-          <option>{{ languageStore.t('wrongItemSelected') }}</option>
-          <option>{{ languageStore.t('other') }}</option>
+          <option disabled value=""><!-- {{ languageStore.t('selectReason') }} -->Select Reason</option>
+          <option><!-- {{ languageStore.t('itemNotAvailable') }} -->Item Not Available</option>
+          <option><!-- {{ languageStore.t('changedMyMind') }} -->Changed My Mind</option>
+          <option><!-- {{ languageStore.t('wrongItemSelected') }} -->Wrong Item Selected</option>
+          <option><!-- {{ languageStore.t('other') }} -->Other</option>
         </select>
 
         <div class="modal-actions">
@@ -87,9 +87,6 @@
 import { ref, onMounted } from 'vue'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
 import { getItems, updateStatus as apiUpdateStatus } from '@/services/trackitemuser'
-import { useLanguageStore } from '../stores/language'
-
-const languageStore = useLanguageStore()
 
 /* STATE */
 const items = ref([])
@@ -160,8 +157,15 @@ const statusClass = (status) => ({
 })
 
 const translateStatus = (status) => {
+  const statusMap = {
+    available: 'Available',
+    pending: 'Pending',
+    accepted: 'Accepted',
+    completed: 'Completed',
+    cancelled: 'Cancelled'
+  }
   const lowerStatus = status.toLowerCase()
-  return languageStore.t(lowerStatus) || status
+  return statusMap[lowerStatus] || status
 }
 
 /* INIT */

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useLanguageStore } from '@/stores/language'
 
 type Message = {
   text: string
@@ -37,7 +36,6 @@ const emit = defineEmits<{
 const currentUserAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=CurrentUser'
 
 const fileInput = ref<HTMLInputElement | null>(null)
-const languageStore = useLanguageStore()
 
 const handleAttachClick = () => {
   fileInput.value?.click()

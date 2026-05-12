@@ -13,6 +13,7 @@ import Chat from '../views/Chat.vue'
 // Posts Create
 import CreatePost from '../views/CreatePost.vue'
 import EditPost from '../views/EditPost.vue'
+import MaterialDetailView from '../views/MaterialDetailView.vue'
 // HomeView
 import HomeView from '../views/HomeView.vue'
 // Auth 
@@ -39,6 +40,7 @@ const router = createRouter({
 
     { path: '/posts', name: 'posts', component: PostsList },
     { path: '/posts/create', name: 'create-post', component: CreatePost },
+    { path: '/posts/:id', name: 'post-detail', component: MaterialDetailView },
     { path: '/posts/:id/edit', name: 'edit-post', component: EditPost },
 
     { path: '/chat', name: 'chat', component: Chat },

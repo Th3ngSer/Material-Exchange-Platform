@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useLanguageStore } from '@/stores/language'
 type Message = {
   text: string
   sender: 'me' | 'them'
@@ -25,8 +24,6 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'select-user', user: User): void
 }>()
-
-const languageStore = useLanguageStore()
 </script>
 
 <template>

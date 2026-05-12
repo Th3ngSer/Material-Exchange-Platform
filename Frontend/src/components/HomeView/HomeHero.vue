@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { useLanguageStore } from '@/stores/language'
 
 interface HeroSlide {
   image: string
   title: string
   accent: string
 }
-
-const languageStore = useLanguageStore()
 
 const slides: HeroSlide[] = [
   {

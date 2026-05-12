@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { useLanguageStore } from '@/stores/language'
-
 defineProps<{
   categories: string[]
   selectedCategory: string
@@ -13,8 +11,6 @@ defineEmits<{
   (event: 'update:category', value: string): void
   (event: 'update:sort', value: string): void
 }>()
-
-const languageStore = useLanguageStore()
 </script>
 
 <template>
