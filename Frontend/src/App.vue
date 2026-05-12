@@ -1,20 +1,23 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import DropDownMenu from './components/DropDownMenu.vue'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from './stores/auth'
+import { useLanguageStore } from './stores/language'
 
 const authStore = useAuthStore()
+const languageStore = useLanguageStore()
 
 onMounted(() => {
   authStore.initializeAuth()
+  languageStore.initializeLanguage()
 })
 </script>
 
 <template>
-
-  <router-view v-slot="{ Component }">
-    <transition name="fade" mode="out-in">
-      <component :is="Component" />
-    </transition>
-  </router-view>
+  <div :class="languageStore.language === 'Khmer' ? 'font-khmer' : ''">
+    <router-view v-slot="{ Component }">
+      <transition name="fade" mode="out-in">
+        <component :is="Component" />
+      </transition>
+    </router-view>
+  </div>
 </template>

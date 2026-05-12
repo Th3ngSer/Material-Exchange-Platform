@@ -11,7 +11,7 @@ services:
       test:
         [
           'CMD-SHELL',
-          "mongosh --quiet --eval \"db.adminCommand('ping').ok\" | grep 1",
+          'mongosh --quiet --eval "db.adminCommand(''ping'').ok" | grep 1',
         ]
       interval: 5s
       timeout: 3s

@@ -27,6 +27,7 @@ import HelpProfile from '../user/HelpProfile.vue'
 import LangaugeInformation from '../user/LangaugeInformation.vue'
 import LogoutInformation from '@/user/LogoutInformation.vue'
 import PaymentInformation from '@/user/PaymentInformation.vue'
+import TrackingInformation from '@/user/TrackingInformation.vue'
 
 
 const router = createRouter({
@@ -51,6 +52,7 @@ const router = createRouter({
     { path: '/profile/language', name: 'language-information', component: LangaugeInformation },
     { path: '/profile/logout', name: 'logout-information', component: LogoutInformation },
     { path: '/profile/payment', name: 'payment-information', component: PaymentInformation },
+    { path: '/profile/tracker', name: 'trackItem', component: TrackingInformation},
 
     // Admin routes
     { path: '/admin', name: 'SuperAdmin', component: AdminDashboard },

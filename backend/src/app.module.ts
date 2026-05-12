@@ -7,7 +7,6 @@ import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
 import { TrackitemuserModule } from './trackitemuser/trackitemuser.module';
 
-
 const databaseImports =
   process.env.NODE_ENV === 'test'
     ? []

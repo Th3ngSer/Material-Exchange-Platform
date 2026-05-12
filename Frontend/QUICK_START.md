@@ -3,6 +3,7 @@
 ## 1-Minute Setup
 
 ### Prerequisites
+
 - Node.js v20.19.0 or v22.12.0+
 - Backend running at `http://localhost:3000`
 
@@ -19,14 +20,17 @@ Open `http://localhost:5173` in your browser.
 ## Test the Authentication
 
 ### Available Routes
+
 - `/` - Home page
 - `/login` - Login form
 - `/signup` - Sign-up form
 
 ### Test Credentials (if available from backend)
+
 If your backend has test users, use them to test the login flow.
 
 ### Test User Registration
+
 1. Go to `/signup`
 2. Enter test email: `test@example.com`
 3. Password must include:
@@ -39,6 +43,7 @@ If your backend has test users, use them to test the login flow.
 5. Click "Sign Up"
 
 ### Expected Behavior After Login/Signup
+
 - Redirected to home page (`/`)
 - User email displayed in welcome message
 - Logout button appears
@@ -47,6 +52,7 @@ If your backend has test users, use them to test the login flow.
 ## File Structure
 
 **Core Auth Files:**
+
 - `src/stores/auth.ts` - Authentication state management
 - `src/services/auth.ts` - Backend API communication
 - `src/components/auth/LoginForm.vue` - Login component
@@ -54,11 +60,13 @@ If your backend has test users, use them to test the login flow.
 - `src/types/auth.ts` - TypeScript types
 
 **Pages:**
+
 - `src/views/LoginView.vue`
 - `src/views/SignUpView.vue`
 - `src/views/HomeView.vue`
 
 **Configuration:**
+
 - `.env` - Development API endpoint
 - `.env.production` - Production API endpoint
 
@@ -73,20 +81,24 @@ If your backend has test users, use them to test the login flow.
 ## Debugging
 
 **Check Network Tab:**
+
 - Verify API requests to backend are made
 - Check response status (200, 400, 401, 500, etc.)
 
 **Check Console:**
+
 - Verify no JavaScript errors
 - Check error messages from auth store
 
 **Check DevTools Application Tab:**
+
 - Verify `authToken` is stored in localStorage after login
 - Token should be removed after logout
 
 ## Documentation
 
 See `AUTH_SETUP.md` for complete documentation including:
+
 - Feature overview
 - Component details
 - API endpoint specifications

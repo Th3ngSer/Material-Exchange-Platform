@@ -2,7 +2,7 @@ import { IsString, IsOptional } from 'class-validator';
 
 export class CreateTrackItemUserDto {
   @IsString()
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsString()
