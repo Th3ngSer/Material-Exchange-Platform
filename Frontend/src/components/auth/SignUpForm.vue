@@ -16,11 +16,15 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 // Form data
+const firstName = ref('')
+const lastName = ref('')
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 
 // Validation errors
+const firstNameError = ref('')
+const lastNameError = ref('')
 const emailError = ref('')
 const passwordError = ref('')
 const confirmPasswordError = ref('')
@@ -35,6 +39,22 @@ const hasSubmitted = ref(false)
  */
 function validateEmailInput() {
   emailError.value = validateEmail(email.value.trim())
+}
+
+function validateFirstNameInput() {
+  if (!firstName.value.trim()) {
+    firstNameError.value = 'First name is required'
+  } else {
+    firstNameError.value = ''
+  }
+}
+
+function validateLastNameInput() {
+  if (!lastName.value.trim()) {
+    lastNameError.value = 'Last name is required'
+  } else {
+    lastNameError.value = ''
+  }
 }
 
 /**
@@ -58,11 +78,13 @@ async function handleSubmit() {
   hasSubmitted.value = true
   successMessage.value = ''
   // Validate all fields
+  validateFirstNameInput()
+  validateLastNameInput()
   validateEmailInput()
   validatePasswordInput()
   validateConfirmPasswordInput()
 
-  if (emailError.value || passwordError.value || confirmPasswordError.value) {
+  if (firstNameError.value || lastNameError.value || emailError.value || passwordError.value || confirmPasswordError.value) {
     return
   }
 
@@ -71,6 +93,7 @@ async function handleSubmit() {
 
   try {
     const credentials: RegisterCredentials = {
+      name: `${firstName.value.trim()} ${lastName.value.trim()}`.trim(),
       email: email.value.trim(),
       password: password.value,
       confirmPassword: confirmPassword.value,
@@ -79,6 +102,8 @@ async function handleSubmit() {
     await authStore.register(credentials)
 
     // Clear form on success
+    firstName.value = ''
+    lastName.value = ''
     email.value = ''
     password.value = ''
     confirmPassword.value = ''
@@ -112,6 +137,36 @@ async function handleSubmit() {
       {{ successMessage }}
     </div>
 
+    <div class="form-row">
+      <div class="form-group">
+        <label for="firstName">First Name</label>
+        <input
+          id="firstName"
+          v-model="firstName"
+          type="text"
+          placeholder="First name"
+          :disabled="isSubmitting || authStore.isLoading"
+          @blur="validateFirstNameInput"
+          @input="firstNameError = ''"
+        />
+        <span v-if="firstNameError && hasSubmitted" class="field-error">{{ firstNameError }}</span>
+      </div>
+
+      <div class="form-group">
+        <label for="lastName">Last Name</label>
+        <input
+          id="lastName"
+          v-model="lastName"
+          type="text"
+          placeholder="Last name"
+          :disabled="isSubmitting || authStore.isLoading"
+          @blur="validateLastNameInput"
+          @input="lastNameError = ''"
+        />
+        <span v-if="lastNameError && hasSubmitted" class="field-error">{{ lastNameError }}</span>
+      </div>
+    </div>
+
     <!-- Email Input -->
     <div class="form-group">
       <label for="email">Enter your Email</label>
@@ -129,7 +184,7 @@ async function handleSubmit() {
 
     <!-- Password Input -->
     <div class="form-group">
-      <label for="password">Enter your Password</label>
+      <label for="password">Enter the Password</label>
       <input
         id="password"
         v-model="password"
@@ -179,7 +234,7 @@ async function handleSubmit() {
 
 <style scoped>
 .signup-form {
-  max-width: 360px;
+  max-width: 400px;
   margin: 0;
   padding: 2rem;
   border: 5px;
@@ -197,6 +252,18 @@ h1 {
 
 .form-group {
   margin-bottom: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 520px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 label {

@@ -85,7 +85,7 @@ async function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit" class="login-form">
-    <h1 style="font-weight:bold;">Login into DoOt</h1>
+    <h1 class="login-title">Login into DoOt</h1>
 
     <!-- Error Display -->
     <div v-if="authStore.error" class="error-message" role="alert">
@@ -99,7 +99,7 @@ async function handleSubmit() {
         id="email"
         v-model="email"
         type="email"
-        placeholder="Enter your email"
+        placeholder="Your email here"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validateEmailInput"
         @input="emailError = ''"
@@ -114,7 +114,7 @@ async function handleSubmit() {
         id="password"
         v-model="password"
         type="password"
-        placeholder="Enter your password"
+        placeholder="Password"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validatePasswordInput"
         @input="passwordError = ''"
@@ -144,8 +144,7 @@ async function handleSubmit() {
 
 <style scoped>
 .login-form {
-  max-width: 360px;
-  margin: 0;
+  max-width: 380px;
   padding: 2rem;
   border: 5px;
   border-radius: 16px;
@@ -153,15 +152,16 @@ async function handleSubmit() {
   box-shadow: 0 16px 30px rgba(8, 10, 40, 0.25);
 }
 
-h2 {
+.login-title {
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
   color: #1b1b1b;
-  font-size: 1.5rem;
+  font-size: 2rem;
+  font-weight: 700;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 label {

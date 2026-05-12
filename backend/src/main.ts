@@ -18,6 +18,9 @@ async function bootstrap() {
 
   app.enableCors();
 
+  // Prefix all routes with /api so frontend can call /api/auth/login and /api/auth/register
+  app.setGlobalPrefix('api');
+
   // Serve uploaded images as static: GET /uploads/filename.jpg
   app.useStaticAssets(
     join(process.cwd(), process.env.UPLOAD_DIR ?? 'uploads'),
