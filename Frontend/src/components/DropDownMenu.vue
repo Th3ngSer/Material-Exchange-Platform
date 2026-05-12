@@ -12,7 +12,13 @@
       <span class="trigger-label">{{ selectedLabel || placeholder }}</span>
       <span class="trigger-arrow" :class="{ rotated: isOpen }">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path
+            d="M2 4L6 8L10 4"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
       </span>
     </button>
@@ -65,7 +71,13 @@
               </span>
               <span v-if="modelValue === item.value" class="item-check">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path
+                    d="M2.5 7L5.5 10L11.5 4"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
                 </svg>
               </span>
             </button>
@@ -106,7 +118,7 @@ export interface DropdownItem {
 }
 
 export type DropdownAlign = 'left' | 'right'
-export type DropdownSize  = 'sm' | 'md' | 'lg'
+export type DropdownSize = 'sm' | 'md' | 'lg'
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -158,24 +170,22 @@ const emit = defineEmits<{
 
 // ── State ────────────────────────────────────────────────────────────────────
 
-const isOpen      = ref<boolean>(false)
+const isOpen = ref<boolean>(false)
 const searchQuery = ref<string>('')
-const wrapperRef  = ref<HTMLDivElement | null>(null)
+const wrapperRef = ref<HTMLDivElement | null>(null)
 const searchInput = ref<HTMLInputElement | null>(null)
 
 // ── Computed ─────────────────────────────────────────────────────────────────
 
 const selectedLabel = computed<string | null>(() => {
-  const found = props.items.find(i => i.value === props.modelValue)
+  const found = props.items.find((i) => i.value === props.modelValue)
   return found?.label ?? null
 })
 
 const filteredItems = computed<DropdownItem[]>(() => {
   if (!props.searchable || !searchQuery.value) return props.items
   const q = searchQuery.value.toLowerCase()
-  return props.items.filter(
-    i => i.divider || i.group || i.label.toLowerCase().includes(q)
-  )
+  return props.items.filter((i) => i.divider || i.group || i.label.toLowerCase().includes(q))
 })
 
 // ── Methods ──────────────────────────────────────────────────────────────────
@@ -214,24 +224,24 @@ function handleClickOutside(event: MouseEvent): void {
 
 // ── Lifecycle ────────────────────────────────────────────────────────────────
 
-onMounted(()       => document.addEventListener('mousedown', handleClickOutside))
+onMounted(() => document.addEventListener('mousedown', handleClickOutside))
 onBeforeUnmount(() => document.removeEventListener('mousedown', handleClickOutside))
 </script>
 
 <style scoped>
 /* ── Design tokens ─────────────────────────────────────── */
 .dropdown-wrapper {
-  --dd-bg:           #ffffff;
-  --dd-border:       #e2e5eb;
-  --dd-shadow:       0 8px 24px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.06);
-  --dd-radius:       10px;
-  --dd-accent:       #5b5ef4;
+  --dd-bg: #ffffff;
+  --dd-border: #e2e5eb;
+  --dd-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.06);
+  --dd-radius: 10px;
+  --dd-accent: #5b5ef4;
   --dd-accent-light: #ededff;
-  --dd-text:         #1a1d23;
-  --dd-muted:        #7a7f8e;
-  --dd-hover:        #f5f6f9;
-  --dd-disabled:     #c4c8d2;
-  --dd-font:         'DM Sans', system-ui, sans-serif;
+  --dd-text: #1a1d23;
+  --dd-muted: #7a7f8e;
+  --dd-hover: #f5f6f9;
+  --dd-disabled: #c4c8d2;
+  --dd-font: 'DM Sans', system-ui, sans-serif;
 
   position: relative;
   display: inline-block;
@@ -252,30 +262,41 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', handleClickOutsi
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color .18s, box-shadow .18s;
+  transition:
+    border-color 0.18s,
+    box-shadow 0.18s;
   white-space: nowrap;
   user-select: none;
 }
 .dropdown-trigger:hover:not(:disabled) {
   border-color: var(--dd-accent);
-  box-shadow: 0 0 0 3px rgba(91,94,244,.10);
+  box-shadow: 0 0 0 3px rgba(91, 94, 244, 0.1);
 }
 .dropdown-trigger.open {
   border-color: var(--dd-accent);
-  box-shadow: 0 0 0 3px rgba(91,94,244,.14);
+  box-shadow: 0 0 0 3px rgba(91, 94, 244, 0.14);
 }
 .dropdown-trigger.disabled,
-.dropdown-trigger:disabled { opacity: .5; cursor: not-allowed; }
+.dropdown-trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
-.trigger-label { flex: 1; }
-.trigger-icon  { font-size: 16px; }
+.trigger-label {
+  flex: 1;
+}
+.trigger-icon {
+  font-size: 16px;
+}
 .trigger-arrow {
   display: flex;
   align-items: center;
   color: var(--dd-muted);
-  transition: transform .22s cubic-bezier(.34,1.56,.64,1);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.trigger-arrow.rotated { transform: rotate(180deg); }
+.trigger-arrow.rotated {
+  transform: rotate(180deg);
+}
 
 /* ── Menu ──────────────────────────────────────────────── */
 .dropdown-menu {
@@ -289,11 +310,23 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', handleClickOutsi
   box-shadow: var(--dd-shadow);
   overflow: hidden;
 }
-.dropdown-menu.align-right { right: 0; left: auto; }
-.dropdown-menu.align-left  { left: 0;  right: auto; }
+.dropdown-menu.align-right {
+  right: 0;
+  left: auto;
+}
+.dropdown-menu.align-left {
+  left: 0;
+  right: auto;
+}
 
-.dropdown-menu.size-sm .dropdown-item { font-size: 12px;  padding: 7px 10px; }
-.dropdown-menu.size-lg .dropdown-item { font-size: 15px;  padding: 12px 16px; }
+.dropdown-menu.size-sm .dropdown-item {
+  font-size: 12px;
+  padding: 7px 10px;
+}
+.dropdown-menu.size-lg .dropdown-item {
+  font-size: 15px;
+  padding: 12px 16px;
+}
 
 /* ── Search ────────────────────────────────────────────── */
 .dropdown-search {
@@ -310,9 +343,11 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', handleClickOutsi
   font-family: var(--dd-font);
   color: var(--dd-text);
   outline: none;
-  transition: border-color .15s;
+  transition: border-color 0.15s;
 }
-.search-input:focus { border-color: var(--dd-accent); }
+.search-input:focus {
+  border-color: var(--dd-accent);
+}
 
 /* ── Items ─────────────────────────────────────────────── */
 .dropdown-items {
@@ -334,22 +369,46 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', handleClickOutsi
   font-size: 13.5px;
   color: var(--dd-text);
   cursor: pointer;
-  transition: background .13s;
+  transition: background 0.13s;
   box-sizing: border-box;
 }
-.dropdown-item:hover:not(:disabled) { background: var(--dd-hover); }
+.dropdown-item:hover:not(:disabled) {
+  background: var(--dd-hover);
+}
 .dropdown-item.active {
   background: var(--dd-accent-light);
   color: var(--dd-accent);
   font-weight: 600;
 }
-.dropdown-item.disabled { color: var(--dd-disabled); cursor: not-allowed; }
+.dropdown-item.disabled {
+  color: var(--dd-disabled);
+  cursor: not-allowed;
+}
 
-.item-icon        { font-size: 16px; flex-shrink: 0; }
-.item-content     { flex: 1; display: flex; flex-direction: column; gap: 1px; }
-.item-label       { line-height: 1.3; }
-.item-description { font-size: 11.5px; color: var(--dd-muted); line-height: 1.3; }
-.item-check       { color: var(--dd-accent); display: flex; align-items: center; flex-shrink: 0; }
+.item-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.item-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.item-label {
+  line-height: 1.3;
+}
+.item-description {
+  font-size: 11.5px;
+  color: var(--dd-muted);
+  line-height: 1.3;
+}
+.item-check {
+  color: var(--dd-accent);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
 
 /* ── Badge ─────────────────────────────────────────────── */
 .item-badge {
@@ -359,11 +418,26 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', handleClickOutsi
   border-radius: 20px;
   flex-shrink: 0;
 }
-.badge-default { background: #eef0f5; color: #5a6278; }
-.badge-success { background: #e6f7ee; color: #1a8a4a; }
-.badge-warning { background: #fff5e6; color: #b06000; }
-.badge-danger  { background: #ffeaea; color: #c0392b; }
-.badge-info    { background: #e8f0ff; color: #2858c5; }
+.badge-default {
+  background: #eef0f5;
+  color: #5a6278;
+}
+.badge-success {
+  background: #e6f7ee;
+  color: #1a8a4a;
+}
+.badge-warning {
+  background: #fff5e6;
+  color: #b06000;
+}
+.badge-danger {
+  background: #ffeaea;
+  color: #c0392b;
+}
+.badge-info {
+  background: #e8f0ff;
+  color: #2858c5;
+}
 
 /* ── Divider & Group ───────────────────────────────────── */
 .dropdown-divider {
@@ -375,7 +449,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', handleClickOutsi
   padding: 6px 12px 2px;
   font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--dd-muted);
 }
@@ -391,12 +465,14 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', handleClickOutsi
 /* ── Transition ────────────────────────────────────────── */
 .dropdown-enter-active,
 .dropdown-leave-active {
-  transition: opacity .17s ease, transform .17s cubic-bezier(.34,1.56,.64,1);
+  transition:
+    opacity 0.17s ease,
+    transform 0.17s cubic-bezier(0.34, 1.56, 0.64, 1);
   transform-origin: top left;
 }
 .dropdown-enter-from,
 .dropdown-leave-to {
   opacity: 0;
-  transform: scaleY(.88) translateY(-6px);
+  transform: scaleY(0.88) translateY(-6px);
 }
 </style>

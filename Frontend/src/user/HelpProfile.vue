@@ -12,9 +12,7 @@
 
       <section class="support">
         <h2>Work with Support</h2>
-        <p>
-          Submit a bug report, get help collecting log files, and find your system information.
-        </p>
+        <p>Submit a bug report, get help collecting log files, and find your system information.</p>
       </section>
 
       <section class="contact-form">
@@ -61,13 +59,7 @@
           </label>
 
           <!-- ✅ Disabled until all fields filled -->
-          <button
-            type="submit"
-            class="submit-btn"
-            :disabled="!isFormValid"
-          >
-            Submit
-          </button>
+          <button type="submit" class="submit-btn" :disabled="!isFormValid">Submit</button>
         </form>
       </section>
     </div>
@@ -85,7 +77,7 @@ const form = reactive({
   email: '',
   phone: '',
   message: '',
-  request: ''
+  request: '',
 })
 
 /* submit state */
@@ -93,14 +85,7 @@ const submitted = ref(false)
 
 /* ✅ VALIDATION */
 const isFormValid = computed(() => {
-  return (
-    form.firstName &&
-    form.lastName &&
-    form.email &&
-    form.phone &&
-    form.message &&
-    form.request
-  )
+  return form.firstName && form.lastName && form.email && form.phone && form.message && form.request
 })
 
 /* load user info */

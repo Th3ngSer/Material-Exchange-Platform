@@ -1,17 +1,10 @@
 <template>
   <div class="avatar-container">
-
     <!-- Avatar Image -->
-    <img
-      :src="previewImage"
-      
-      class="avatar"
-    />
+    <img :src="previewImage" class="avatar" />
 
     <!-- Change Photo Button -->
-    <p class="change-photo" @click="triggerFile">
-      Change photo
-    </p>
+    <p class="change-photo" @click="triggerFile">Change photo</p>
 
     <!-- Welcome Text -->
     <div class="avatar-text">
@@ -19,14 +12,7 @@
     </div>
 
     <!-- Hidden File Input -->
-    <input
-      ref="fileInput"
-      type="file"
-      accept="image/*"
-      @change="onFileChange"
-      hidden
-    />
-
+    <input ref="fileInput" type="file" accept="image/*" @change="onFileChange" hidden />
   </div>
 </template>
 
@@ -35,7 +21,7 @@ import { ref, watch, onMounted } from 'vue'
 
 const props = defineProps({
   name: String,
-  image: String
+  image: String,
 })
 
 const fileInput = ref(null)
@@ -72,9 +58,12 @@ onMounted(() => {
 })
 
 /* update if parent changes image */
-watch(() => props.image, (newVal) => {
-  if (newVal) previewImage.value = newVal
-})
+watch(
+  () => props.image,
+  (newVal) => {
+    if (newVal) previewImage.value = newVal
+  },
+)
 </script>
 
 <style scoped>

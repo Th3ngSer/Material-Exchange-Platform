@@ -84,7 +84,13 @@ async function handleSubmit() {
   validatePasswordInput()
   validateConfirmPasswordInput()
 
-  if (firstNameError.value || lastNameError.value || emailError.value || passwordError.value || confirmPasswordError.value) {
+  if (
+    firstNameError.value ||
+    lastNameError.value ||
+    emailError.value ||
+    passwordError.value ||
+    confirmPasswordError.value
+  ) {
     return
   }
 
@@ -125,7 +131,7 @@ async function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit" class="signup-form">
-    <h1 style="font-weight: bold;">Create Account</h1>
+    <h1 style="font-weight: bold">Create Account</h1>
 
     <!-- Error Display -->
     <div v-if="authStore.error" class="error-message" role="alert">
@@ -209,15 +215,13 @@ async function handleSubmit() {
         @blur="validateConfirmPasswordInput"
         @input="confirmPasswordError = ''"
       />
-      <span v-if="confirmPasswordError && hasSubmitted" class="field-error">{{ confirmPasswordError }}</span>
+      <span v-if="confirmPasswordError && hasSubmitted" class="field-error">{{
+        confirmPasswordError
+      }}</span>
     </div>
 
     <!-- Submit Button -->
-    <button
-      type="submit"
-      :disabled="isSubmitting || authStore.isLoading"
-      class="submit-button"
-    >
+    <button type="submit" :disabled="isSubmitting || authStore.isLoading" class="submit-button">
       <span v-if="isSubmitting || authStore.isLoading" class="loading-spinner"></span>
       {{ isSubmitting || authStore.isLoading ? 'Creating Account...' : 'Sign Up' }}
     </button>
@@ -322,7 +326,6 @@ input:disabled {
   color: #1e7e34;
   font-size: 0.9rem;
 }
-
 
 .submit-button {
   width: 100%;

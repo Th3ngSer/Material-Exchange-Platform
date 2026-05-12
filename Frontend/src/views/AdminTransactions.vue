@@ -119,7 +119,9 @@ const isActive = (path: string) => {
         <div class="panel-header">
           <div>
             <p class="section-label">Monitor all platform transactions</p>
-            <p class="section-subtitle">Track the flow of payments and exchanges across listings.</p>
+            <p class="section-subtitle">
+              Track the flow of payments and exchanges across listings.
+            </p>
           </div>
           <button class="primary">Select</button>
         </div>
@@ -162,7 +164,9 @@ const isActive = (path: string) => {
             <span>{{ transaction.item }}</span>
             <span>{{ transaction.amount }}</span>
             <span>{{ transaction.type }}</span>
-            <span class="status" :class="transaction.status.toLowerCase()">{{ transaction.status }}</span>
+            <span class="status" :class="transaction.status.toLowerCase()">{{
+              transaction.status
+            }}</span>
             <span>{{ transaction.date }}</span>
           </div>
         </div>

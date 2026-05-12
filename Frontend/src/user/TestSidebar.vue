@@ -18,7 +18,8 @@ import Sidebar from '@/userprofileComponent/Sidebar.vue'
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -31,7 +32,7 @@ html, body {
 .profile-layout {
   display: flex;
   height: 100vh;
-  width: 100vw;        /* ✅ important */
+  width: 100vw; /* ✅ important */
   margin: 0;
   padding: 0;
   overflow: hidden;

@@ -15,7 +15,7 @@ import CreatePost from '../views/CreatePost.vue'
 import EditPost from '../views/EditPost.vue'
 // HomeView
 import HomeView from '../views/HomeView.vue'
-// Auth 
+// Auth
 import LoginView from '../views/LoginView.vue'
 import PostsList from '../views/PostsList.vue'
 import SignUpView from '../views/SignUpView.vue'
@@ -26,7 +26,6 @@ import HelpProfile from '../user/HelpProfile.vue'
 import LangaugeInformation from '../user/LangaugeInformation.vue'
 import LogoutInformation from '@/user/LogoutInformation.vue'
 import PaymentInformation from '@/user/PaymentInformation.vue'
-
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

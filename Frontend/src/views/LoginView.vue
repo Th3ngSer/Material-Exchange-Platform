@@ -16,8 +16,7 @@ import LoginForm from '@/components/auth/LoginForm.vue'
             <span class="brand-primary">Do</span><span class="brand-accent">Ot</span>
           </h1>
           <p class="brand-tagline">
-            an exchange online website platform
-            that use for exchange everything.
+            an exchange online website platform that use for exchange everything.
           </p>
           <div class="brand-pill">Trade. Exchange. Borrow.</div>
         </div>
@@ -43,7 +42,7 @@ import LoginForm from '@/components/auth/LoginForm.vue'
   background-position: center;
   background-attachment: fixed;
   padding: 1.5rem;
-  font-family: "Poppins", "Segoe UI", sans-serif;
+  font-family: 'Poppins', 'Segoe UI', sans-serif;
   position: relative;
 }
 

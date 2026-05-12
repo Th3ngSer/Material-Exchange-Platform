@@ -71,7 +71,7 @@ async function deletePost(postId: string, title: string) {
 
   try {
     await axios.delete(`${apiBaseUrl}/posts/${postId}`)
-    posts.value = posts.value.filter(p => p._id !== postId)
+    posts.value = posts.value.filter((p) => p._id !== postId)
     total.value = Math.max(0, total.value - 1)
   } catch (error: any) {
     const msg = error?.response?.data?.message ?? 'Failed to delete post.'
@@ -87,8 +87,12 @@ onMounted(loadPosts)
     <section class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
       <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p class="text-sm font-semibold uppercase tracking-[0.28em] text-[#0f5e66]">Saved listings</p>
-          <h1 class="mt-2 text-3xl font-black text-slate-900 sm:text-4xl">Browse the posts you already saved</h1>
+          <p class="text-sm font-semibold uppercase tracking-[0.28em] text-[#0f5e66]">
+            Saved listings
+          </p>
+          <h1 class="mt-2 text-3xl font-black text-slate-900 sm:text-4xl">
+            Browse the posts you already saved
+          </h1>
         </div>
 
         <router-link
@@ -99,7 +103,9 @@ onMounted(loadPosts)
         </router-link>
       </div>
 
-      <div class="mb-6 flex items-center justify-between rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm backdrop-blur">
+      <div
+        class="mb-6 flex items-center justify-between rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm backdrop-blur"
+      >
         <p class="text-sm text-slate-600">
           <span class="font-semibold text-slate-900">{{ total }}</span>
           post{{ total === 1 ? '' : 's' }} saved
@@ -113,17 +119,28 @@ onMounted(loadPosts)
         </button>
       </div>
 
-      <div v-if="isLoading" class="rounded-3xl border border-dashed border-slate-300 bg-white/70 p-10 text-center text-slate-500">
+      <div
+        v-if="isLoading"
+        class="rounded-3xl border border-dashed border-slate-300 bg-white/70 p-10 text-center text-slate-500"
+      >
         Loading posts...
       </div>
 
-      <div v-else-if="errorMessage" class="rounded-3xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+      <div
+        v-else-if="errorMessage"
+        class="rounded-3xl border border-red-200 bg-red-50 p-6 text-sm text-red-700"
+      >
         {{ errorMessage }}
       </div>
 
-      <div v-else-if="!hasPosts" class="rounded-3xl border border-dashed border-slate-300 bg-white/70 p-10 text-center">
+      <div
+        v-else-if="!hasPosts"
+        class="rounded-3xl border border-dashed border-slate-300 bg-white/70 p-10 text-center"
+      >
         <p class="text-lg font-semibold text-slate-900">No saved posts yet</p>
-        <p class="mt-2 text-sm text-slate-600">Create the first listing and it will show up here.</p>
+        <p class="mt-2 text-sm text-slate-600">
+          Create the first listing and it will show up here.
+        </p>
       </div>
 
       <div v-else class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -150,7 +167,9 @@ onMounted(loadPosts)
                 <h2 class="text-lg font-bold text-slate-900">{{ post.title }}</h2>
                 <p class="mt-1 text-sm text-slate-500">{{ post.category }} · {{ post.location }}</p>
               </div>
-              <span class="shrink-0 rounded-full bg-[#1A174A] px-3 py-1 text-xs font-semibold text-[#FF8C00]">
+              <span
+                class="shrink-0 rounded-full bg-[#1A174A] px-3 py-1 text-xs font-semibold text-[#FF8C00]"
+              >
                 {{ formatType(post.type) }}
               </span>
             </div>
@@ -166,7 +185,10 @@ onMounted(loadPosts)
               <span class="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
                 {{ formatPrice(post) }}
               </span>
-              <span v-if="post.exchangeFor" class="rounded-full bg-indigo-50 px-3 py-1 font-medium text-indigo-700">
+              <span
+                v-if="post.exchangeFor"
+                class="rounded-full bg-indigo-50 px-3 py-1 font-medium text-indigo-700"
+              >
                 Wants: {{ post.exchangeFor }}
               </span>
             </div>

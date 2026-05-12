@@ -89,10 +89,12 @@ const saveLanguage = () => {
   font-size: 16px;
   font-weight: 500;
   color: #444343;
-  transition: border-color 0.3s ease, background 0.3s ease;
+  transition:
+    border-color 0.3s ease,
+    background 0.3s ease;
 }
 
-.option input[type="radio"] {
+.option input[type='radio'] {
   margin-right: 12px;
   accent-color: #000000; /* indigo radio button */
 }
@@ -102,7 +104,7 @@ const saveLanguage = () => {
   border-color: #000000;
 }
 
-.option input[type="radio"]:checked + span {
+.option input[type='radio']:checked + span {
   font-weight: bold;
   color: #1e1b4b;
 }
@@ -122,7 +124,9 @@ const saveLanguage = () => {
   background: #1e1b4b; /* dark indigo */
   color: #fff;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s ease;
+  transition:
+    background 0.3s ease,
+    transform 0.2s ease;
 }
 
 .btn.save:hover {

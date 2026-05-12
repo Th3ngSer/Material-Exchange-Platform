@@ -1,7 +1,7 @@
 <script setup lang="ts">
 type Message = {
   text: string
-  sender: "me" | "them"
+  sender: 'me' | 'them'
   time: string
 }
 
@@ -31,15 +31,33 @@ const emit = defineEmits<{
     <div class="sidebar-header">
       <h3>Inboxes</h3>
       <button class="new-chat-btn" title="New message">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon">
-          <path fill-rule="evenodd" d="M12 3.75a.75.75 0 01.75.75v6.75h6.75a.75.75 0 010 1.5h-6.75v6.75a.75.75 0 01-1.5 0v-6.75H4.5a.75.75 0 010-1.5h6.75V4.5a.75.75 0 01.75-.75z" clip-rule="evenodd" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          class="icon"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M12 3.75a.75.75 0 01.75.75v6.75h6.75a.75.75 0 010 1.5h-6.75v6.75a.75.75 0 01-1.5 0v-6.75H4.5a.75.75 0 010-1.5h6.75V4.5a.75.75 0 01.75-.75z"
+            clip-rule="evenodd"
+          />
         </svg>
       </button>
     </div>
 
     <div class="search-box">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
-        <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z" clip-rule="evenodd" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        class="search-icon"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z"
+          clip-rule="evenodd"
+        />
       </svg>
       <input class="search" placeholder="Search conversations..." />
     </div>
@@ -53,11 +71,14 @@ const emit = defineEmits<{
       >
         <!-- Profile Avatar (Image) -->
         <div class="avatar-wrapper" :class="{ online: user.online }">
-          <img 
-            :src="user.avatar" 
+          <img
+            :src="user.avatar"
             :alt="user.name"
             class="avatar-img"
-            @error="($event.target as HTMLImageElement).src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.name"
+            @error="
+              ($event.target as HTMLImageElement).src =
+                'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.name
+            "
           />
         </div>
 
@@ -76,7 +97,7 @@ const emit = defineEmits<{
 <style scoped>
 .sidebar {
   width: 400px;
-  background: #0F172A;
+  background: #0f172a;
   color: white;
   display: flex;
   flex-direction: column;
@@ -157,7 +178,7 @@ const emit = defineEmits<{
 
 .user.active {
   background: #1e293b;
-  border-left-color: #EF4444;
+  border-left-color: #ef4444;
 }
 
 .avatar-wrapper {
@@ -185,7 +206,7 @@ const emit = defineEmits<{
   height: 10px;
   background: #22c55e;
   border-radius: 50%;
-  border: 2px solid #0F172A;
+  border: 2px solid #0f172a;
   z-index: 2;
 }
 
@@ -222,5 +243,4 @@ const emit = defineEmits<{
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 </style>

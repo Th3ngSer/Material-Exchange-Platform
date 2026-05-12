@@ -132,7 +132,10 @@ const isActive = (path: string) => {
                 <span>{{ item.label }}</span>
               </div>
               <div class="mix-bar">
-                <div class="mix-fill" :style="{ width: `${item.value}%`, background: item.color }"></div>
+                <div
+                  class="mix-fill"
+                  :style="{ width: `${item.value}%`, background: item.color }"
+                ></div>
               </div>
               <span class="mix-value">{{ item.value }}%</span>
             </div>

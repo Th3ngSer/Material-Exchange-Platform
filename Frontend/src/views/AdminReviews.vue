@@ -169,11 +169,19 @@ const renderStars = (rating: number) => Array.from({ length: rating })
             <span>Status</span>
             <span>Actions</span>
           </div>
-          <div v-for="review in reviews" :key="review.reviewer + review.comment" class="table-row body">
+          <div
+            v-for="review in reviews"
+            :key="review.reviewer + review.comment"
+            class="table-row body"
+          >
             <span>{{ review.reviewer }}</span>
             <span>{{ review.target }}</span>
             <span class="stars">
-              <span v-for="(_, index) in renderStars(review.rating)" :key="index" class="star"></span>
+              <span
+                v-for="(_, index) in renderStars(review.rating)"
+                :key="index"
+                class="star"
+              ></span>
             </span>
             <span class="comment">{{ review.comment }}</span>
             <span>{{ review.date }}</span>
@@ -478,7 +486,18 @@ select {
   width: 12px;
   height: 12px;
   background: linear-gradient(180deg, #fbbf24, #f59e0b);
-  clip-path: polygon(50% 0%, 62% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 38% 35%);
+  clip-path: polygon(
+    50% 0%,
+    62% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    38% 35%
+  );
 }
 
 .status {

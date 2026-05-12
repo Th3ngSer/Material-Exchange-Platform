@@ -66,9 +66,7 @@
       </div>
 
       <div class="form-actions">
-        <button class="btn" @click="saveProfile">
-          Save Changes
-        </button>
+        <button class="btn" @click="saveProfile">Save Changes</button>
       </div>
     </div>
   </div>
@@ -89,7 +87,7 @@ const form = reactive({
   username: '',
   gender: '',
   phone: '',
-  email: ''
+  email: '',
 })
 
 onMounted(() => {

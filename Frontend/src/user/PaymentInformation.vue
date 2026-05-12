@@ -1,6 +1,5 @@
 <template>
   <div class="payment-page">
-    
     <!-- Sidebar -->
     <Sidebar />
 
@@ -9,11 +8,9 @@
       <h2 class="title">Payment Method</h2>
 
       <div class="payment-options">
-
         <!-- Bank Transfer -->
         <div class="option">
           <div class="option-row">
-
             <!-- LEFT: icon + title -->
             <div class="title-with-icon">
               <img class="method-icon" src="/userprofileImage/bank.png" alt="Bank Icon" />
@@ -26,14 +23,12 @@
               <img src="/userprofileImage/acleda.png" alt="ACLEDA Bank" />
               <img src="/userprofileImage/canadia.png" alt="Canadia Bank" />
             </div>
-
           </div>
         </div>
 
         <!-- Card Payment -->
         <div class="option">
           <div class="option-row">
-
             <!-- LEFT: icon + title -->
             <div class="title-with-icon">
               <img class="method-icon" src="/userprofileImage/card.png" alt="Card Icon" />
@@ -44,13 +39,10 @@
             <div class="icons">
               <img src="/userprofileImage/visa.png" alt="VISA" />
             </div>
-
           </div>
         </div>
-
       </div>
     </div>
-
   </div>
 </template>
 
@@ -74,7 +66,6 @@ import Sidebar from '@/userprofileComponent/Sidebar.vue'
   font-size: 24px;
   font-weight: bold;
   margin-bottom: 24px;
-  
 }
 
 /* cards */

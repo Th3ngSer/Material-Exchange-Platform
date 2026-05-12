@@ -94,7 +94,7 @@ async function handleSubmit() {
 
     <!-- Email Input -->
     <div class="form-group">
-      <label for="email" >Enter your Email</label>
+      <label for="email">Enter your Email</label>
       <input
         id="email"
         v-model="email"
@@ -123,11 +123,7 @@ async function handleSubmit() {
     </div>
 
     <!-- Submit Button -->
-    <button
-      type="submit"
-      :disabled="isSubmitting || authStore.isLoading"
-      class="submit-button"
-    >
+    <button type="submit" :disabled="isSubmitting || authStore.isLoading" class="submit-button">
       <span v-if="isSubmitting || authStore.isLoading" class="loading-spinner"></span>
       {{ isSubmitting || authStore.isLoading ? 'Logging in...' : 'Login' }}
     </button>

@@ -156,7 +156,11 @@ const isActive = (path: string) => {
             <span>Date</span>
             <span>Actions</span>
           </div>
-          <div v-for="notice in notifications" :key="notice.title + notice.type" class="table-row body">
+          <div
+            v-for="notice in notifications"
+            :key="notice.title + notice.type"
+            class="table-row body"
+          >
             <span>{{ notice.title }}</span>
             <span class="type" :class="notice.type.toLowerCase()">{{ notice.type }}</span>
             <span>{{ notice.audience }}</span>

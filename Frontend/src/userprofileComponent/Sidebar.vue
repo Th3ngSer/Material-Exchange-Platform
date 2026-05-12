@@ -4,7 +4,7 @@
 
     <nav class="menu">
       <router-link to="/personal-info" class="nav-link">
-        <NavItem label="Personal Information" icon="userprofileImage/user.png"  />
+        <NavItem label="Personal Information" icon="userprofileImage/user.png" />
       </router-link>
 
       <router-link to="/payments" class="nav-link">
@@ -32,7 +32,7 @@ import NavItem from '@/userprofileComponent/NavItem.vue'
 
 const user = {
   name: 'Steav',
-  avatar: 'userprofileImage/avatar.png'
+  avatar: 'userprofileImage/avatar.png',
 }
 </script>
 

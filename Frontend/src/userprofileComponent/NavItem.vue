@@ -8,7 +8,7 @@
 <script setup>
 defineProps({
   label: String,
-  icon: String
+  icon: String,
 })
 </script>
 
@@ -21,7 +21,9 @@ defineProps({
   cursor: pointer;
   border-radius: 8px;
   color: #cbd5e1;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 /* Hover effect */

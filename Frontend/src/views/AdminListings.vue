@@ -183,7 +183,11 @@ const isActive = (path: string) => {
             <span>Date</span>
             <span>Actions</span>
           </div>
-          <div v-for="listing in listings" :key="listing.title + listing.type + listing.status" class="table-row body">
+          <div
+            v-for="listing in listings"
+            :key="listing.title + listing.type + listing.status"
+            class="table-row body"
+          >
             <span>{{ listing.title }}</span>
             <span>{{ listing.lister }}</span>
             <span>{{ listing.category }}</span>

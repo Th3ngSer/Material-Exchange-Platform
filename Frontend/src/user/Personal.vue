@@ -54,9 +54,7 @@
       </div>
 
       <div class="form-actions">
-        <button class="btn edit" type="button" @click="goToEdit">
-          Edit Profile
-        </button>
+        <button class="btn edit" type="button" @click="goToEdit">Edit Profile</button>
       </div>
     </div>
   </div>
@@ -77,7 +75,7 @@ const form = reactive({
   username: '',
   gender: '',
   phone: '',
-  email: ''
+  email: '',
 })
 
 /* Load data from localStorage */
