@@ -34,6 +34,7 @@ const router = createRouter({
   routes: [
     { path: '/', redirect: '/home' },
     { path: '/home', name: 'home', component: HomeView },
+    { path: '/notification', name: 'Notification', component: Notification },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/signup', name: 'signup', component: SignUpView },
 
@@ -42,8 +43,6 @@ const router = createRouter({
     { path: '/posts/:id/edit', name: 'edit-post', component: EditPost },
 
     { path: '/chat', name: 'chat', component: Chat },
-
-    { path: '/notification', name: 'Notification', component: Notification },
 
     // Profile
     { path: '/profile', name: 'profile', component: Profile },

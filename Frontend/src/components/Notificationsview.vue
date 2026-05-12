@@ -1,9 +1,11 @@
 <template>
-  <div class="page-layout">
-    <NotifSidebar
-      :items="sidebarItems"
-      v-model:active="activeTab"
-    />
+  <div class="flex flex-col min-h-screen">
+    <NotificationNavBar />
+    <div class="page-layout">
+      <NotifSidebar
+        :items="sidebarItems"
+        v-model:active="activeTab"
+      />
 
     <main class="main-content">
       <h1 class="page-title">Notifications</h1>
@@ -25,24 +27,43 @@
           <div class="date-label">{{ group.label }}</div>
 
           <TransitionGroup name="card-fade" tag="div">
-            <NotifCard
+            <div
               v-for="notif in group.items"
               :key="notif.id"
-              :notif="notif"
-              @action="handleAction"
-              @dismiss="dismiss"
-              @read="markRead"
-            />
+              class="notif-wrapper"
+              @click="openNotification(notif)"
+            >
+              <NotifCard
+                :notif="notif"
+                @action="handleAction(notif, $event)"
+                @dismiss="dismiss"
+                @read="markRead"
+              />
+            </div>
           </TransitionGroup>
         </div>
       </TransitionGroup>
     </main>
   </div>
+
+  <!-- Detail Modal -->
+  <NotificationDetailModal
+    :notification="selectedNotification"
+    :is-open="isModalOpen"
+    @close="closeNotification"
+    @reply="handleReply"
+    @action="handleModalAction"
+  />
+  </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import NotificationNavBar from './NotificationNavBar.vue'
 import NotifSidebar from './Notifsidebar.vue'
-import NotifCard    from './Notifcard.vue'
+import NotifCard from './Notifcard.vue'
+import NotificationDetailModal from './NotificationDetailModal.vue'
+import type { Notification } from '../types/notification'
 import { useNotifications } from '../composable/useNotifications'
 
 const {
@@ -53,8 +74,46 @@ const {
   dismiss,
 } = useNotifications()
 
-function handleAction(payload: { notifId: number; label: string }): void {
+const selectedNotification = ref<Notification | null>(null)
+const isModalOpen = ref(false)
+
+function openNotification(notif: Notification): void {
+  selectedNotification.value = notif
+  isModalOpen.value = true
+  markRead(notif.id)
+}
+
+function closeNotification(): void {
+  isModalOpen.value = false
+  selectedNotification.value = null
+}
+
+function handleAction(notif: Notification, payload: { notifId: number; label: string }): void {
   console.log(`Action "${payload.label}" on notification #${payload.notifId}`)
+  if (payload.label.toLowerCase().includes('reply') || payload.label.toLowerCase() === 'reply') {
+    openNotification(notif)
+  }
+  if (payload.label.toLowerCase().includes('view')) {
+    openNotification(notif)
+  }
+}
+
+function handleReply(message: string): void {
+  if (selectedNotification.value) {
+    console.log(`Reply to notification #${selectedNotification.value.id}: ${message}`)
+    // Here you would send the reply to your backend
+  }
+  closeNotification()
+}
+
+function handleModalAction(label: string): void {
+  console.log(`Modal action: ${label}`)
+  if (label.toLowerCase().includes('review')) {
+    // Handle leave review
+  }
+  if (label.toLowerCase().includes('invoice')) {
+    // Handle invoice
+  }
 }
 </script>
 
@@ -110,6 +169,16 @@ function handleAction(payload: { notifId: number; label: string }): void {
   font-size: 14px;
 }
 .empty-icon { font-size: 40px; }
+
+/* Notification wrapper */
+.notif-wrapper {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.notif-wrapper:hover {
+  transform: scale(1.01);
+}
 
 /* Transitions */
 .group-fade-enter-active,
