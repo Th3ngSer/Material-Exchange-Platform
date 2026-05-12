@@ -1,19 +1,9 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 
-const router = useRouter()
-
-function goMessages() {
-  router.push('/chat')
-}
-
-function goNotifications() {
-  router.push('/help')
-}
-
-function goLogin() {
-  router.push('/login')
-}
+const authStore = useAuthStore()
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 </script>
 
 <template>
@@ -55,7 +45,23 @@ function goLogin() {
             <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm8-6V11a8 8 0 1 0-16 0v5L2 18v1h20v-1l-2-2Zm-2 0H6v-5a6 6 0 1 1 12 0v5Z" />
           </svg>
         </button>
-        <button class="whitespace-nowrap text-[16px] font-bold text-[#201f62] no-underline border-0 bg-transparent cursor-pointer hover:text-[#ff4b42] transition-colors duration-200" type="button" @click="goLogin">Login/Sign up</button>
+        <RouterLink
+          v-if="!isAuthenticated"
+          class="whitespace-nowrap text-[16px] font-bold text-[#201f62] no-underline"
+          to="/login"
+        >
+          Login/Sign up
+        </RouterLink>
+        <RouterLink
+          v-else
+          class="grid h-[34px] w-[34px] place-items-center rounded-full border border-[#201f62] text-[#201f62]"
+          to="/profile"
+          aria-label="Profile"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="h-[20px] w-[20px] fill-current">
+            <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.33 0-8 1.67-8 5v1h16v-1c0-3.33-4.67-5-8-5Z" />
+          </svg>
+        </RouterLink>
       </div>
     </div>
   </header>

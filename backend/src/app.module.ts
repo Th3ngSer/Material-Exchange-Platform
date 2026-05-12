@@ -12,17 +12,17 @@ const databaseImports =
   process.env.NODE_ENV === 'test'
     ? []
     : [
-      MongooseModule.forRootAsync({
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        useFactory: (configService: ConfigService) => ({
-          uri: configService.get<string>(
-            'MONGODB_URI',
-            'mongodb://127.0.0.1:27018/material_xchange?directConnection=true',
-          ),
+        MongooseModule.forRootAsync({
+          imports: [ConfigModule],
+          inject: [ConfigService],
+          useFactory: (configService: ConfigService) => ({
+            uri: configService.get<string>(
+              'MONGODB_URI',
+              'mongodb://127.0.0.1:27017/material_xchange?directConnection=true',
+            ),
+          }),
         }),
-      }),
-    ];
+      ];
 
 @Module({
   imports: [

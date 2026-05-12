@@ -4,26 +4,28 @@ import { Model } from 'mongoose';
 import { User, UserDocument, UserRole } from './schemas/user.schema';
 
 export interface CreateUserInput {
-    email: string;
-    password: string;
-    name?: string;
-    role?: UserRole;
+  email: string;
+  password: string;
+  name?: string;
+  role?: UserRole;
 }
 
 @Injectable()
 export class UsersService {
-    constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>) { }
+  constructor(
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+  ) {}
 
-    createUser(input: CreateUserInput): Promise<UserDocument> {
-        const created = new this.userModel(input);
-        return created.save();
-    }
+  createUser(input: CreateUserInput): Promise<UserDocument> {
+    const created = new this.userModel(input);
+    return created.save();
+  }
 
-    findByEmail(email: string): Promise<UserDocument | null> {
-        return this.userModel.findOne({ email: email.toLowerCase() }).exec();
-    }
+  findByEmail(email: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({ email: email.toLowerCase() }).exec();
+  }
 
-    findById(id: string): Promise<UserDocument | null> {
-        return this.userModel.findById(id).exec();
-    }
+  findById(id: string): Promise<UserDocument | null> {
+    return this.userModel.findById(id).exec();
+  }
 }

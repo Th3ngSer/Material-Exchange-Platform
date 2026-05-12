@@ -16,11 +16,10 @@ async function bootstrap() {
     }),
   );
 
-   app.enableCors({
-    origin: 'http://localhost:5173', // your Vue frontend
-    methods: 'GET,POST,PUT,PATCH,DELETE',
-    credentials: true,
-  });
+  app.enableCors();
+
+  // Prefix all routes with /api so frontend can call /api/auth/login and /api/auth/register
+  app.setGlobalPrefix('api');
 
   // Serve uploaded images as static: GET /uploads/filename.jpg
   app.useStaticAssets(
