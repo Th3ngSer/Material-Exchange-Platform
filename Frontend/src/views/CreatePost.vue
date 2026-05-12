@@ -269,15 +269,15 @@ onBeforeUnmount(() => {
     <!-- ══════════════════════════════════════════════════ -->
     <div v-if="step === 1" class="max-w-2xl mx-auto space-y-5">
       <div class="mb-8">
-        <h1 class="text-2xl font-bold text-black-900">{{ languageStore.t('letsReleaseProduct') }}</h1>
-        <p class="text-black-800 text-sm mt-1">{{ languageStore.t('fillDetailsBelow') }}</p>
+        <h1 class="text-2xl font-bold text-black-900"><!-- {{ languageStore.t('letsReleaseProduct') }} -->Let's release your product</h1>
+        <p class="text-black-800 text-sm mt-1"><!-- {{ languageStore.t('fillDetailsBelow') }} -->Fill in the details below</p>
       </div>
 
       <!-- Listing type -->
       <div
         class="bg-white rounded-2xl shadow-lg shadow-black/30 border border-gray-100 p-6 space-y-5"
       >
-        <p class="text-xl font-bold text-Black-900 mb-3">{{ languageStore.t('listingType') }}</p>
+        <p class="text-xl font-bold text-Black-900 mb-3"><!-- {{ languageStore.t('listingType') }} -->Listing type</p>
         <div class="grid grid-cols-3 gap-3">
           <button
             v-for="t in ['Sell', 'Exchange', 'Lend'] as const"
@@ -296,15 +296,16 @@ onBeforeUnmount(() => {
 
         <!-- Product details -->
         <!-- <div class="bg-white rounded-2xl shadow-lg shadow-black/30 border border-gray-100 p-6 space-y-5"> -->
-        <p class="text-xl font-bold text-Black-900">{{ languageStore.t('listingInformation') }}</p>
+        <p class="text-xl font-bold text-Black-900"><!-- {{ languageStore.t('listingInformation') }} -->Listing information</p>
 
         <div id="field-title">
           <label class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5">
-            {{ languageStore.t('productTitle') }} <span class="text-red-400">*</span>
+            <!-- {{ languageStore.t('productTitle') }} -->Product title <span class="text-red-400">*</span>
           </label>
+          <!-- {{ languageStore.t('whatIsProductTitle') }} -->
           <input
             v-model="form.title"
-            :placeholder="languageStore.t('whatIsProductTitle')"
+            placeholder="What's the product title?"
             class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition"
             :class="
               errors.title
@@ -318,11 +319,12 @@ onBeforeUnmount(() => {
 
         <div id="field-description">
           <label class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5">
-            {{ languageStore.t('description') }} <span class="text-red-400">*</span>
+            <!-- {{ languageStore.t('description') }} -->Description <span class="text-red-400">*</span>
           </label>
+          <!-- {{ languageStore.t('addDetailsToProduct') }} -->
           <textarea
             v-model="form.description"
-            :placeholder="languageStore.t('addDetailsToProduct')"
+            placeholder="Add details about your product"
             rows="4"
             class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition resize-none"
             :class="
@@ -342,7 +344,7 @@ onBeforeUnmount(() => {
             <label
               class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5"
             >
-              {{ languageStore.t('category') }} <span class="text-red-400">*</span>
+              <!-- {{ languageStore.t('category') }} -->Category <span class="text-red-400">*</span>
             </label>
             <div class="relative">
               <select
@@ -355,7 +357,7 @@ onBeforeUnmount(() => {
                 "
                 @change="clearError('category')"
               >
-                <option value="">{{ languageStore.t('select') }}</option>
+                <option value=""><!-- {{ languageStore.t('select') }} -->Select</option>
                 <option
                   v-for="c in [
                     'Clothing',
@@ -386,7 +388,7 @@ onBeforeUnmount(() => {
 
           <div>
             <label class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5"
-              >{{ languageStore.t('condition') }}</label
+              ><!-- {{ languageStore.t('condition') }} -->Condition</label
             >
             <div class="flex border border-[#666565] rounded-xl overflow-hidden">
               <button
@@ -410,7 +412,7 @@ onBeforeUnmount(() => {
             <label
               class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5"
             >
-              {{ form.type === 'Lend' ? languageStore.t('price') : languageStore.t('price') }}
+              <!-- {{ form.type === 'Lend' ? languageStore.t('price') : languageStore.t('price') }} -->Price
               <span class="text-red-400">*</span>
             </label>
             <div class="relative">
@@ -438,11 +440,12 @@ onBeforeUnmount(() => {
 
           <div v-if="form.type === 'Exchange'">
             <label class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5"
-              >{{ languageStore.t('exchangeFor') }} <span class="text-red-400">*</span></label
+              ><!-- {{ languageStore.t('exchangeFor') }} -->Exchange for <span class="text-red-400">*</span></label
             >
+            <!-- {{ languageStore.t('tellWhatWantExchange') }} -->
             <input
               v-model="form.exchangeFor"
-              :placeholder="languageStore.t('tellWhatWantExchange')"
+              placeholder="Tell us what you want in exchange"
               class="w-full border border-[#666565] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 transition"
               :class="
                 errors.exchangeFor
@@ -460,13 +463,13 @@ onBeforeUnmount(() => {
         <!-- Contact -->
         <!-- <div class="bg-white rounded-2xl shadow-lg shadow-black/30 border border-gray-100 p-6"> -->
         <p class="tblock text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5">
-          {{ languageStore.t('contact') }}
+          <!-- {{ languageStore.t('contact') }} -->Contact
         </p>
-        <p class="text-xs text-gray-400 mb-4">{{ languageStore.t('addAtLeastContact') }}</p>
+        <p class="text-xs text-gray-400 mb-4"><!-- {{ languageStore.t('addAtLeastContact') }} -->Add at least one contact method</p>
         <div id="field-contact" class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5"
-              >{{ languageStore.t('phone') }}</label
+              ><!-- {{ languageStore.t('phone') }} -->Phone</label
             >
             <div class="relative">
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm">📞</span>
@@ -486,7 +489,7 @@ onBeforeUnmount(() => {
           </div>
           <div>
             <label class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5"
-              >{{ languageStore.t('email') }}</label
+              ><!-- {{ languageStore.t('email') }} -->Email</label
             >
             <div class="relative">
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm">✉</span>
@@ -561,7 +564,7 @@ onBeforeUnmount(() => {
         <!-- Location -->
         <!-- <div class="bg-white rounded-2xl shadow-lg shadow-black/30 border border-gray-100 p-6"> -->
         <p class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5">
-          {{ languageStore.t('location') }}
+          <!-- {{ languageStore.t('location') }} -->Location
         </p>
         <div id="field-location">
           <label class="block text-xs text-gray-400 tracking-wide mb-1.5">

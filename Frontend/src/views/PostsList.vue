@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import axios from 'axios'
-import { useLanguageStore } from '@/stores/language'
 
 interface Post {
   _id: string
@@ -29,7 +28,6 @@ const posts = ref<Post[]>([])
 const total = ref(0)
 const isLoading = ref(false)
 const errorMessage = ref('')
-const languageStore = useLanguageStore()
 
 const hasPosts = computed(() => posts.value.length > 0)
 
@@ -60,14 +58,14 @@ async function loadPosts() {
     posts.value = data.posts ?? []
     total.value = data.total ?? posts.value.length
   } catch (error: any) {
-    errorMessage.value = error?.response?.data?.message ?? languageStore.t('loadingPosts')
+    errorMessage.value = error?.response?.data?.message ?? 'Error loading saved posts.'
   } finally {
     isLoading.value = false
   }
 }
 
 async function deletePost(postId: string, title: string) {
-  if (!confirm(`${languageStore.t('confirmDelete')} "${title}"? ${languageStore.t('cannotBeUndone')}`)) {
+  if (!confirm(`Delete "${title}"? This action cannot be undone.`)) {
     return
   }
 
@@ -90,10 +88,10 @@ onMounted(loadPosts)
       <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p class="text-sm font-semibold uppercase tracking-[0.28em] text-[#0f5e66]">
-            {{ languageStore.t('savedListings') }}
+            <!-- {{ languageStore.t('savedListings') }} -->Saved listings
           </p>
           <h1 class="mt-2 text-3xl font-black text-slate-900 sm:text-4xl">
-            {{ languageStore.t('browseSavedPosts') }}
+            <!-- {{ languageStore.t('browseSavedPosts') }} -->Browse saved posts
           </h1>
         </div>
 
@@ -101,7 +99,7 @@ onMounted(loadPosts)
           to="/create"
           class="inline-flex items-center justify-center rounded-full bg-[#FF8C00] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600"
         >
-          {{ languageStore.t('createPost') }}
+          <!-- {{ languageStore.t('createPost') }} -->Create post
         </router-link>
       </div>
 
@@ -110,14 +108,14 @@ onMounted(loadPosts)
       >
         <p class="text-sm text-slate-600">
           <span class="font-semibold text-slate-900">{{ total }}</span>
-          {{ languageStore.t('postsSaved') }}
+          <!-- {{ languageStore.t('postsSaved') }} -->posts saved
         </p>
         <button
           type="button"
           class="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
           @click="loadPosts"
         >
-          {{ languageStore.t('refresh') }}
+          <!-- {{ languageStore.t('refresh') }} -->Refresh
         </button>
       </div>
 
@@ -125,7 +123,7 @@ onMounted(loadPosts)
         v-if="isLoading"
         class="rounded-3xl border border-dashed border-slate-300 bg-white/70 p-10 text-center text-slate-500"
       >
-        {{ languageStore.t('loadingPosts') }}
+        <!-- {{ languageStore.t('loadingPosts') }} -->Loading posts...
       </div>
 
       <div
@@ -139,9 +137,9 @@ onMounted(loadPosts)
         v-else-if="!hasPosts"
         class="rounded-3xl border border-dashed border-slate-300 bg-white/70 p-10 text-center"
       >
-        <p class="text-lg font-semibold text-slate-900">{{ languageStore.t('noSavedPostsYet') }}</p>
+        <p class="text-lg font-semibold text-slate-900"><!-- {{ languageStore.t('noSavedPostsYet') }} -->No saved posts yet</p>
         <p class="mt-2 text-sm text-slate-600">
-          {{ languageStore.t('createFirstListing') }}
+          <!-- {{ languageStore.t('createFirstListing') }} -->Create your first listing
         </p>
       </div>
 
@@ -191,7 +189,7 @@ onMounted(loadPosts)
                 v-if="post.exchangeFor"
                 class="rounded-full bg-indigo-50 px-3 py-1 font-medium text-indigo-700"
               >
-                {{ languageStore.t('wants') }} {{ post.exchangeFor }}
+                <!-- {{ languageStore.t('wants') }} -->Wants {{ post.exchangeFor }}
               </span>
             </div>
 
@@ -200,14 +198,14 @@ onMounted(loadPosts)
                 :to="`/edit/${post._id}`"
                 class="flex-1 rounded-lg bg-[#1A174A] px-3 py-2 text-center text-sm font-medium text-[#FF8C00] transition hover:bg-[#221f5a]"
               >
-                {{ languageStore.t('edit') }}
+                <!-- {{ languageStore.t('edit') }} -->Edit
               </router-link>
               <button
                 type="button"
                 class="flex-1 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-700"
                 @click="deletePost(post._id, post.title)"
               >
-                {{ languageStore.t('delete') }}
+                <!-- {{ languageStore.t('delete') }} -->Delete
               </button>
             </div>
           </div>

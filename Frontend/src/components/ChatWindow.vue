@@ -80,20 +80,20 @@ const handleFileChange = (event: Event) => {
           />
         </svg>
       </div>
-      <h2>{{ languageStore.t('selectConversation') }}</h2>
+      <h2><!-- {{ languageStore.t('selectConversation') }} -->Select a conversation</h2>
       <p class="empty-desc">
         A secure and integrated platform that empowers professionals to connect, collaborate, and
         conduct transactions, including the buying, selling, exchanging, lending, and borrowing of
         materials and services.
       </p>
-      <button class="new-message-btn">{{ languageStore.t('newMessage') }}</button>
+      <button class="new-message-btn"><!-- {{ languageStore.t('newMessage') }} -->New Message</button>
     </section>
 
     <section v-else class="chat-active">
       <!-- Security Bar -->
       <div class="security-bar">
         <div class="security-left">
-          <span class="security-item"><span class="green-dot"></span>{{ languageStore.t('secureConnection') }}</span>
+          <span class="security-item"><span class="green-dot"></span><!-- {{ languageStore.t('secureConnection') }} -->Secure connection</span>
           <span class="security-divider"></span>
           <span class="security-item">
             <svg
@@ -108,7 +108,7 @@ const handleFileChange = (event: Event) => {
                 clip-rule="evenodd"
               />
             </svg>
-            {{ languageStore.t('endToEndEncrypted') }}
+            <!-- {{ languageStore.t('endToEndEncrypted') }} -->End-to-end encrypted
           </span>
         </div>
         <div class="security-right">

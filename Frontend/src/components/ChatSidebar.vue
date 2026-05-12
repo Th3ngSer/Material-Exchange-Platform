@@ -32,7 +32,7 @@ const languageStore = useLanguageStore()
 <template>
   <aside class="sidebar">
     <div class="sidebar-header">
-      <h3>{{ languageStore.t('inboxes') }}</h3>
+      <h3><!-- {{ languageStore.t('inboxes') }} -->Inboxes</h3>
       <button class="new-chat-btn" title="New message">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -62,7 +62,7 @@ const languageStore = useLanguageStore()
           clip-rule="evenodd"
         />
       </svg>
-      <input class="search" :placeholder="languageStore.t('searchConversations')" />
+      <input class="search" placeholder="Search conversations" />
     </div>
 
     <div class="conversation-list">

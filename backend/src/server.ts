@@ -10,7 +10,21 @@ app.use(cors());
 app.use(express.json());
 
 // connect MongoDB
-mongoose.connect('mongodb://localhost:27017/chatDB');
+void mongoose.connect('mongodb://localhost:27017/chatDB').catch((err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+const asyncHandler =
+  (
+    handler: (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => Promise<void>,
+  ) =>
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    void handler(req, res, next).catch(next);
+  };
 
 // test route
 app.get('/', (req, res) => {
@@ -18,17 +32,23 @@ app.get('/', (req, res) => {
 });
 
 // save message
-app.post('/messages', async (req, res) => {
-  const msg = new Message(req.body);
-  await msg.save();
-  res.send(msg);
-});
+app.post(
+  '/messages',
+  asyncHandler(async (req, res) => {
+    const msg = new Message(req.body);
+    await msg.save();
+    res.send(msg);
+  }),
+);
 
 // get messages
-app.get('/messages', async (req, res) => {
-  const data = await Message.find();
-  res.send(data);
-});
+app.get(
+  '/messages',
+  asyncHandler(async (_req, res) => {
+    const data = await Message.find();
+    res.send(data);
+  }),
+);
 
 app.listen(3000, () => {
   console.log('running on 3000');

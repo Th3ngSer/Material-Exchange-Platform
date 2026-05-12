@@ -73,19 +73,19 @@ onBeforeUnmount(() => {
       <p
         class="max-w-[560px] text-[clamp(0.95rem,1.2vw,1.25rem)] font-semibold leading-[1.7] text-white/90"
       >
-        {{ languageStore.t('heroDescription') }}
+        <!-- {{ languageStore.t('heroDescription') }} -->A secure platform to buy, sell, exchange, lend, and borrow materials.
       </p>
 
       <div class="flex flex-wrap justify-start gap-5">
         <a
           class="inline-flex min-w-[220px] items-center justify-center rounded-[12px] border border-white/85 bg-[#f23838] px-7 py-3 text-[1.15rem] font-bold text-white no-underline shadow-[0_16px_26px_rgba(255,75,66,0.24)] transition hover:-translate-y-0.5 max-[960px]:min-w-[190px] max-[960px]:text-[1rem]"
           href="#categories"
-          >{{ languageStore.t('browse') }}</a
+          ><!-- {{ languageStore.t('browse') }} -->Browse</a
         >
         <a
           class="inline-flex min-w-[220px] items-center justify-center rounded-[12px] border border-white/35 bg-[#5f6572]/95 px-7 py-3 text-[1.15rem] font-bold text-white/88 no-underline transition hover:-translate-y-0.5 max-[960px]:min-w-[190px] max-[960px]:text-[1rem]"
           href="#listings"
-          >{{ languageStore.t('learnMore') }}</a
+          ><!-- {{ languageStore.t('learnMore') }} -->Learn more</a
         >
       </div>
     </div>

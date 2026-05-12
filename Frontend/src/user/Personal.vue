@@ -94,7 +94,7 @@ onMounted(() => {
 })
 
 const goToEdit = () => {
-  router.push('/edit-profile')
+  router.push('/profile/edit')
 }
 </script>
 

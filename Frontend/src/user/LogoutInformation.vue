@@ -3,11 +3,11 @@
     <Sidebar />
 
     <div class="content">
-      <h2 class="title">{{ languageStore.t('logout') }}</h2>
-      <p>{{ languageStore.t('logoutDescription') }}</p>
+      <h2 class="title"><!-- {{ languageStore.t('logout') }} -->Logout</h2>
+      <p><!-- {{ languageStore.t('logoutDescription') }} -->You have been logged out successfully.</p>
 
       <div class="actions">
-        <button class="btn logout" @click="handleLogout">{{ languageStore.t('logout') }}</button>
+        <button class="btn logout" @click="handleLogout"><!-- {{ languageStore.t('logout') }} -->Logout</button>
       </div>
     </div>
   </div>

@@ -3,28 +3,28 @@
     <UserAvatar :name="user.name" :image="user.avatar" />
 
     <nav class="menu">
-      <router-link to="/personal-info" class="nav-link">
-        <NavItem :label="languageStore.t('personalInformation')" icon="userprofileImage/user.png" />
+      <router-link to="/profile" class="nav-link" active-class="active-link" exact>
+        <NavItem :label="languageStore.t('personalInformation')" icon="/userprofileImage/user.png" />
       </router-link>
 
-      <router-link to="/tracker" class="nav-link">
-        <NavItem :label="languageStore.t('trackingItem')" icon="userprofileImage/tracker.png" />
+      <router-link to="/profile/tracker" class="nav-link" active-class="active-link">
+        <NavItem :label="languageStore.t('trackingItem')" icon="/userprofileImage/tracker.png" />
       </router-link>
 
-      <router-link to="/payments" class="nav-link">
-        <NavItem :label="languageStore.t('payments')" icon="userprofileImage/wallet.png" />
+      <router-link to="/profile/payment" class="nav-link" active-class="active-link">
+        <NavItem :label="languageStore.t('payments')" icon="/userprofileImage/wallet.png" />
       </router-link>
 
-      <router-link to="/language" class="nav-link">
-        <NavItem :label="languageStore.t('language')" icon="userprofileImage/globe.png" />
+      <router-link to="/profile/language" class="nav-link" active-class="active-link">
+        <NavItem :label="languageStore.t('language')" icon="/userprofileImage/globe.png" />
       </router-link>
 
-      <router-link to="/help" class="nav-link">
-        <NavItem :label="languageStore.t('help')" icon="userprofileImage/help.png" />
+      <router-link to="/profile/help" class="nav-link" active-class="active-link">
+        <NavItem :label="languageStore.t('help')" icon="/userprofileImage/help.png" />
       </router-link>
 
-      <router-link to="/logout" class="nav-link">
-        <NavItem :label="languageStore.t('logout')" icon="userprofileImage/logout.png" />
+      <router-link to="/profile/logout" class="nav-link" active-class="active-link">
+        <NavItem :label="languageStore.t('logout')" icon="/userprofileImage/logout.png" />
       </router-link>
     </nav>
   </aside>
@@ -46,7 +46,7 @@ export default defineComponent({
 
     const user = {
       name: 'Steav',
-      avatar: 'userprofileImage/avatar.png',
+      avatar: '/userprofileImage/avatar.png',
     }
 
     return {
@@ -66,10 +66,9 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   padding: 20px 15px;
-  margin: 0;
 }
 
-/* menu */
+/* menu layout */
 .menu {
   margin-top: 20px;
   display: flex;
@@ -77,16 +76,22 @@ export default defineComponent({
   gap: 8px;
 }
 
-/* IMPORTANT: fix router-link default style */
+/* remove default link style */
 .nav-link {
   text-decoration: none;
   color: inherit;
   display: block;
+  border-radius: 8px;
 }
 
-/* active page highlight */
-.router-link-active {
-  background: rgba(255, 255, 255, 0.1);
+/* FULL ACTIVE STATE (FIXED) */
+.active-link {
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 8px;
+}
+
+/* hover effect */
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 </style>

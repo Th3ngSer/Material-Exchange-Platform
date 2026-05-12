@@ -21,7 +21,7 @@ defineProps<{
 const languageStore = useLanguageStore()
 
 function getTimeAgo(dateString: string | undefined): string {
-  if (!dateString) return languageStore.t('justNow')
+  if (!dateString) return 'Just now'
 
   const date = new Date(dateString)
   const now = new Date()
@@ -31,10 +31,10 @@ function getTimeAgo(dateString: string | undefined): string {
   const diffHours = Math.floor(diffMins / 60)
   const diffDays = Math.floor(diffHours / 24)
 
-  if (diffSecs < 60) return languageStore.t('justNow')
-  if (diffMins < 60) return `${diffMins}${languageStore.t('minutesAgo')}`
-  if (diffHours < 24) return `${diffHours}${languageStore.t('hoursAgo')}`
-  if (diffDays < 7) return `${diffDays}${languageStore.t('daysAgo')}`
+  if (diffSecs < 60) return 'Just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays < 7) return `${diffDays}d ago`
 
   return date.toLocaleDateString()
 }
@@ -58,7 +58,7 @@ function getTimeAgo(dateString: string | undefined): string {
                 : '#0B6F61',
         }"
       >
-        {{ item.category === 'Sell' ? languageStore.t('forSale') : item.category === 'Exchange' ? languageStore.t('exchange') : languageStore.t('borrow') }}
+        {{ item.category === 'Sell' ? 'For sale' : item.category === 'Exchange' ? 'Exchange' : 'Borrow' }}
       </div>
 
       <!-- Product Image -->
@@ -79,7 +79,7 @@ function getTimeAgo(dateString: string | undefined): string {
       </div>
 
       <!-- Posted Time -->
-      <div class="text-xs text-gray-400 mb-2">{{ languageStore.t('posted') }} {{ getTimeAgo(item.postedTime) }}</div>
+      <div class="text-xs text-gray-400 mb-2">Posted {{ getTimeAgo(item.postedTime) }}</div>
 
       <!-- Location -->
       <div class="flex items-center gap-2 text-sm text-gray-300 mb-2">

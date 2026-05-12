@@ -17,7 +17,7 @@ const databaseImports =
           useFactory: (configService: ConfigService) => ({
             uri: configService.get<string>(
               'MONGODB_URI',
-              'mongodb://127.0.0.1:27018/material_xchange?directConnection=true',
+              'mongodb://127.0.0.1:27017/material_xchange?directConnection=true',
             ),
           }),
         }),

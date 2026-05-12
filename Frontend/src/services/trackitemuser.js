@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API = 'http://localhost:3000/trackitemuser'
+const API = 'http://localhost:3000/api/trackitemuser'
 
 export const getItems = () => axios.get(API)
 

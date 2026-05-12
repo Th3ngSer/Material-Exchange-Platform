@@ -22,6 +22,9 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Prefix all routes with /api so frontend can call /api/auth/login and /api/auth/register
+  app.setGlobalPrefix('api');
+
   // Serve uploaded images as static: GET /uploads/filename.jpg
   app.useStaticAssets(
     join(process.cwd(), process.env.UPLOAD_DIR ?? 'uploads'),
@@ -30,7 +33,7 @@ async function bootstrap() {
     },
   );
 
-  await app.listen(process.env.PORT ?? 3000);
-  console.log(`Server running on http://localhost:${process.env.PORT ?? 3000}`);
+  await app.listen(process.env.PORT || 3000);
+  console.log(`Server running on http://localhost:${process.env.PORT || 3000}`);
 }
 void bootstrap();
