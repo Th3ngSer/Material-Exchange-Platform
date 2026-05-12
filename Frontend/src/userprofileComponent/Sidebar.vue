@@ -7,6 +7,10 @@
         <NavItem label="Personal Information" icon="userprofileImage/user.png"  />
       </router-link>
 
+      <router-link to="/tracker" class="nav-link">
+        <NavItem label="Tracking Item" icon="userprofileImage/tracker.png" />
+      </router-link>
+
       <router-link to="/payments" class="nav-link">
         <NavItem label="Payments" icon="userprofileImage/wallet.png" />
       </router-link>

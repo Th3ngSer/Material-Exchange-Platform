@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import guitarImage from '@/assets/images/guitar.png'
 
 interface HeroSlide {
   image: string
@@ -9,9 +8,9 @@ interface HeroSlide {
 }
 
 const slides: HeroSlide[] = [
-  { image: guitarImage, title: 'XChange Material', accent: 'X' },
-  { image: guitarImage, title: 'XChange Material', accent: 'X' },
-  { image: guitarImage, title: 'XChange Material', accent: 'X' },
+  { image: 'https://cdn11.bigcommerce.com/s-6yzvyy2b/images/stencil/1280x1280/products/129305/335368/0140510525_fen_ins_frt_1_rr__18615.1734992258.png?c=2', title: 'XChange Material', accent: 'X' },
+  { image: 'https://png.pngtree.com/png-vector/20250522/ourmid/pngtree-modern-laptop-computer-with-screen-open-technology-digital-device-png-image_16345445.png', title: 'XChange Material', accent: 'X' },
+  { image: 'https://static.vecteezy.com/system/resources/thumbnails/024/819/248/small/fat-cycle-fat-bike-fat-bicycle-fat-tire-cycle-fat-tire-bike-transparent-background-ai-generated-png.png', title: 'XChange Material', accent: 'X' },
 ]
 
 const currentSlide = ref(0)
@@ -57,12 +56,12 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="grid place-items-center px-6 pb-14 pt-10 max-[960px]:order-first max-[960px]:pb-6 max-[960px]:pt-6">
-      <div class="relative flex min-h-[420px] w-full items-center justify-center overflow-hidden max-[960px]:min-h-[300px]">
+      <div class="relative flex h-[400px] max-w-full items-center justify-center overflow-hidden max-[960px]:h-[260px] max-[960px]:w-[320px]">
         <div class="pointer-events-none absolute inset-4"></div>
         <img
           :src="activeSlide.image"
           :alt="activeSlide.title"
-          class="h-full w-full max-h-[72%] max-w-[72%] object-contain p-2 transition-opacity duration-700 max-[960px]:max-h-[86%] max-[960px]:max-w-[86%]"
+          class="h-full w-full object-contain p-2 transition-opacity duration-700"
         />
 
       </div>
