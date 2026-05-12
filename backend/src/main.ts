@@ -16,15 +16,11 @@ async function bootstrap() {
     }),
   );
 
-<<<<<<< HEAD
   app.enableCors({
     origin: 'http://localhost:5173', // your Vue frontend
     methods: 'GET,POST,PUT,PATCH,DELETE',
     credentials: true,
   });
-=======
-  app.enableCors();
->>>>>>> 23d7b9a17dab9a96e1f372c73b5f42bfc0840c5e
 
   // Prefix all routes with /api so frontend can call /api/auth/login and /api/auth/register
   app.setGlobalPrefix('api');
