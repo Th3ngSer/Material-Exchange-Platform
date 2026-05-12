@@ -35,7 +35,7 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
       </form>
 
       <div class="inline-flex items-center justify-self-end gap-2">
-        <button class="grid h-[34px] w-[34px] place-items-center rounded-full border-0 bg-transparent text-[#201f62] cursor-pointer hover:bg-[#f0f1ff] transition-colors duration-200" type="button" aria-label="Messages" @click="goMessages">
+        <button class="grid h-[34px] w-[34px] place-items-center rounded-full border-0 bg-transparent text-[#201f62] cursor-pointer hover:bg-[#f0f1ff] transition-colors duration-200" type="button" aria-label="Messages" @click="">
           <svg viewBox="0 0 24 24" aria-hidden="true" class="h-[25px] w-[25px] fill-current">
             <path d="M20 4H4a2 2 0 0 0-2 2v13.17L5.17 16H20a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 10H4.34L4 14.34V6h16v8Z" />
           </svg>
