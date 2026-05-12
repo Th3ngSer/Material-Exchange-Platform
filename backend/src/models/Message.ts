@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const messageSchema = new mongoose.Schema(
   {
@@ -11,7 +11,7 @@ const messageSchema = new mongoose.Schema(
     image: String,
     voice: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export default mongoose.model("Message", messageSchema);
+export default mongoose.model('Message', messageSchema);

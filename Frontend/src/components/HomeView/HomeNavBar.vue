@@ -1,3 +1,11 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+const isAuthenticated = computed(() => authStore.isAuthenticated)
+</script>
+
 <template>
   <header class="sticky top-0 z-20 border-b border-[#22245f1a] bg-white">
     <div class="mx-auto grid min-h-[66px] w-full max-w-[1920px] grid-cols-[auto_auto_1fr_auto] items-center gap-3 px-3 py-1 max-[1100px]:grid-cols-1 max-[1100px]:gap-2">
@@ -7,7 +15,12 @@
 
       <nav class="inline-flex gap-5 max-[1100px]:hidden text-center" aria-label="Primary">
         <a class="ml-20 text-[16px] font-bold text-[#201f62] no-underline text-center" href="#categories">Browse</a>
-        <a class="ml-20 text-[16px] font-bold text-[#201f62] no-underline text-center" href="#listings">Post</a>
+        <!-- <a class="ml-20 text-[16px] font-bold text-[#201f62] no-underline text-center" href="#listings">Post</a> -->
+        <router-link 
+          class="ml-20 text-[16px] font-bold text-[#201f62] no-underline text-center" 
+          to="/posts/create">
+          Post
+        </router-link>
       </nav>
 
       <form class="mx-auto grid w-full max-w-[452px] grid-cols-[118px_1fr_42px] items-center overflow-hidden rounded-[8px] border border-[#2b2f9161] bg-[#f4f5fb] max-[1100px]:max-w-none max-[1100px]:justify-self-stretch" role="search">
@@ -37,7 +50,23 @@
             <path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm8-6V11a8 8 0 1 0-16 0v5L2 18v1h20v-1l-2-2Zm-2 0H6v-5a6 6 0 1 1 12 0v5Z" />
           </svg>
         </button>
-        <a class="whitespace-nowrap text-[16px] font-bold text-[#201f62] no-underline" href="#">Login/Sign up</a>
+        <RouterLink
+          v-if="!isAuthenticated"
+          class="whitespace-nowrap text-[16px] font-bold text-[#201f62] no-underline"
+          to="/login"
+        >
+          Login/Sign up
+        </RouterLink>
+        <RouterLink
+          v-else
+          class="grid h-[34px] w-[34px] place-items-center rounded-full border border-[#201f62] text-[#201f62]"
+          to="/profile"
+          aria-label="Profile"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="h-[20px] w-[20px] fill-current">
+            <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.33 0-8 1.67-8 5v1h16v-1c0-3.33-4.67-5-8-5Z" />
+          </svg>
+        </RouterLink>
       </div>
     </div>
   </header>
