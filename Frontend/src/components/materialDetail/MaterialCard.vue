@@ -1,0 +1,38 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
+
+import BaseMaterialCard from '@/components/HomeView/MaterialCard.vue'
+
+type Tone = 'gold' | 'orange' | 'rose'
+
+type MaterialCardItem = {
+  id: number
+  title: string
+  price: string
+  location: string
+  category: 'Sell' | 'Exchange' | 'Borrow'
+  tone: Tone
+  seller?: string
+  rating?: number
+  avatar?: string
+  images?: string[]
+  postedTime?: string
+}
+
+const props = defineProps<{
+  item: MaterialCardItem
+}>()
+
+const to = computed(() => `/posts/${props.item.id}`)
+
+function scrollToTop() {
+  window.scrollTo({ top: 0 })
+}
+</script>
+
+<template>
+  <RouterLink :to="to" @click="scrollToTop" class="block no-underline transition hover:-translate-y-1 hover:opacity-95">
+    <BaseMaterialCard :item="item" />
+  </RouterLink>
+</template>
