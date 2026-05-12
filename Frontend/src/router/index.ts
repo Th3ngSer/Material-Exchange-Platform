@@ -26,6 +26,7 @@ import HelpProfile from '../user/HelpProfile.vue'
 import LangaugeInformation from '../user/LangaugeInformation.vue'
 import LogoutInformation from '@/user/LogoutInformation.vue'
 import PaymentInformation from '@/user/PaymentInformation.vue'
+import Notification from '@/components/Notificationsview.vue'
 
 
 const router = createRouter({
@@ -41,6 +42,8 @@ const router = createRouter({
     { path: '/posts/:id/edit', name: 'edit-post', component: EditPost },
 
     { path: '/chat', name: 'chat', component: Chat },
+
+    { path: '/notification', name: 'Notification', component: Notification },
 
     // Profile
     { path: '/profile', name: 'profile', component: Profile },
