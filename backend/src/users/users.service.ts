@@ -28,4 +28,13 @@ export class UsersService {
   findById(id: string): Promise<UserDocument | null> {
     return this.userModel.findById(id).exec();
   }
+
+  findAllForAdmin() {
+    return this.userModel
+      .find()
+      .select('name email role status listingsCount rating createdAt')
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+  }
 }

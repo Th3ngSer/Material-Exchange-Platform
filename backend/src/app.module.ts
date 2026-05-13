@@ -6,22 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
 import { TrackitemuserModule } from './trackitemuser/trackitemuser.module';
-
-const databaseImports =
-  process.env.NODE_ENV === 'test'
-    ? []
-    : [
-        MongooseModule.forRootAsync({
-          imports: [ConfigModule],
-          inject: [ConfigService],
-          useFactory: (configService: ConfigService) => ({
-            uri: configService.get<string>(
-              'MONGODB_URI',
-              'mongodb://127.0.0.1:27017/material_xchange?directConnection=true',
-            ),
-          }),
-        }),
-      ];
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -47,9 +32,15 @@ const databaseImports =
       },
     }),
 
+    MongooseModule.forRoot(
+      process.env.MONGODB_URI1 ||
+        'mongodb+srv://Akainu_user:<dbAdminMongodb>@material-exchange-platf.ahheacd.mongodb.net/?appName=Material-Exchange-Platform',
+    ),
+
     AuthModule,
     ChatModule,
     TrackitemuserModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
