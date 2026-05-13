@@ -1,6 +1,17 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+
+type AdminUser = {
+  id: string
+  name?: string
+  email: string
+  role: string
+  status: string
+  listingsCount: number
+  rating: number
+  createdAt?: string
+}
 
 const navItems = [
   { label: 'Dashboard', to: '/admin' },
@@ -15,64 +26,11 @@ const navItems = [
   { label: 'Settings', to: '/admin/settings' },
 ]
 
-const users = [
-  {
-    name: 'Yagami',
-    email: 'yagami@gmail.com',
-    role: 'User',
-    status: 'Active',
-    listings: 168,
-    rating: 5.0,
-  },
-  {
-    name: 'Mina L.',
-    email: 'mina.l@gmail.com',
-    role: 'User',
-    status: 'Suspended',
-    listings: 48,
-    rating: 4.8,
-  },
-  {
-    name: 'Jiro H.',
-    email: 'jiro.h@gmail.com',
-    role: 'Moderator',
-    status: 'Active',
-    listings: 92,
-    rating: 4.9,
-  },
-  {
-    name: 'Nara K.',
-    email: 'nara.k@gmail.com',
-    role: 'User',
-    status: 'Active',
-    listings: 136,
-    rating: 5.0,
-  },
-  {
-    name: 'Sovan P.',
-    email: 'sovan.p@gmail.com',
-    role: 'User',
-    status: 'Active',
-    listings: 65,
-    rating: 4.7,
-  },
-  {
-    name: 'Dara M.',
-    email: 'dara.m@gmail.com',
-    role: 'User',
-    status: 'Active',
-    listings: 114,
-    rating: 4.9,
-  },
-  {
-    name: 'Srey N.',
-    email: 'srey.n@gmail.com',
-    role: 'User',
-    status: 'Active',
-    listings: 53,
-    rating: 4.8,
-  },
-]
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+
+const users = ref<AdminUser[]>([])
+const isLoading = ref(false)
+const errorMessage = ref('')
 
 const route = useRoute()
 const currentPath = computed(() => route.path)
@@ -83,6 +41,45 @@ const isActive = (path: string) => {
   }
   return currentPath.value === path
 }
+
+const formatDate = (value?: string) => {
+  if (!value) {
+    return '---'
+  }
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+  return date.toISOString().split('T')[0]
+}
+
+const fetchUsers = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    const token = localStorage.getItem('authToken')
+    const response = await fetch(`${API_BASE_URL}/admin/users`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.message || 'Failed to load users')
+    }
+
+    users.value = await response.json()
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Failed to load users'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchUsers)
 </script>
 
 <template>
@@ -158,28 +155,32 @@ const isActive = (path: string) => {
         </div>
 
         <div class="table">
+          <p v-if="isLoading" class="table-note">Loading users...</p>
+          <p v-else-if="errorMessage" class="table-note error">{{ errorMessage }}</p>
           <div class="table-row header">
             <span>Name</span>
             <span>Email</span>
             <span>Role</span>
             <span>Status</span>
             <span>Listings</span>
+            <span>Rating</span>
             <span>Joined</span>
             <span>Actions</span>
           </div>
-          <div v-for="user in users" :key="user.email" class="table-row body">
+          <div v-for="user in users" :key="user.id" class="table-row body">
             <div class="name-cell">
               <div class="avatar small"></div>
-              <span>{{ user.name }}</span>
+              <span>{{ user.name || user.email.split('@')[0] }}</span>
             </div>
             <span>{{ user.email }}</span>
             <span>{{ user.role }}</span>
             <span class="status" :class="user.status.toLowerCase()">{{ user.status }}</span>
-            <span>{{ user.listings }}</span>
+            <span>{{ user.listingsCount }}</span>
             <span class="rating">
               <span class="star"></span>
-              {{ user.rating.toFixed(1) }}
+              {{ Number(user.rating || 0).toFixed(1) }}
             </span>
+            <span class="joined">{{ formatDate(user.createdAt) }}</span>
             <button class="dots" aria-label="More actions">
               <span></span>
               <span></span>
@@ -456,9 +457,19 @@ select {
   gap: 10px;
 }
 
+.table-note {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.table-note.error {
+  color: #ef4444;
+}
+
 .table-row {
   display: grid;
-  grid-template-columns: 2fr 2fr 1fr 1fr 1fr 1fr 0.5fr;
+  grid-template-columns: 2fr 2fr 1fr 1fr 1fr 1fr 1fr 0.5fr;
   gap: 8px;
   font-size: 13px;
   padding: 10px 0;
