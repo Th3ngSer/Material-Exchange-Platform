@@ -33,7 +33,7 @@ import { UsersModule } from './users/users.module';
     }),
 
     MongooseModule.forRoot(
-      process.env.MONGODB_URI1 ||
+      process.env.MONGODB_URI ||
         'mongodb+srv://Akainu_user:<Akainu1234>@material-exchange-platf.ahheacd.mongodb.net/?appName=Material-Exchange-Platform',
     ),
 
