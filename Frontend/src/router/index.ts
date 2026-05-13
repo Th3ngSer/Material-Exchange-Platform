@@ -13,6 +13,7 @@ import Chat from '../views/Chat.vue'
 // Posts Create
 import CreatePost from '../views/CreatePost.vue'
 import EditPost from '../views/EditPost.vue'
+import MaterialDetailView from '../views/MaterialDetailView.vue'
 // HomeView
 import HomeView from '../views/HomeView.vue'
 // Auth 
@@ -27,6 +28,7 @@ import LangaugeInformation from '../user/LangaugeInformation.vue'
 import LogoutInformation from '@/user/LogoutInformation.vue'
 import PaymentInformation from '@/user/PaymentInformation.vue'
 import Notification from '@/components/Notificationsview.vue'
+import TrackingInformation from '@/user/TrackingInformation.vue'
 
 
 const router = createRouter({
@@ -40,6 +42,7 @@ const router = createRouter({
 
     { path: '/posts', name: 'posts', component: PostsList },
     { path: '/posts/create', name: 'create-post', component: CreatePost },
+    { path: '/posts/:id', name: 'post-detail', component: MaterialDetailView },
     { path: '/posts/:id/edit', name: 'edit-post', component: EditPost },
 
     { path: '/chat', name: 'chat', component: Chat },
@@ -51,6 +54,7 @@ const router = createRouter({
     { path: '/profile/language', name: 'language-information', component: LangaugeInformation },
     { path: '/profile/logout', name: 'logout-information', component: LogoutInformation },
     { path: '/profile/payment', name: 'payment-information', component: PaymentInformation },
+    { path: '/profile/tracker', name: 'trackItem', component: TrackingInformation},
 
     // Admin routes
     { path: '/admin', name: 'SuperAdmin', component: AdminDashboard },

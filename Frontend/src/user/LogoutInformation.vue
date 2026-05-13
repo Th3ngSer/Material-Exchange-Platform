@@ -3,11 +3,11 @@
     <Sidebar />
 
     <div class="content">
-      <h2 class="title">Log Out</h2>
-      <p>You are about to log out of your account.</p>
+      <h2 class="title"><!-- {{ languageStore.t('logout') }} -->Logout</h2>
+      <p><!-- {{ languageStore.t('logoutDescription') }} -->You have been logged out successfully.</p>
 
       <div class="actions">
-        <button class="btn logout" @click="handleLogout">Log Out</button>
+        <button class="btn logout" @click="handleLogout"><!-- {{ languageStore.t('logout') }} -->Logout</button>
       </div>
     </div>
   </div>
@@ -15,7 +15,10 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import Sidebar from '@/userprofileComponent/Sidebar.vue'
+import Sidebar from '../userprofileComponent/Sidebar.vue'
+import { useLanguageStore } from '../stores/language'
+
+const languageStore = useLanguageStore()
 
 const router = useRouter()
 

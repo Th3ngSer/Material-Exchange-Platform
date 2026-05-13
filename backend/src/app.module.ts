@@ -4,6 +4,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { ChatModule } from './chat/chat.module';
+import { TrackitemuserModule } from './trackitemuser/trackitemuser.module';
 
 const databaseImports =
   process.env.NODE_ENV === 'test'
@@ -23,10 +25,14 @@ const databaseImports =
 
 @Module({
   imports: [
+    // Load .env globally
     ConfigModule.forRoot({
       isGlobal: true,
     }),
     ...databaseImports,
+    AuthModule,
+    ChatModule,
+    TrackitemuserModule,
   ],
   controllers: [AppController],
   providers: [AppService],
