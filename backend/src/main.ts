@@ -7,22 +7,23 @@ import { join } from 'path';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Global validation pipe -- auto-validates all DTOs
+  // Validation
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // strip unknown fields
+      whitelist: true,
       forbidNonWhitelisted: false,
-      transform: true, // auto-cast types
+      transform: true,
     }),
   );
 
-   app.enableCors({
-    origin: 'http://localhost:5173', // your Vue frontend
+  // CORS
+  app.enableCors({
+    origin: 'http://localhost:5173',
     methods: 'GET,POST,PUT,PATCH,DELETE',
     credentials: true,
   });
 
-  // Serve uploaded images as static: GET /uploads/filename.jpg
+  // Static uploads
   app.useStaticAssets(
     join(process.cwd(), process.env.UPLOAD_DIR ?? 'uploads'),
     {
@@ -30,7 +31,12 @@ async function bootstrap() {
     },
   );
 
-  await app.listen(process.env.PORT ?? 3000);
-  console.log(`Server running on http://localhost:${process.env.PORT ?? 3000}`);
+  const port = process.env.PORT ?? 3000;
+
+  // ✅ IMPORTANT FIX FOR DOCKER
+  await app.listen(port, '0.0.0.0');
+
+  console.log(`🚀 Server running on http://localhost:${port}`);
 }
+
 void bootstrap();

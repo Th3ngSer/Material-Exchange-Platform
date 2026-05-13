@@ -1,46 +1,41 @@
+// chat/chat.controller.ts
 import {
   Controller,
   Post,
   Body,
   Get,
-  Param,
   Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('chat')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
-  // ✔ send message
+  @UseGuards(JwtAuthGuard)
   @Post('send')
-  sendMessage(
-    @Body()
-    body: {
-      senderId: string;
-      receiverId: string;
-      content: string;
-    },
+  async sendMessage(
+    @Body() body: { receiverId: string; content: string },
+    @Req() req: any,
   ) {
+    // 🔥 THIS WILL NOW WORK
+    const senderId = req.user.id;
+
     return this.chatService.sendMessage(
-      body.senderId,
+      senderId,
       body.receiverId,
       body.content,
     );
   }
 
-  // ✔ chat history A ↔ B
   @Get('history')
-  getHistory(
+  async getHistory(
     @Query('user1') user1: string,
     @Query('user2') user2: string,
   ) {
     return this.chatService.getHistory(user1, user2);
-  }
-
-  // ✔ single user messages
-  @Get('messages/:userId')
-  getMessages(@Param('userId') userId: string) {
-    return this.chatService.getMessages(userId);
   }
 }

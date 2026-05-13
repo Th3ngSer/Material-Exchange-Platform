@@ -1,10 +1,10 @@
-import { IsString } from 'class-validator';
+import { IsString, IsIn } from 'class-validator';
 
 export class SendMessageDto {
   @IsString()
   receiverId: string;
 
-  @IsString()
+  @IsIn(['text', 'image', 'voice'])
   type: 'text' | 'image' | 'voice';
 
   @IsString()

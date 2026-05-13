@@ -10,17 +10,17 @@ export class ChatService {
     private messageModel: Model<MessageDocument>,
   ) {}
 
-  // ✔ Send message
+  // SEND MESSAGE
   async sendMessage(senderId: string, receiverId: string, content: string) {
     return this.messageModel.create({
       senderId,
       receiverId,
-      type: 'text',
       content,
+      type: 'text',
     });
   }
 
-  // ✔ FIXED: full chat (A ↔ B)
+  // GET CONVERSATION (SECURE)
   async getHistory(user1: string, user2: string) {
     return this.messageModel
       .find({
@@ -30,12 +30,5 @@ export class ChatService {
         ],
       })
       .sort({ createdAt: 1 });
-  }
-
-  // ✔ user messages
-  async getMessages(userId: string) {
-    return this.messageModel.find({
-      $or: [{ senderId: userId }, { receiverId: userId }],
-    });
   }
 }

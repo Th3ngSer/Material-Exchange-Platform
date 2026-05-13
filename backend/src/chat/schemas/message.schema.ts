@@ -1,7 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
 
-export type MessageDocument = Message & Document;
+export type MessageDocument = HydratedDocument<Message>;
+
+export type MessageType = 'text' | 'image' | 'voice';
 
 @Schema({ timestamps: true })
 export class Message {
@@ -12,7 +14,7 @@ export class Message {
   receiverId: string;
 
   @Prop({ enum: ['text', 'image', 'voice'], default: 'text' })
-  type: string;
+  type: MessageType;
 
   @Prop({ required: true })
   content: string;

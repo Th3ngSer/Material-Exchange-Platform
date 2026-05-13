@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue"
-import ChatSidebar from "@/components/ChatSidebar.vue"
-import ChatWindow from "@/components/ChatWindow.vue"
+import ChatSidebar from "../components/ChatSidebar.vue"
+import ChatWindow from "../components/ChatWindow.vue"
+import { useChatStore } from "../stores/chat"
 
 type Message = {
   text: string
@@ -84,6 +85,7 @@ const users = ref<User[]>([
   }
 ])
 
+const chatStore = useChatStore()
 const selectedUser = ref<User | null>(null)
 const newMessage = ref("")
 
@@ -110,17 +112,17 @@ const sendMessage = () => {
   newMessage.value = ""
 
   // Fake auto-reply after 1 second (for demo)
-  setTimeout(() => {
-    const replyTime = new Date().toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    })
-    selectedUser.value?.chat.push({
-      text: "Thanks for your message! I'll get back to you soon.",
-      sender: "them",
-      time: replyTime
-    })
-  }, 1000)
+  // setTimeout(() => {
+  //   const replyTime = new Date().toLocaleTimeString([], { 
+  //     hour: '2-digit', 
+  //     minute: '2-digit' 
+  //   })
+  //   selectedUser.value?.chat.push({
+  //     text: "Thanks for your message! I'll get back to you soon.",
+  //     sender: "them",
+  //     time: replyTime
+  //   })
+  // }, 1000)
 }
 const formatTime = (time: string) => time
 </script>

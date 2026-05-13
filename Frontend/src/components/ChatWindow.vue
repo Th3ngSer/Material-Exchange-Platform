@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 
 type Message = {
   text: string
@@ -32,8 +33,16 @@ const emit = defineEmits<{
   (e: 'send-image', file: File): void  // ✅ Added: Image send event
 }>()
 
-// Current user's avatar
-const currentUserAvatar = "https://api.dicebear.com/7.x/avataaars/svg?seed=CurrentUser"
+// Get current authenticated user from auth store
+const authStore = useAuthStore()
+
+// Current user's avatar - generated from authenticated user's email
+const currentUserAvatar = computed(() => {
+  if (authStore.user?.email) {
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(authStore.user.email)}`
+  }
+  return "https://api.dicebear.com/7.x/avataaars/svg?seed=Anonymous"
+})
 
 const fileInput = ref<HTMLInputElement | null>(null)
 
@@ -580,6 +589,12 @@ const handleFileChange = (event: Event) => {
   font-size: 11px; 
   color: #94A3B8; 
   font-weight: 500; 
+}
+
+.msg-avatar {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
 }
 
 .msg-dot { 
