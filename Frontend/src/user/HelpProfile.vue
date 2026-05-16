@@ -6,58 +6,58 @@
     <!-- Main Content -->
     <div class="content">
       <section class="troubleshoot">
-        <h1><!-- {{ languageStore.t('troubleshoot') }} -->Troubleshoot</h1>
-        <p><!-- {{ languageStore.t('troubleshootDescription') }} -->Find answers to common issues and how to resolve them.</p>
+        <h1>{{ languageStore.t('troubleshoot') }} </h1>
+        <p>{{ languageStore.t('troubleshootDescription') }} </p>
       </section>
 
       <section class="support">
-        <h2><!-- {{ languageStore.t('support') }} -->Support</h2>
-        <p><!-- {{ languageStore.t('supportDescription') }} -->If you need help, our team is here for you.</p>
+        <h2>{{ languageStore.t('support') }}</h2>
+        <p>{{ languageStore.t('supportDescription') }}</p>
       </section>
 
       <section class="contact-form">
-        <h2><!-- {{ languageStore.t('contactUs') }} -->Contact Us</h2>
+        <h2>{{ languageStore.t('contactUs') }}</h2>
 
         <p v-if="submitted" class="success-msg">
-          <!-- {{ languageStore.t('successSubmit') }} -->Your request has been submitted successfully.
+          {{ languageStore.t('successSubmit') }} 
         </p>
 
         <form v-if="!submitted" @submit.prevent="submitForm">
           <div class="form-row">
             <label>
-              <!-- {{ languageStore.t('firstName') }} -->First Name
+              {{ languageStore.t('firstName') }} 
               <input type="text" v-model="form.firstName" />
             </label>
 
             <label>
-              <!-- {{ languageStore.t('lastName') }} -->Last Name
+              {{ languageStore.t('lastName') }} 
               <input type="text" v-model="form.lastName" />
             </label>
           </div>
 
           <div class="form-row">
             <label>
-              <!-- {{ languageStore.t('emailAddress') }} -->Email Address
+              {{ languageStore.t('emailAddress') }} 
               <input type="email" v-model="form.email" />
             </label>
 
             <label>
-              <!-- {{ languageStore.t('phoneNumber') }} -->Phone Number
+              {{ languageStore.t('phoneNumber') }} 
               <input type="tel" v-model="form.phone" />
             </label>
           </div>
 
           <label>
-            <!-- {{ languageStore.t('howCanWeHelp') }} -->How can we help?
+            {{ languageStore.t('howCanWeHelp') }} 
             <textarea v-model="form.message"></textarea>
           </label>
 
           <label>
-            <!-- {{ languageStore.t('whatCanWeProvide') }} -->What can we provide?
+            {{ languageStore.t('whatCanWeProvide') }} 
             <textarea v-model="form.request"></textarea>
           </label>
 
-          <button type="submit" class="submit-btn" :disabled="!isFormValid"><!-- {{ languageStore.t('submit') }} -->Submit</button>
+          <button type="submit" class="submit-btn" :disabled="!isFormValid"> {{ languageStore.t('submit') }} </button>
         </form>
       </section>
     </div>
@@ -104,6 +104,7 @@ onMounted(async () => {
     form.firstName = firstName || ''
     form.lastName = lastName || ''
     form.email = authStore.user.email || ''
+    form.phone = authStore.user.phone || ''
   }
 })
 
