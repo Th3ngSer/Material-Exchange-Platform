@@ -15,7 +15,7 @@ export interface CreateUserInput {
   birthDate?: string;
 }
 
-export type UpdateUserInput = Partial<Omit<CreateUserInput, 'password'>>
+export type UpdateUserInput = Partial<Omit<CreateUserInput, 'password'>>;
 
 @Injectable()
 export class UsersService {
@@ -34,6 +34,12 @@ export class UsersService {
 
   findById(id: string): Promise<UserDocument | null> {
     return this.userModel.findById(id).exec();
+  }
+
+  updateUser(userId: string, update: UpdateUserInput): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(userId, update, { new: true })
+      .exec();
   }
 
   findAllForAdmin() {

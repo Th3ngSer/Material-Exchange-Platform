@@ -104,7 +104,6 @@ onMounted(async () => {
     form.firstName = firstName || ''
     form.lastName = lastName || ''
     form.email = authStore.user.email || ''
-    form.phone = authStore.user.phone || ''
   }
 })
 
