@@ -17,17 +17,14 @@
 import { useRouter } from 'vue-router'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
 import { useLanguageStore } from '../stores/language'
+import { useAuthStore } from '@/stores/auth'
 
 const languageStore = useLanguageStore()
-
+const authStore = useAuthStore()
 const router = useRouter()
 
 const handleLogout = () => {
-  // Clear stored user data
-  localStorage.removeItem('profile')
-  localStorage.removeItem('token') // if you store auth token
-
-  // Redirect to login page
+  authStore.logout()
   router.push('/login')
 }
 </script>

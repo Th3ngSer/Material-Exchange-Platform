@@ -68,8 +68,10 @@
 import { reactive, ref, computed, onMounted } from 'vue'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
 import { useLanguageStore } from '../stores/language'
+import { useAuthStore } from '@/stores/auth'
 
 const languageStore = useLanguageStore()
+const authStore = useAuthStore()
 
 /* form */
 const form = reactive({
@@ -89,16 +91,20 @@ const isFormValid = computed(() => {
 })
 
 /* load user info */
-onMounted(() => {
-  const saved = localStorage.getItem('profile')
+onMounted(async () => {
+  if (!authStore.user) {
+    await authStore.refreshUser()
+  }
 
-  if (saved) {
-    const profile = JSON.parse(saved)
+  if (authStore.user) {
+    const fullName = authStore.user.name || ''
+    const [firstName, ...rest] = fullName.split(' ')
+    const lastName = rest.join(' ')
 
-    form.firstName = profile.firstName || ''
-    form.lastName = profile.lastName || ''
-    form.email = profile.email || ''
-    form.phone = profile.phone || ''
+    form.firstName = firstName || ''
+    form.lastName = lastName || ''
+    form.email = authStore.user.email || ''
+    form.phone = authStore.user.phone || ''
   }
 })
 
