@@ -36,7 +36,12 @@ export class UsersService {
     return this.userModel.findById(id).exec();
   }
 
-  updateUser(id: string, updates: UpdateUserInput): Promise<UserDocument | null> {
-    return this.userModel.findByIdAndUpdate(id, updates, { new: true }).exec();
+  findAllForAdmin() {
+    return this.userModel
+      .find()
+      .select('name email role status listingsCount rating createdAt')
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
   }
 }

@@ -118,6 +118,9 @@ export class AuthService {
       nationality: user.nationality,
       birthDate: user.birthDate,
       role: user.role,
+      status: user.status,
+      listingsCount: user.listingsCount,
+      rating: user.rating,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

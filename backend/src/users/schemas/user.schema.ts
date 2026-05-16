@@ -8,6 +8,11 @@ export enum UserRole {
   ADMIN = 'admin',
 }
 
+export enum UserStatus {
+  ACTIVE = 'active',
+  SUSPENDED = 'suspended',
+}
+
 @Schema({ timestamps: true })
 export class User {
   @Prop({ required: true, unique: true, lowercase: true, trim: true })
@@ -36,6 +41,15 @@ export class User {
 
   @Prop({ type: String, enum: UserRole, default: UserRole.USER })
   role!: UserRole;
+
+  @Prop({ type: String, enum: UserStatus, default: UserStatus.ACTIVE })
+  status!: UserStatus;
+
+  @Prop({ type: Number, default: 0, min: 0 })
+  listingsCount!: number;
+
+  @Prop({ type: Number, default: 0, min: 0, max: 5 })
+  rating!: number;
 
   createdAt?: Date;
 
