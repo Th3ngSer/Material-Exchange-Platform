@@ -3,14 +3,14 @@
     <Sidebar />
 
     <div class="content">
-      <h2 class="title"><!-- {{ languageStore.t('transactionOfItem') }} -->Transaction of Item</h2>
+      <h2 class="title">{{ languageStore.t('transactionOfItem') }} </h2>
 
       <!-- ITEMS -->
       <div v-for="item in items" :key="item._id" class="item-card">
         <h3>{{ item.name }}</h3>
 
         <p>
-          <!-- {{ languageStore.t('status') }} -->Status:
+          {{ languageStore.t('status') }}:
           <span :class="statusClass(item.status)">
             {{ translateStatus(item.status) }}
           </span>
@@ -22,34 +22,34 @@
             :class="['btn', { active: item.status === 'Pending' }]"
             @click="updateStatus(item, 'Pending')"
           >
-            <!-- {{ languageStore.t('pending') }} -->Pending
+            {{ languageStore.t('pending') }} 
           </button>
 
           <button
             :class="['btn', { active: item.status === 'Accepted' }]"
             @click="updateStatus(item, 'Accepted')"
           >
-            <!-- {{ languageStore.t('accepted') }} -->Accepted
+            {{ languageStore.t('accepted') }}
           </button>
 
           <button
             :class="['btn', { active: item.status === 'Completed' }]"
             @click="updateStatus(item, 'Completed')"
           >
-            <!-- {{ languageStore.t('completed') }} -->Completed
+            {{ languageStore.t('completed') }}
           </button>
 
           <button
             :class="['btn', { active: item.status === 'Cancelled' }]"
             @click="openCancelModal(item)"
           >
-            <!-- {{ languageStore.t('cancelled') }} -->Cancelled
+            {{ languageStore.t('cancelled') }}
           </button>
         </div>
 
         <!-- HISTORY -->
         <div class="history">
-          <h4><!-- {{ languageStore.t('history') }} -->History</h4>
+          <h4>{{ languageStore.t('history') }}</h4>
           <ul>
             <li v-for="(log, index) in item.history" :key="index">
               {{ log.time }} →
@@ -64,19 +64,19 @@
     <!-- CANCEL MODAL -->
     <div v-if="showCancelModal" class="modal-overlay">
       <div class="modal">
-        <h3><!-- {{ languageStore.t('whyCancel') }} -->Why Cancel?</h3>
+        <h3>{{ languageStore.t('whyCancel') }}</h3>
 
         <select v-model="selectedReason">
-          <option disabled value=""><!-- {{ languageStore.t('selectReason') }} -->Select Reason</option>
-          <option><!-- {{ languageStore.t('itemNotAvailable') }} -->Item Not Available</option>
-          <option><!-- {{ languageStore.t('changedMyMind') }} -->Changed My Mind</option>
-          <option><!-- {{ languageStore.t('wrongItemSelected') }} -->Wrong Item Selected</option>
-          <option><!-- {{ languageStore.t('other') }} -->Other</option>
+          <option disabled value="">{{ languageStore.t('selectReason') }}</option>
+          <option>{{ languageStore.t('itemNotAvailable') }} </option>
+          <option>{{ languageStore.t('changedMyMind') }} </option>
+          <option>{{ languageStore.t('wrongItemSelected') }}</option>
+          <option>{{ languageStore.t('other') }}</option>
         </select>
 
         <div class="modal-actions">
-          <button @click="confirmCancel">Confirm</button>
-          <button @click="closeModal">Close</button>
+          <button class="modal-btn confirm-btn" @click="confirmCancel">Confirm</button>
+          <button class="modal-btn cancel-btn" @click="closeModal">Cancel</button>
         </div>
       </div>
     </div>
@@ -87,6 +87,9 @@
 import { ref, onMounted } from 'vue'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
 import { getItems, updateStatus as apiUpdateStatus } from '@/services/trackitemuser'
+import { useLanguageStore } from '../stores/language'
+
+const languageStore = useLanguageStore()
 
 /* STATE */
 const items = ref([])
@@ -98,9 +101,12 @@ const selectedItem = ref(null)
 const loadItems = async () => {
   try {
     const res = await getItems()
-    items.value = res.data
+    console.log('Response:', res)
+    items.value = Array.isArray(res.data) ? res.data : res.data?.data || []
+    console.log('Items loaded:', items.value)
   } catch (err) {
     console.error('Load error:', err)
+    items.value = []
   }
 }
 
@@ -283,5 +289,35 @@ onMounted(loadItems)
   margin-top: 15px;
   display: flex;
   justify-content: space-between;
+  gap: 10px;
+}
+
+.modal-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.confirm-btn {
+  background: #1e1b4b;
+  color: white;
+}
+
+.confirm-btn:hover {
+  background: #2d2a5a;
+}
+
+.cancel-btn {
+  background: #e5e7eb;
+  color: #333;
+}
+
+.cancel-btn:hover {
+  background: #d1d5db;
 }
 </style>
