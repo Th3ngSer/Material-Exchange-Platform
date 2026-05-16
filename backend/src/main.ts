@@ -16,14 +16,17 @@ async function bootstrap() {
     }),
   );
 
-  // CORS
   app.enableCors({
-    origin: 'http://localhost:5173',
+    origin: 'http://localhost:5173', // your Vue frontend
     methods: 'GET,POST,PUT,PATCH,DELETE',
     credentials: true,
   });
 
   // Static uploads
+  // Prefix all routes with /api so frontend can call /api/auth/login and /api/auth/register
+  app.setGlobalPrefix('api');
+
+  // Serve uploaded images as static: GET /uploads/filename.jpg
   app.useStaticAssets(
     join(process.cwd(), process.env.UPLOAD_DIR ?? 'uploads'),
     {
@@ -31,12 +34,9 @@ async function bootstrap() {
     },
   );
 
-  const port = process.env.PORT ?? 3000;
-
-  // ✅ IMPORTANT FIX FOR DOCKER
-  await app.listen(port, '0.0.0.0');
-
-  console.log(`🚀 Server running on http://localhost:${port}`);
+  await app.listen(process.env.PORT || 3000);
+  console.log(`Server running on http://localhost:${process.env.PORT || 3000}`);
 }
 
 void bootstrap();
+

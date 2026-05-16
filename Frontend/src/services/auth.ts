@@ -12,6 +12,10 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
  * Parse error response from API
  */
 function parseErrorMessage(error: unknown): string {
+    if (error instanceof TypeError) {
+        return 'Oops! We could not reach the server. Please check your connection and try again.'
+    }
+
     if (error instanceof Response) {
         return 'An error occurred. Please try again.'
     }

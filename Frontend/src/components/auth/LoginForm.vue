@@ -24,19 +24,20 @@ const passwordError = ref('')
 
 // Form state
 const isSubmitting = ref(false)
+const hasSubmitted = ref(false)
 
 /**
  * Validate email input
  */
 function validateEmailInput() {
-  emailError.value = validateEmail(email.value)
+  emailError.value = validateEmail(email.value.trim())
 }
 
 /**
  * Validate password input
  */
 function validatePasswordInput() {
-  if (!password.value) {
+  if (!password.value.trim()) {
     passwordError.value = 'Password is required'
   } else {
     passwordError.value = ''
@@ -47,6 +48,7 @@ function validatePasswordInput() {
  * Handle form submission
  */
 async function handleSubmit() {
+  hasSubmitted.value = true
   // Validate all fields
   validateEmailInput()
   validatePasswordInput()
@@ -60,7 +62,7 @@ async function handleSubmit() {
 
   try {
     const credentials: LoginCredentials = {
-      email: email.value,
+      email: email.value.trim(),
       password: password.value,
     }
 
@@ -83,7 +85,7 @@ async function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit" class="login-form">
-    <h2>Login</h2>
+    <h1 class="login-title">Login into DoOt</h1>
 
     <!-- Error Display -->
     <div v-if="authStore.error" class="error-message" role="alert">
@@ -92,16 +94,17 @@ async function handleSubmit() {
 
     <!-- Email Input -->
     <div class="form-group">
-      <label for="email">Email Address</label>
+      <label for="email" >Enter your Email</label>
       <input
         id="email"
         v-model="email"
         type="email"
-        placeholder="Enter your email"
+        placeholder="Your email here"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validateEmailInput"
+        @input="emailError = ''"
       />
-      <span v-if="emailError" class="field-error">{{ emailError }}</span>
+      <span v-if="emailError && hasSubmitted" class="field-error">{{ emailError }}</span>
     </div>
 
     <!-- Password Input -->
@@ -111,11 +114,12 @@ async function handleSubmit() {
         id="password"
         v-model="password"
         type="password"
-        placeholder="Enter your password"
+        placeholder="Password"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validatePasswordInput"
+        @input="passwordError = ''"
       />
-      <span v-if="passwordError" class="field-error">{{ passwordError }}</span>
+      <span v-if="passwordError && hasSubmitted" class="field-error">{{ passwordError }}</span>
     </div>
 
     <!-- Submit Button -->
@@ -140,24 +144,24 @@ async function handleSubmit() {
 
 <style scoped>
 .login-form {
-  max-width: 400px;
-  margin: 0 auto;
+  max-width: 380px;
   padding: 2rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 5px;
+  border-radius: 16px;
+  background-color: #e7ecf1;
+  box-shadow: 0 16px 30px rgba(8, 10, 40, 0.25);
 }
 
-h2 {
+.login-title {
   text-align: center;
-  margin-bottom: 1.5rem;
-  color: #333;
-  font-size: 1.5rem;
+  margin-bottom: 1.75rem;
+  color: #1b1b1b;
+  font-size: 2rem;
+  font-weight: 700;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 label {
@@ -171,16 +175,16 @@ input {
   width: 100%;
   padding: 0.75rem;
   font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: none;
+  border-radius: 8px;
   box-sizing: border-box;
   transition: border-color 0.3s;
+  background-color: #f7f9fb;
 }
 
 input:focus {
   outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+  box-shadow: 0 0 0 3px rgba(28, 31, 88, 0.15);
 }
 
 input:disabled {
@@ -197,13 +201,14 @@ input:disabled {
 }
 
 .error-message {
-  padding: 0.75rem;
+  padding: 0.85rem 1rem;
   margin-bottom: 1rem;
-  background-color: #fee;
-  border: 1px solid #fcc;
-  border-radius: 4px;
-  color: #c00;
+  background-color: #ffeef2;
+  border: 1px solid #f7c6d3;
+  border-radius: 12px;
+  color: #8a1d3f;
   font-size: 0.9rem;
+  box-shadow: 0 8px 16px rgba(138, 29, 63, 0.08);
 }
 
 .submit-button {

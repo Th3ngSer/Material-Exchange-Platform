@@ -73,6 +73,7 @@ The application will run at `http://localhost:5173` (or another available port).
 ### Authentication Pages
 
 #### Login Page (`/login`)
+
 - Email validation
 - Password input
 - Loading state during submission
@@ -80,6 +81,7 @@ The application will run at `http://localhost:5173` (or another available port).
 - Link to sign-up page
 
 #### Sign-Up Page (`/signup`)
+
 - Email validation with format check
 - Password validation with strength indicator
 - Real-time password strength feedback
@@ -92,6 +94,7 @@ The application will run at `http://localhost:5173` (or another available port).
 - Link to login page
 
 #### Home Page (`/`)
+
 - Displays user email when authenticated
 - Logout button
 - Navigation between auth pages
@@ -124,7 +127,9 @@ All forms include real-time validation:
 The implementation expects these endpoints from the backend:
 
 #### POST `/auth/login`
+
 **Request:**
+
 ```json
 {
   "email": "user@example.com",
@@ -133,6 +138,7 @@ The implementation expects these endpoints from the backend:
 ```
 
 **Response:**
+
 ```json
 {
   "access_token": "jwt_token_here",
@@ -145,7 +151,9 @@ The implementation expects these endpoints from the backend:
 ```
 
 #### POST `/auth/register`
+
 **Request:**
+
 ```json
 {
   "email": "newuser@example.com",
@@ -154,6 +162,7 @@ The implementation expects these endpoints from the backend:
 ```
 
 **Response:**
+
 ```json
 {
   "access_token": "jwt_token_here",
@@ -175,10 +184,10 @@ import { useAuthStore } from '@/stores/auth'
 const authStore = useAuthStore()
 
 // State
-authStore.user              // Current user or null
-authStore.isLoading        // true while API request is in progress
-authStore.error            // Error message or null
-authStore.isAuthenticated  // true if user is logged in
+authStore.user // Current user or null
+authStore.isLoading // true while API request is in progress
+authStore.error // Error message or null
+authStore.isAuthenticated // true if user is logged in
 
 // Methods
 await authStore.login(credentials)
@@ -209,6 +218,7 @@ authStore.initializeAuth()
 ## Testing the Authentication
 
 ### Test Login Flow
+
 1. Start backend at `http://localhost:3000`
 2. Run `npm run dev` in Frontend
 3. Navigate to `http://localhost:5173/login`
@@ -216,6 +226,7 @@ authStore.initializeAuth()
 5. Should redirect to home page showing logged-in user
 
 ### Test Sign-Up Flow
+
 1. Navigate to `http://localhost:5173/signup`
 2. Enter new email and password
 3. Password strength indicator shows real-time feedback
@@ -223,6 +234,7 @@ authStore.initializeAuth()
 5. Should redirect to home page after successful registration
 
 ### Test Validation
+
 1. Try submitting empty forms - validation errors appear
 2. Try invalid email - validation error shows
 3. Try weak password - strength indicator shows "weak"
@@ -255,16 +267,19 @@ See `src/types/auth.ts` for all TypeScript interfaces:
 ## Troubleshooting
 
 ### API Connection Issues
+
 - Ensure backend is running on correct port (default: 3000)
 - Check `VITE_API_URL` in `.env` matches backend URL
 - Check browser console for CORS errors
 
 ### Form Not Submitting
+
 - Check browser console for errors
 - Verify all validation errors are resolved
 - Check network tab to see API request status
 
 ### Token Not Persisting
+
 - Check if `localStorage` is enabled
 - Check if token was returned from backend
 - Check Application tab in DevTools for `authToken`

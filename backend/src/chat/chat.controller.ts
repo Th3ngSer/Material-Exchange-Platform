@@ -39,3 +39,4 @@ export class ChatController {
     return this.chatService.getHistory(user1, user2);
   }
 }
+
