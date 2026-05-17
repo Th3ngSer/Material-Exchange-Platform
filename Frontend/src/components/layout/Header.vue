@@ -1,9 +1,31 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
+const router = useRouter()
+
+type HeaderSearchType = 'All' | 'Sell' | 'Exchange' | 'Borrow'
+
+const selectedType = ref<HeaderSearchType>('All')
+const searchText = ref('')
+
+async function submitHeaderSearch() {
+  const query: Record<string, string> = {}
+  const keyword = searchText.value.trim()
+
+  if (keyword.length > 0) {
+    query.q = keyword
+  }
+
+  if (selectedType.value !== 'All') {
+    query.type = selectedType.value
+  }
+
+  await router.push({ name: 'browse', query })
+}
 </script>
 
 <template>
@@ -35,23 +57,26 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
       <form
         class="mx-auto grid w-full max-w-[452px] grid-cols-[118px_1fr_42px] items-center overflow-hidden rounded-[8px] border border-[#2b2f9161] bg-[#f4f5fb] max-[1100px]:max-w-none max-[1100px]:justify-self-stretch"
         role="search"
+        @submit.prevent="submitHeaderSearch"
       >
         <label class="sr-only" for="home-search">Search materials</label>
         <select
           id="home-search-type"
           aria-label="Search type"
           class="appearance-none border-0 border-r border-[#2b2f912e] bg-transparent px-3 text-[#7b7c98] outline-none cursor-pointer hover:text-[#201f62] transition-colors duration-200"
+          v-model="selectedType"
         >
-          <option>All Types</option>
-          <option>Sell</option>
-          <option>Exchange</option>
-          <option>Borrow</option>
+          <option value="All">All Types</option>
+          <option value="Sell">Sell</option>
+          <option value="Exchange">Exchange</option>
+          <option value="Borrow">Borrow</option>
         </select>
         <input
           id="home-search"
           type="search"
           placeholder="Search materials"
           class="min-w-0 border-0 bg-transparent px-3 outline-none"
+          v-model="searchText"
         />
         <button
           type="submit"
