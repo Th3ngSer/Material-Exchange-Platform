@@ -106,10 +106,10 @@ async function submitHeaderSearch() {
       <!-- message -->
       <div class="inline-flex items-center justify-self-end gap-2">
         <RouterLink
-          to=""
+          to="/messages"
           :class="[
             'grid h-[34px] w-[34px] place-items-center rounded-full transition-colors duration-200',
-            router.currentRoute.value.path.startsWith('')
+            router.currentRoute.value.path.startsWith('/messages')
               ? 'bg-[#f0f1ff] text-[#ff4b42]'
               : 'bg-transparent text-[#201f62] hover:bg-[#f0f1ff]'
           ]"
@@ -124,10 +124,10 @@ async function submitHeaderSearch() {
 
         <!-- Notifications -->
         <RouterLink
-          to=""
+          to="/notifications"
           :class="[
             'grid h-[34px] w-[34px] place-items-center rounded-full transition-colors duration-200',
-            router.currentRoute.value.path.startsWith('')
+            router.currentRoute.value.path.startsWith('/notifications')
               ? 'bg-[#f0f1ff] text-[#ff4b42]'
               : 'bg-transparent text-[#201f62] hover:bg-[#f0f1ff]'
           ]"
