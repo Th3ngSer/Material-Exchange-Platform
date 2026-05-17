@@ -27,7 +27,7 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
         >
         <RouterLink
           class="ml-20 text-[16px] font-bold text-[#201f62] no-underline text-center cursor-pointer hover:text-[#ff4b42] transition-colors duration-200"
-          to="/create-post"
+          to="/posts/create"
           ><!-- {{ languageStore.t('post') }} -->Create Post</RouterLink
         >
       </nav>
