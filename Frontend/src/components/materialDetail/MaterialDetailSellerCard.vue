@@ -1,4 +1,12 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+
+const isFollowed = ref(false)
+
+const toggleFollow = () => {
+  isFollowed.value = !isFollowed.value
+}
+
 const props = defineProps<{
   name: string
   rating: number
@@ -44,8 +52,15 @@ const initials = (props.name || 'U')
     </div>
 
     <div class="mt-4 grid grid-cols-2 gap-3">
-      <button type="button" class="rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#23216e] ring-1 ring-[#e0e2f3] transition hover:bg-[#f5f6ff]">
-        Follow
+      <button
+        type="button"
+        @click="toggleFollow"
+        :class="isFollowed
+          ? 'bg-[#23216e] text-white ring-[#23216e]'
+          : 'bg-white text-[#23216e] ring-[#e0e2f3] hover:bg-[#f5f6ff]'"
+        class="rounded-full px-4 py-2 text-sm font-semibold ring-1 transition"
+      >
+        {{ isFollowed ? 'Followed' : 'Follow' }}
       </button>
       <button type="button" class="rounded-full bg-[#ff8c00] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#ff9d21]">
         Message
