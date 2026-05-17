@@ -99,4 +99,27 @@ export const authApi = {
             throw new Error(parseErrorMessage(error))
         }
     },
+
+    async getProfile(token: string): Promise<AuthResponse['user']> {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/me`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}))
+                throw {
+                    statusCode: response.status,
+                    message: error.message || 'Failed to load profile.',
+                }
+            }
+
+            return await response.json()
+        } catch (error) {
+            throw new Error(parseErrorMessage(error))
+        }
+    },
 }

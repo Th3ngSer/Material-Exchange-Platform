@@ -7,7 +7,9 @@ export type TrackItemUserDocument = TrackItemUser & Document;
   timestamps: true,
   toJSON: {
     transform: (doc, ret) => {
-      const { _id, __v, ...result } = ret;
+      const { _id: _unusedId, __v: _unusedV, ...result } = ret;
+      void _unusedId;
+      void _unusedV;
       return result;
     },
   },

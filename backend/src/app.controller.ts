@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
-import { Connection } from 'mongoose';
+import { Connection, ConnectionStates } from 'mongoose';
 
 @Controller()
 export class AppController {
@@ -9,7 +9,10 @@ export class AppController {
   @Get('db-status')
   getDbStatus() {
     return {
-      status: this.connection.readyState === 1 ? 'connected' : 'disconnected',
+      status:
+        this.connection.readyState === ConnectionStates.connected
+          ? 'connected'
+          : 'disconnected',
       readyState: this.connection.readyState,
     };
   }

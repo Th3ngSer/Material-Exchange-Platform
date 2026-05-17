@@ -53,7 +53,7 @@ const router = createRouter({
     { path: '/profile/language', name: 'language-information', component: LangaugeInformation },
     { path: '/profile/logout', name: 'logout-information', component: LogoutInformation },
     { path: '/profile/payment', name: 'payment-information', component: PaymentInformation },
-    { path: '/profile/tracker', name: 'trackItem', component: TrackingInformation},
+    { path: '/profile/tracker', name: 'trackItem', component: TrackingInformation },
 
     // Admin routes
     { path: '/admin', name: 'SuperAdmin', component: AdminDashboard, meta: { requiresAdmin: true } },
@@ -70,11 +70,13 @@ const router = createRouter({
 function getRoleFromToken(token: string | null) {
   if (!token) return null
 
-  const parts = token.split('.')
+  const parts = String(token).split('.')
   if (parts.length < 2) return null
 
   try {
-    const payload = JSON.parse(atob(parts[1])) as { role?: string }
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
+    const payload = JSON.parse(atob(padded)) as { role?: string }
     return payload.role ?? null
   } catch {
     return null
@@ -87,7 +89,7 @@ router.beforeEach((to) => {
   }
 
   const authStore = useAuthStore()
-  const token = localStorage.getItem('authToken')
+  const token = sessionStorage.getItem('authToken')
   const role = authStore.user?.role ?? getRoleFromToken(token)
 
   if (!token) {

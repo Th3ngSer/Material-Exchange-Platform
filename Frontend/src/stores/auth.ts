@@ -41,8 +41,8 @@ export const useAuthStore = defineStore('auth', () => {
       // Store user data
       user.value = response.user
 
-      // Store token in localStorage for subsequent requests
-      localStorage.setItem('authToken', response.accessToken)
+      // Store token per-tab
+      sessionStorage.setItem('authToken', response.accessToken)
 
       return response
     } catch (err) {
@@ -68,8 +68,8 @@ export const useAuthStore = defineStore('auth', () => {
       // Store user data
       user.value = response.user
 
-      // Store token in localStorage for subsequent requests
-      localStorage.setItem('authToken', response.accessToken)
+      // Store token per-tab
+      sessionStorage.setItem('authToken', response.accessToken)
 
       return response
     } catch (err) {
@@ -89,7 +89,7 @@ export const useAuthStore = defineStore('auth', () => {
   function logout() {
     user.value = null
     error.value = null
-    localStorage.removeItem('authToken')
+    sessionStorage.removeItem('authToken')
   }
 
   /**
@@ -103,11 +103,17 @@ export const useAuthStore = defineStore('auth', () => {
    * Initialize auth state (e.g., from localStorage on app startup)
    * This should be called when the app mounts to restore session if token exists
    */
-  function initializeAuth() {
-    const token = localStorage.getItem('authToken')
-    // In a real app, you might validate the token or fetch user data from an endpoint
-    // For now, we just check if token exists
+  async function initializeAuth() {
+    const token = sessionStorage.getItem('authToken')
     if (!token) {
+      logout()
+      return
+    }
+
+    try {
+      const profile = await authApi.getProfile(token)
+      user.value = profile
+    } catch {
       logout()
     }
   }
