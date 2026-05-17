@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import Footer from '@/components/layout/Footer.vue'
@@ -8,6 +8,13 @@ import MaterialDetailGallery from '@/components/materialDetail/MaterialDetailGal
 import MaterialDetailSellerCard from '@/components/materialDetail/MaterialDetailSellerCard.vue'
 import RelatedMaterialCard from '@/components/materialDetail/MaterialCard.vue'
 import { defaultMaterials, getMaterialById, type MaterialItem, type MaterialTone } from '@/data/materials'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+
+let gmap: any = null
+let marker: any = null
+let lmap: L.Map | null = null
+let lmarker: L.Marker | null = null
 
 const route = useRoute()
 const router = useRouter()
@@ -83,6 +90,152 @@ const detailStats = computed(() => [
   { label: 'Location', value: currentPost.value.location },
   { label: 'Listed', value: formatRelativeTime(currentPost.value.postedTime) },
 ])
+
+const mapContainer = ref<HTMLDivElement | null>(null)
+
+const hasCoordinates = computed(() => {
+  return typeof currentPost.value.lat === 'number' && typeof currentPost.value.lng === 'number'
+})
+
+const mapError = ref('')
+
+function viewInGoogleMapsUrl() {
+  if (!hasCoordinates.value) return '#'
+  return `https://www.google.com/maps/search/?api=1&query=${currentPost.value.lat},${currentPost.value.lng}`
+}
+
+async function initMapGoogle() {
+  if (!mapContainer.value) return
+  if (!hasCoordinates.value) return
+
+  // Clean up existing maps
+  if (gmap) {
+    try {
+      marker?.setMap(null)
+    } catch (e) {
+      // ignore
+    }
+    gmap = null
+  }
+  if (lmap) {
+    try {
+      lmarker?.remove()
+      lmap.remove()
+    } catch (e) {
+      // ignore
+    }
+    lmap = null
+    lmarker = null
+  }
+
+  const apiKey = String(import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '')
+  const coords = { lat: currentPost.value.lat!, lng: currentPost.value.lng! }
+
+  // Try Google Maps if API key exists
+  if (apiKey) {
+    try {
+      // Load Google Maps library dynamically
+      const mapsScript = document.createElement('script')
+      mapsScript.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=weekly`
+      
+      await new Promise<void>((resolve, reject) => {
+        mapsScript.onload = () => resolve()
+        mapsScript.onerror = () => reject(new Error('Failed to load Google Maps script'))
+        document.head.appendChild(mapsScript)
+      })
+
+      gmap = new (window as any).google.maps.Map(mapContainer.value as HTMLElement, {
+        center: coords,
+        zoom: 13,
+        disableDefaultUI: false,
+      })
+
+      marker = new (window as any).google.maps.Marker({ position: coords, map: gmap })
+      mapError.value = ''
+      return
+    } catch (err: any) {
+      const msg = `Failed to load Google Maps: ${err?.message || err}`
+      console.error(msg, err)
+      mapError.value = msg
+    }
+  }
+
+  // Fallback to Leaflet/OpenStreetMap
+  console.info('Using Leaflet/OpenStreetMap as fallback (no Google Maps API key)')
+  try {
+    const leafletCoords: [number, number] = [coords.lat, coords.lng]
+
+    lmap = L.map(mapContainer.value as HTMLElement, {
+      center: leafletCoords,
+      zoom: 13,
+      scrollWheelZoom: false,
+    })
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(lmap)
+
+    // Use Leaflet's built-in marker with fixed icons from CDN
+    lmarker = L.marker(leafletCoords, {
+      icon: L.icon({
+        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+      }),
+    }).addTo(lmap)
+    
+    mapError.value = ''
+  } catch (err: any) {
+    const msg = `Failed to load Leaflet: ${err?.message || err}`
+    console.error(msg, err)
+    mapError.value = msg
+  }
+}
+onMounted(() => {
+  // init on mount
+  initMapGoogle()
+})
+
+watch(
+  () => route.params.id,
+  () => {
+    // re-init when route changes
+    setTimeout(() => initMapGoogle(), 0)
+  },
+)
+
+onBeforeUnmount(() => {
+  if (marker) {
+    try {
+      marker.setMap(null)
+    } catch (e) {
+      // ignore
+    }
+    marker = null
+  }
+  gmap = null
+
+  if (lmarker) {
+    try {
+      lmarker.remove()
+    } catch (e) {
+      // ignore
+    }
+    lmarker = null
+  }
+  if (lmap) {
+    try {
+      lmap.remove()
+    } catch (e) {
+      // ignore
+    }
+    lmap = null
+  }
+})
 </script>
 
 <template>
@@ -246,14 +399,29 @@ const detailStats = computed(() => [
             </template>
           </div>
 
-          <!-- Location Map Placeholder -->
+          <!-- Location Map -->
           <div class="rounded-lg bg-[#e8f4f7] p-4">
             <div class="flex items-center justify-between rounded-full bg-white px-3 py-2 text-xs font-semibold text-[#1f245e] shadow-sm mb-3">
               <span>{{ currentPost.location }}</span>
               <span>{{ formatRelativeTime(currentPost.postedTime) }}</span>
             </div>
-            <div class="relative min-h-[300px] overflow-hidden rounded-lg bg-[#eef6f8] flex items-center justify-center">
-              <div class="text-[#6b7280] text-lg font-semibold">Map</div>
+
+            <div class="relative min-h-[300px] overflow-hidden rounded-lg bg-[#eef6f8]">
+              <div v-if="hasCoordinates" class="space-y-2">
+                <div v-if="mapError" class="h-[300px] flex items-center justify-center text-center px-4 bg-red-50 rounded-lg">
+                  <div>
+                    <p class="text-sm font-semibold text-[#b33131]">{{ mapError }}</p>
+                    <p class="text-xs text-[#6b7280] mt-2">Check browser console for more details.</p>
+                  </div>
+                </div>
+                <div v-else ref="mapContainer" class="h-[300px] w-full rounded-lg"></div>
+                <div class="text-right">
+                  <a :href="viewInGoogleMapsUrl()" target="_blank" rel="noopener" class="text-sm font-semibold text-[#1b1748]">Open in Google Maps</a>
+                </div>
+              </div>
+              <div v-else class="flex h-[300px] items-center justify-center">
+                <div class="text-[#6b7280] text-lg font-semibold">Map unavailable for this listing</div>
+              </div>
             </div>
           </div>
         </div>
