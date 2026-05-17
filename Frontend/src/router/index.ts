@@ -16,6 +16,7 @@ import EditPost from '../views/EditPost.vue'
 import MaterialDetailView from '../views/MaterialDetailView.vue'
 // HomeView
 import HomeView from '../views/HomeView.vue'
+import BrowseView from '../views/BrowseView.vue'
 // Auth 
 import LoginView from '../views/LoginView.vue'
 import PostsList from '../views/PostsList.vue'
@@ -35,6 +36,7 @@ const router = createRouter({
   routes: [
     { path: '/', redirect: '/home' },
     { path: '/home', name: 'home', component: HomeView },
+    { path: '/browse', name: 'browse', component: BrowseView },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/signup', name: 'signup', component: SignUpView },
 

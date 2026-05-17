@@ -20,14 +20,14 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
       </RouterLink>
 
       <nav class="inline-flex gap-5 max-[1100px]:hidden text-center" aria-label="Primary">
-        <a
+        <RouterLink
           class="ml-20 text-[16px] font-bold text-[#201f62] no-underline text-center cursor-pointer hover:text-[#ff4b42] transition-colors duration-200"
-          href="#categories"
-          ><!-- {{ languageStore.t('browse') }} -->Browse</a
+          to="/browse#categories"
+          ><!-- {{ languageStore.t('browse') }} -->Browse</RouterLink
         >
         <RouterLink
           class="ml-20 text-[16px] font-bold text-[#201f62] no-underline text-center cursor-pointer hover:text-[#ff4b42] transition-colors duration-200"
-          to="/create-post"
+          to="/posts/create"
           ><!-- {{ languageStore.t('post') }} -->Create Post</RouterLink
         >
       </nav>
