@@ -3,24 +3,24 @@
     <Sidebar />
 
     <div class="content">
-      <h2 class="title"><!-- {{ languageStore.t('language') }} -->Language</h2>
+      <h2 class="title">{{ languageStore.t('language') }}</h2>
 
       <form class="language-form" @submit.prevent="saveLanguage">
         <!-- Khmer option -->
         <label class="option">
           <input type="radio" value="Khmer" v-model="selectedLanguage" />
-          <span><!-- {{ languageStore.t('khmer') }} -->Khmer</span>
+          <span>{{ languageStore.t('khmer') }}</span>
         </label>
 
         <!-- English option -->
         <label class="option">
           <input type="radio" value="English" v-model="selectedLanguage" />
-          <span><!-- {{ languageStore.t('english') }} -->English</span>
+          <span>{{ languageStore.t('english') }}</span>
         </label>
 
         <!-- Save button -->
         <div class="form-actions">
-          <button class="btn save" type="submit"><!-- {{ languageStore.t('save') }} -->Save</button>
+          <button class="btn save" type="submit">{{ languageStore.t('save') }}</button>
         </div>
       </form>
 
@@ -31,16 +31,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
+import { useLanguageStore } from '../stores/language'
 
-const selectedLanguage = ref('English')
+const languageStore = useLanguageStore()
+const selectedLanguage = ref(languageStore.language)
 const message = ref('')
+
+const selectedLabel = computed(() =>
+  selectedLanguage.value === 'Khmer'
+    ? languageStore.t('khmer')
+    : languageStore.t('english'),
+)
+
+onMounted(() => {
+  languageStore.initializeLanguage()
+  selectedLanguage.value = languageStore.language
+})
 
 const saveLanguage = () => {
   if (!selectedLanguage.value) return
-  const label = selectedLanguage.value === 'Khmer' ? 'Khmer' : 'English'
-  message.value = `Language changed to ${label}`
+  languageStore.setLanguage(selectedLanguage.value)
+  message.value = `${languageStore.t('languageChanged')} ${selectedLabel.value}`
 }
 </script>
 

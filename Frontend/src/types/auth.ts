@@ -11,7 +11,10 @@ export interface User {
   email: string
   name?: string
   role?: string
-  createdAt: string
+  status?: string
+  listingsCount?: number
+  rating?: number
+  createdAt?: string
   updatedAt?: string
 }
 

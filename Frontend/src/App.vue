@@ -6,8 +6,8 @@ import { useLanguageStore } from './stores/language'
 const authStore = useAuthStore()
 const languageStore = useLanguageStore()
 
-onMounted(() => {
-  authStore.initializeAuth()
+onMounted(async () => {
+  await authStore.initializeAuth()
   languageStore.initializeLanguage()
 })
 </script>

@@ -15,7 +15,12 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
 
       <nav class="inline-flex gap-5 max-[1100px]:hidden text-center" aria-label="Primary">
         <a class="ml-20 text-[16px] font-bold text-[#201f62] no-underline text-center" href="#categories">Browse</a>
-        <a class="ml-20 text-[16px] font-bold text-[#201f62] no-underline text-center" href="#listings">Post</a>
+        <!-- <a class="ml-20 text-[16px] font-bold text-[#201f62] no-underline text-center" href="#listings">Post</a> -->
+        <router-link 
+          class="ml-20 text-[16px] font-bold text-[#201f62] no-underline text-center" 
+          to="/posts/create">
+          Post
+        </router-link>
       </nav>
 
       <form class="mx-auto grid w-full max-w-[452px] grid-cols-[118px_1fr_42px] items-center overflow-hidden rounded-[8px] border border-[#2b2f9161] bg-[#f4f5fb] max-[1100px]:max-w-none max-[1100px]:justify-self-stretch" role="search">

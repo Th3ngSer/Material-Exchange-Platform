@@ -40,7 +40,8 @@ const router = createRouter({
     { path: '/signup', name: 'signup', component: SignUpView },
 
     { path: '/posts', name: 'posts', component: PostsList },
-    { path: '/posts/create', name: 'create-post', component: CreatePost },
+
+    { path: '/posts/create', name: 'create-post', component: CreatePost, meta: { requiresAuth: true } },
     { path: '/posts/:id', name: 'post-detail', component: MaterialDetailView },
     { path: '/posts/:id/edit', name: 'edit-post', component: EditPost },
 
@@ -101,6 +102,17 @@ router.beforeEach((to) => {
   }
 
   return true
+})
+
+
+// add guard to check for authenticated access before post
+router.beforeEach((to, _from, next) => {
+  const authStore = useAuthStore()
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    next('/login')
+  } else {
+    next()
+  }
 })
 
 export default router

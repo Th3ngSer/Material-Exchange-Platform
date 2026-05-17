@@ -3,7 +3,7 @@
  * Centralized configuration for backend API calls
  */
 
-import type { AuthResponse, LoginCredentials, RegisterCredentials, ApiError } from '@/types/auth'
+import type { AuthResponse, LoginCredentials, RegisterCredentials, ApiError, User } from '@/types/auth'
 
 // Backend API base URL - adjust if your backend runs on a different port/host
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
@@ -100,7 +100,7 @@ export const authApi = {
         }
     },
 
-    async getProfile(token: string): Promise<AuthResponse['user']> {
+    async getProfile(token: string): Promise<User> {
         try {
             const response = await fetch(`${API_BASE_URL}/auth/me`, {
                 headers: {

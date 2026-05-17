@@ -10,6 +10,7 @@
     "test:unit": "vitest",
     "test:e2e": "playwright test",
     "build-only": "vite build",
+    "lint": "eslint \"src/**/*.{ts,vue}\" --max-warnings=0",
     "type-check": "vue-tsc --build",
     "format": "prettier --write --experimental-cli src/"
   },
@@ -29,7 +30,12 @@
     "@vitejs/plugin-vue-jsx": "^5.1.4",
     "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.9.0",
+    "@eslint/js": "^9.35.0",
+    "@typescript-eslint/eslint-plugin": "^8.28.0",
+    "@typescript-eslint/parser": "^8.28.0",
     "autoprefixer": "^10.5.0",
+    "eslint": "^9.35.0",
+    "eslint-plugin-vue": "^9.29.0",
     "jsdom": "^28.1.0",
     "npm-run-all2": "^8.0.4",
     "postcss": "^8.5.10",
@@ -39,7 +45,8 @@
     "vite": "^7.3.1",
     "vite-plugin-vue-devtools": "^8.0.7",
     "vitest": "^4.0.18",
-    "vue-tsc": "^3.2.5"
+    "vue-tsc": "^3.2.5",
+    "vue-eslint-parser": "^9.4.3"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
