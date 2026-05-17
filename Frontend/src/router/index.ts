@@ -66,6 +66,9 @@ const router = createRouter({
     { path: '/admin/transactions', name: 'admin-transactions', component: AdminTransactions },
     { path: '/admin/users', name: 'admin-users', component: AdminUsers },
   ],
+  scrollBehavior(to, from, savedPosition) {
+    return { top: 0 }
+  }
 })
 
 export default router
