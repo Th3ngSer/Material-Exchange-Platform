@@ -31,7 +31,7 @@ async function submitHeaderSearch() {
 <template>
   <header class="sticky top-0 z-20 border-b border-[#22245f1a] bg-white">
     <div
-      class="mx-auto grid min-h-[66px] w-full max-w-[1920px] grid-cols-[auto_auto_1fr_auto] items-center gap-3 px-3 py-1 max-[1100px]:grid-cols-1 max-[1100px]:gap-2"
+      class="mx-auto grid min-h-[66px] w-full max-w-[1500px] grid-cols-[auto_auto_1fr_auto] items-center gap-3 px-3 py-1 max-[1100px]:grid-cols-1 max-[1100px]:gap-2"
     >
       <RouterLink
         class="inline-flex items-baseline text-[32px] font-extrabold tracking-[-0.04em] no-underline cursor-pointer hover:opacity-80 transition-opacity duration-200"
@@ -103,12 +103,13 @@ async function submitHeaderSearch() {
         </button>
       </form>
 
+      <!-- message -->
       <div class="inline-flex items-center justify-self-end gap-2">
         <RouterLink
-          to="/messages"
+          to=""
           :class="[
             'grid h-[34px] w-[34px] place-items-center rounded-full transition-colors duration-200',
-            router.currentRoute.value.path.startsWith('/messages')
+            router.currentRoute.value.path.startsWith('')
               ? 'bg-[#f0f1ff] text-[#ff4b42]'
               : 'bg-transparent text-[#201f62] hover:bg-[#f0f1ff]'
           ]"
@@ -120,11 +121,13 @@ async function submitHeaderSearch() {
             />
           </svg>
         </RouterLink>
+
+        <!-- Notifications -->
         <RouterLink
-          to="/notifications"
+          to=""
           :class="[
             'grid h-[34px] w-[34px] place-items-center rounded-full transition-colors duration-200',
-            router.currentRoute.value.path.startsWith('/notifications')
+            router.currentRoute.value.path.startsWith('')
               ? 'bg-[#f0f1ff] text-[#ff4b42]'
               : 'bg-transparent text-[#201f62] hover:bg-[#f0f1ff]'
           ]"

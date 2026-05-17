@@ -74,7 +74,7 @@ const displayedMaterials = computed(() => filteredMaterials.value.slice(0, 20))
   <div class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.9),_rgba(245,245,250,0.95)_30%,_#f5f5f7_65%),linear-gradient(180deg,_#f4f4f8_0%,_#ffffff_20%,_#ffffff_100%)] text-[#15152d]">
     <Header />
     <HomeHero class="pl-20"/>
-    <main class="mx-auto w-[min(1880px,calc(100%-32px))] max-[768px]:w-[min(100%-20px,100%)]">
+    <main class="mx-auto w-[min(1500px,calc(100%-32px))] max-[768px]:w-[min(100%-20px,100%)]">
       
 
       <section class="py-7 pb-12 max-[768px]:pt-5">
