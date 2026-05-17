@@ -43,15 +43,27 @@ async function submitHeaderSearch() {
 
       <nav class="inline-flex gap-5 max-[1100px]:hidden text-center" aria-label="Primary">
         <RouterLink
-          class="ml-20 text-[16px] font-bold text-[#201f62] no-underline text-center cursor-pointer hover:text-[#ff4b42] transition-colors duration-200"
+          :class="[
+            'ml-20 text-[16px] font-bold no-underline text-center cursor-pointer transition-colors duration-200',
+            router.currentRoute.value.path.startsWith('/browse')
+              ? 'text-[#ff4b42]'
+              : 'text-[#201f62] hover:text-[#ff4b42]'
+          ]"
           to="/browse#categories"
-          ><!-- {{ languageStore.t('browse') }} -->Browse</RouterLink
         >
+          Browse
+        </RouterLink>
         <RouterLink
-          class="ml-20 text-[16px] font-bold text-[#201f62] no-underline text-center cursor-pointer hover:text-[#ff4b42] transition-colors duration-200"
+          :class="[
+            'ml-20 text-[16px] font-bold no-underline text-center cursor-pointer transition-colors duration-200',
+            router.currentRoute.value.path.startsWith('/posts/create')
+              ? 'text-[#ff4b42]'
+              : 'text-[#201f62] hover:text-[#ff4b42]'
+          ]"
           to="/posts/create"
-          ><!-- {{ languageStore.t('post') }} -->Create Post</RouterLink
         >
+          Create Post
+        </RouterLink>
       </nav>
 
       <form
@@ -92,16 +104,30 @@ async function submitHeaderSearch() {
       </form>
 
       <div class="inline-flex items-center justify-self-end gap-2">
-        <button class="grid h-[34px] w-[34px] place-items-center rounded-full border-0 bg-transparent text-[#201f62] cursor-pointer hover:bg-[#f0f1ff] transition-colors duration-200" type="button" aria-label="Messages" @click="">
+        <RouterLink
+          to="/messages"
+          :class="[
+            'grid h-[34px] w-[34px] place-items-center rounded-full transition-colors duration-200',
+            router.currentRoute.value.path.startsWith('/messages')
+              ? 'bg-[#f0f1ff] text-[#ff4b42]'
+              : 'bg-transparent text-[#201f62] hover:bg-[#f0f1ff]'
+          ]"
+          aria-label="Messages"
+        >
           <svg viewBox="0 0 24 24" aria-hidden="true" class="h-[25px] w-[25px] fill-current">
             <path
               d="M20 4H4a2 2 0 0 0-2 2v13.17L5.17 16H20a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 10H4.34L4 14.34V6h16v8Z"
             />
           </svg>
-        </button>
-        <button
-          class="grid h-[34px] w-[34px] place-items-center rounded-full border-0 bg-transparent text-[#201f62] cursor-pointer hover:bg-[#f0f1ff] transition-colors duration-200"
-          type="button"
+        </RouterLink>
+        <RouterLink
+          to="/notifications"
+          :class="[
+            'grid h-[34px] w-[34px] place-items-center rounded-full transition-colors duration-200',
+            router.currentRoute.value.path.startsWith('/notifications')
+              ? 'bg-[#f0f1ff] text-[#ff4b42]'
+              : 'bg-transparent text-[#201f62] hover:bg-[#f0f1ff]'
+          ]"
           aria-label="Notifications"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" class="h-[25px] w-[25px] fill-current">
@@ -109,7 +135,7 @@ async function submitHeaderSearch() {
               d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm8-6V11a8 8 0 1 0-16 0v5L2 18v1h20v-1l-2-2Zm-2 0H6v-5a6 6 0 1 1 12 0v5Z"
             />
           </svg>
-        </button>
+        </RouterLink>
         <RouterLink
           v-if="!isAuthenticated"
           class="whitespace-nowrap text-[16px] font-bold text-[#201f62] no-underline"
