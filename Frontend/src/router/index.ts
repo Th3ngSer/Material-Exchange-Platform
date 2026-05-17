@@ -13,6 +13,7 @@ import Chat from '../views/Chat.vue'
 // Posts Create
 import CreatePost from '../views/CreatePost.vue'
 import EditPost from '../views/EditPost.vue'
+import { useAuthStore } from '@/stores/auth'
 import MaterialDetailView from '../views/MaterialDetailView.vue'
 // HomeView
 import HomeView from '../views/HomeView.vue'
@@ -41,7 +42,8 @@ const router = createRouter({
     { path: '/signup', name: 'signup', component: SignUpView },
 
     { path: '/posts', name: 'posts', component: PostsList },
-    { path: '/posts/create', name: 'create-post', component: CreatePost },
+
+    { path: '/posts/create', name: 'create-post', component: CreatePost, meta: { requiresAuth: true } },
     { path: '/posts/:id', name: 'post-detail', component: MaterialDetailView },
     { path: '/posts/:id/edit', name: 'edit-post', component: EditPost },
 
@@ -68,6 +70,17 @@ const router = createRouter({
   ],
   scrollBehavior(to, from, savedPosition) {
     return { top: 0 }
+  }
+})
+
+
+// add guard to check for authenticated access before post
+router.beforeEach((to, _from, next) => {
+  const authStore = useAuthStore()
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    next('/login')
+  } else {
+    next()
   }
 })
 
