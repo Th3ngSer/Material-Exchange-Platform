@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 
 import Footer from '@/components/layout/Footer.vue'
 import Header from '@/components/layout/Header.vue'
@@ -22,6 +23,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   materials: () => defaultMaterials,
 })
+
+const route = useRoute()
 
 const categoryOptions: Category[] = ['All', 'Sell', 'Exchange', 'Borrow']
 const sortOptions: SortOption[] = ['Newest', 'A-Z', 'Z-A', 'Price: Low to High', 'Price: High to Low']
@@ -193,6 +196,16 @@ function clearFilters() {
   browseType.value = 'items'
 }
 
+function applyHeaderSearchFromRoute() {
+  const routeQuery = typeof route.query.q === 'string' ? route.query.q : ''
+  const routeType = typeof route.query.type === 'string' ? route.query.type : 'All'
+  const normalizedType = categoryOptions.includes(routeType as Category) ? (routeType as Category) : 'All'
+
+  searchQuery.value = routeQuery
+  selectedCategory.value = normalizedType
+  browseType.value = 'items'
+}
+
 const filteredMaterials = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
 
@@ -324,10 +337,18 @@ watch(
 )
 
 onMounted(async () => {
+  applyHeaderSearchFromRoute()
   await nextTick()
   observeFilterTriggerVisibility()
   observePagingSentinel()
 })
+
+watch(
+  () => [route.query.q, route.query.type],
+  () => {
+    applyHeaderSearchFromRoute()
+  },
+)
 
 onBeforeUnmount(() => {
   if (filterVisibilityObserver) {
