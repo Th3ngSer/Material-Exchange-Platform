@@ -65,6 +65,9 @@ const filteredMaterials = computed(() => {
 })
 
 const featuredCount = computed(() => filteredMaterials.value.length)
+
+// Limit displayed materials to 20 items for any category/filter
+const displayedMaterials = computed(() => filteredMaterials.value.slice(0, 20))
 </script>
 
 <template>
@@ -86,7 +89,7 @@ const featuredCount = computed(() => filteredMaterials.value.length)
         />
 
         <div class="mt-7 grid justify-center gap-6 [grid-template-columns:repeat(auto-fill,minmax(320px,320px))] max-[768px]:gap-4 max-[768px]:[grid-template-columns:repeat(auto-fill,minmax(250px,250px))]" aria-label="Material listings">
-          <MaterialCard v-for="item in filteredMaterials" :key="item.id" :item="item" />
+          <MaterialCard v-for="item in displayedMaterials" :key="item.id" :item="item" />
         </div>
       </section>
     </main>
