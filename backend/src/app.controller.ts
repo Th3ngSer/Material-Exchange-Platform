@@ -1,12 +1,16 @@
 import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { InjectConnection } from '@nestjs/mongoose';
+import { Connection } from 'mongoose';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(@InjectConnection() private connection: Connection) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @Get('db-status')
+  getDbStatus() {
+    return {
+      status: this.connection.readyState === 1 ? 'connected' : 'disconnected',
+      readyState: this.connection.readyState,
+    };
   }
 }

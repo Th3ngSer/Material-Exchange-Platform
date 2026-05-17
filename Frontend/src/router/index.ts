@@ -14,6 +14,7 @@ import Chat from '../views/Chat.vue'
 import CreatePost from '../views/CreatePost.vue'
 import EditPost from '../views/EditPost.vue'
 import { useAuthStore } from '@/stores/auth'
+import MaterialDetailView from '../views/MaterialDetailView.vue'
 // HomeView
 import HomeView from '../views/HomeView.vue'
 // Auth 
@@ -27,6 +28,7 @@ import HelpProfile from '../user/HelpProfile.vue'
 import LangaugeInformation from '../user/LangaugeInformation.vue'
 import LogoutInformation from '@/user/LogoutInformation.vue'
 import PaymentInformation from '@/user/PaymentInformation.vue'
+import TrackingInformation from '@/user/TrackingInformation.vue'
 
 
 const router = createRouter({
@@ -38,7 +40,9 @@ const router = createRouter({
     { path: '/signup', name: 'signup', component: SignUpView },
 
     { path: '/posts', name: 'posts', component: PostsList },
+
     { path: '/posts/create', name: 'create-post', component: CreatePost, meta: { requiresAuth: true } },
+    { path: '/posts/:id', name: 'post-detail', component: MaterialDetailView },
     { path: '/posts/:id/edit', name: 'edit-post', component: EditPost },
 
     { path: '/chat', name: 'chat', component: Chat },
@@ -50,6 +54,7 @@ const router = createRouter({
     { path: '/profile/language', name: 'language-information', component: LangaugeInformation },
     { path: '/profile/logout', name: 'logout-information', component: LogoutInformation },
     { path: '/profile/payment', name: 'payment-information', component: PaymentInformation },
+    { path: '/profile/tracker', name: 'trackItem', component: TrackingInformation},
 
     // Admin routes
     { path: '/admin', name: 'SuperAdmin', component: AdminDashboard },
@@ -65,7 +70,7 @@ const router = createRouter({
 
 
 // add guard to check for authenticated access before post
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const authStore = useAuthStore()
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')

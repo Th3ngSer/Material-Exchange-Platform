@@ -5,10 +5,14 @@
   </div>
 </template>
 
-<script setup>
-defineProps({
-  label: String,
-  icon: String
+<script lang="ts">
+import { defineComponent } from 'vue'
+
+export default defineComponent({
+  props: {
+    label: String,
+    icon: String,
+  },
 })
 </script>
 
@@ -21,7 +25,9 @@ defineProps({
   cursor: pointer;
   border-radius: 8px;
   color: #cbd5e1;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 /* Hover effect */

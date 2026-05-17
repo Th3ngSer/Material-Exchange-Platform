@@ -16,7 +16,11 @@ async function bootstrap() {
     }),
   );
 
-  app.enableCors();
+  app.enableCors({
+    origin: 'http://localhost:5173', // your Vue frontend
+    methods: 'GET,POST,PUT,PATCH,DELETE',
+    credentials: true,
+  });
 
   // Prefix all routes with /api so frontend can call /api/auth/login and /api/auth/register
   app.setGlobalPrefix('api');
@@ -29,7 +33,7 @@ async function bootstrap() {
     },
   );
 
-  await app.listen(process.env.PORT ?? 3000);
-  console.log(`Server running on http://localhost:${process.env.PORT ?? 3000}`);
+  await app.listen(process.env.PORT || 3000);
+  console.log(`Server running on http://localhost:${process.env.PORT || 3000}`);
 }
 void bootstrap();

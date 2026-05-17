@@ -1,17 +1,10 @@
 <template>
   <div class="avatar-container">
-
     <!-- Avatar Image -->
-    <img
-      :src="previewImage"
-      
-      class="avatar"
-    />
+    <img :src="previewImage" class="avatar" />
 
     <!-- Change Photo Button -->
-    <p class="change-photo" @click="triggerFile">
-      Change photo
-    </p>
+    <p class="change-photo" @click="triggerFile">Change photo</p>
 
     <!-- Welcome Text -->
     <div class="avatar-text">
@@ -19,61 +12,62 @@
     </div>
 
     <!-- Hidden File Input -->
-    <input
-      ref="fileInput"
-      type="file"
-      accept="image/*"
-      @change="onFileChange"
-      hidden
-    />
-
+    <input ref="fileInput" type="file" accept="image/*" @change="onFileChange" hidden />
   </div>
 </template>
 
-<script setup>
-import { ref, watch, onMounted } from 'vue'
+<script lang="ts">
+import { defineComponent, ref, watch, onMounted } from 'vue'
 
-const props = defineProps({
-  name: String,
-  image: String
-})
+export default defineComponent({
+  props: {
+    name: String,
+    image: String,
+  },
+  setup(props) {
+    const fileInput = ref<HTMLInputElement | null>(null)
+    const previewImage = ref(props.image || '')
 
-const fileInput = ref(null)
-const previewImage = ref(props.image || '')
+    const triggerFile = () => {
+      fileInput.value?.click()
+    }
 
-/* open file picker */
-const triggerFile = () => {
-  fileInput.value.click()
-}
+    const onFileChange = (event: Event) => {
+      const target = event.target as HTMLInputElement
+      const file = target.files?.[0]
+      if (!file) return
 
-/* convert image to base64 + save */
-const onFileChange = (event) => {
-  const file = event.target.files[0]
-  if (!file) return
+      const reader = new FileReader()
 
-  const reader = new FileReader()
+      reader.onload = () => {
+        previewImage.value = reader.result as string
+        localStorage.setItem('avatar', previewImage.value)
+      }
 
-  reader.onload = () => {
-    previewImage.value = reader.result
+      reader.readAsDataURL(file)
+    }
 
-    // ✅ SAVE TO LOCAL STORAGE
-    localStorage.setItem('avatar', reader.result)
-  }
+    onMounted(() => {
+      const saved = localStorage.getItem('avatar')
+      if (saved) {
+        previewImage.value = saved
+      }
+    })
 
-  reader.readAsDataURL(file)
-}
+    watch(
+      () => props.image,
+      (newVal) => {
+        if (newVal) previewImage.value = newVal
+      },
+    )
 
-/* load saved image when page reload */
-onMounted(() => {
-  const saved = localStorage.getItem('avatar')
-  if (saved) {
-    previewImage.value = saved
-  }
-})
-
-/* update if parent changes image */
-watch(() => props.image, (newVal) => {
-  if (newVal) previewImage.value = newVal
+    return {
+      fileInput,
+      previewImage,
+      triggerFile,
+      onFileChange,
+    }
+  },
 })
 </script>
 

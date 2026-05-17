@@ -4,14 +4,14 @@ services:
     container_name: materialx-mongo
     command: ['mongod', '--replSet', 'rs0', '--bind_ip_all', '--port', '27017']
     ports:
-      - '27018:27017'
+      - '27017:27017'
     volumes:
       - mongo_data:/data/db
     healthcheck:
       test:
         [
           'CMD-SHELL',
-          "mongosh --quiet --eval \"db.adminCommand('ping').ok\" | grep 1",
+          'mongosh --quiet --eval "db.adminCommand(''ping'').ok" | grep 1',
         ]
       interval: 5s
       timeout: 3s
