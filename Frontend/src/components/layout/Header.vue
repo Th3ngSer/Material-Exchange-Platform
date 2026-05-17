@@ -31,7 +31,7 @@ async function submitHeaderSearch() {
 <template>
   <header class="sticky top-0 z-20 border-b border-[#22245f1a] bg-white">
     <div
-      class="mx-auto grid min-h-[66px] w-full max-w-[1920px] grid-cols-[auto_auto_1fr_auto] items-center gap-3 px-3 py-1 max-[1100px]:grid-cols-1 max-[1100px]:gap-2"
+      class="mx-auto grid min-h-[66px] w-full max-w-[1500px] grid-cols-[auto_auto_1fr_auto] items-center gap-3 px-3 py-1 max-[1100px]:grid-cols-1 max-[1100px]:gap-2"
     >
       <RouterLink
         class="inline-flex items-baseline text-[32px] font-extrabold tracking-[-0.04em] no-underline cursor-pointer hover:opacity-80 transition-opacity duration-200"
