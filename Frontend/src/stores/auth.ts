@@ -42,7 +42,7 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = response.user
 
       // Store token in localStorage for subsequent requests
-      localStorage.setItem('authToken', response.access_token)
+      localStorage.setItem('authToken', response.accessToken)
 
       return response
     } catch (err) {
@@ -69,7 +69,7 @@ export const useAuthStore = defineStore('auth', () => {
       user.value = response.user
 
       // Store token in localStorage for subsequent requests
-      localStorage.setItem('authToken', response.access_token)
+      localStorage.setItem('authToken', response.accessToken)
 
       return response
     } catch (err) {

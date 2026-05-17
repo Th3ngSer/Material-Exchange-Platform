@@ -28,6 +28,7 @@ import LangaugeInformation from '../user/LangaugeInformation.vue'
 import LogoutInformation from '@/user/LogoutInformation.vue'
 import PaymentInformation from '@/user/PaymentInformation.vue'
 import TrackingInformation from '@/user/TrackingInformation.vue'
+import { useAuthStore } from '@/stores/auth'
 
 
 const router = createRouter({
@@ -55,15 +56,49 @@ const router = createRouter({
     { path: '/profile/tracker', name: 'trackItem', component: TrackingInformation},
 
     // Admin routes
-    { path: '/admin', name: 'SuperAdmin', component: AdminDashboard },
-    { path: '/admin/activity', name: 'admin-activity', component: AdminActivity },
-    { path: '/admin/listings', name: 'admin-listings', component: AdminListings },
-    { path: '/admin/notifications', name: 'admin-notifications', component: AdminNotifications },
-    { path: '/admin/reports', name: 'admin-reports', component: AdminReports },
-    { path: '/admin/reviews', name: 'admin-reviews', component: AdminReviews },
-    { path: '/admin/transactions', name: 'admin-transactions', component: AdminTransactions },
-    { path: '/admin/users', name: 'admin-users', component: AdminUsers },
+    { path: '/admin', name: 'SuperAdmin', component: AdminDashboard, meta: { requiresAdmin: true } },
+    { path: '/admin/activity', name: 'admin-activity', component: AdminActivity, meta: { requiresAdmin: true } },
+    { path: '/admin/listings', name: 'admin-listings', component: AdminListings, meta: { requiresAdmin: true } },
+    { path: '/admin/notifications', name: 'admin-notifications', component: AdminNotifications, meta: { requiresAdmin: true } },
+    { path: '/admin/reports', name: 'admin-reports', component: AdminReports, meta: { requiresAdmin: true } },
+    { path: '/admin/reviews', name: 'admin-reviews', component: AdminReviews, meta: { requiresAdmin: true } },
+    { path: '/admin/transactions', name: 'admin-transactions', component: AdminTransactions, meta: { requiresAdmin: true } },
+    { path: '/admin/users', name: 'admin-users', component: AdminUsers, meta: { requiresAdmin: true } },
   ],
+})
+
+function getRoleFromToken(token: string | null) {
+  if (!token) return null
+
+  const parts = token.split('.')
+  if (parts.length < 2) return null
+
+  try {
+    const payload = JSON.parse(atob(parts[1])) as { role?: string }
+    return payload.role ?? null
+  } catch {
+    return null
+  }
+}
+
+router.beforeEach((to) => {
+  if (!to.matched.some((record) => record.meta?.requiresAdmin)) {
+    return true
+  }
+
+  const authStore = useAuthStore()
+  const token = localStorage.getItem('authToken')
+  const role = authStore.user?.role ?? getRoleFromToken(token)
+
+  if (!token) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
+  if (role !== 'admin') {
+    return { name: 'home' }
+  }
+
+  return true
 })
 
 export default router
