@@ -5,7 +5,7 @@
 
     <!-- Main Content -->
     <div class="content">
-      <h2 class="title"><!-- {{ languageStore.t('paymentMethod') }} -->Payment Methods</h2>
+      <h2 class="title">{{ languageStore.t('paymentMethod') }}</h2>
 
       <div class="payment-options">
         <!-- Bank Transfer -->
@@ -14,7 +14,7 @@
             <!-- LEFT: icon + title -->
             <div class="title-with-icon">
               <img class="method-icon" src="/userprofileImage/bank.png" alt="Bank Icon" />
-              <h3><!-- {{ languageStore.t('bankTransfer') }} -->Bank Transfer</h3>
+              <h3>{{ languageStore.t('bankTransfer') }}</h3>
             </div>
 
             <!-- RIGHT: bank logos -->
@@ -32,7 +32,7 @@
             <!-- LEFT: icon + title -->
             <div class="title-with-icon">
               <img class="method-icon" src="/userprofileImage/card.png" alt="Card Icon" />
-              <h3><!-- {{ languageStore.t('cardPayment') }} -->Card Payment</h3>
+              <h3>{{ languageStore.t('cardPayment') }}</h3>
             </div>
 
             <!-- RIGHT: visa -->
@@ -48,6 +48,9 @@
 
 <script setup>
 import Sidebar from '../userprofileComponent/Sidebar.vue'
+import { useLanguageStore } from '../stores/language'
+
+const languageStore = useLanguageStore()
 </script>
 
 <style scoped>

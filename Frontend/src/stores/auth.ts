@@ -40,9 +40,13 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Store user data
       user.value = response.user
+      localStorage.setItem('authUser', JSON.stringify(response.user))
 
       // Store token in localStorage for subsequent requests
-      localStorage.setItem('authToken', response.access_token)
+      const token = response.access_token || response.accessToken
+      if (token) {
+        localStorage.setItem('authToken', token)
+      }
 
       return response
     } catch (err) {
@@ -67,9 +71,13 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Store user data
       user.value = response.user
+      localStorage.setItem('authUser', JSON.stringify(response.user))
 
       // Store token in localStorage for subsequent requests
-      localStorage.setItem('authToken', response.access_token)
+      const token = response.access_token || response.accessToken
+      if (token) {
+        localStorage.setItem('authToken', token)
+      }
 
       return response
     } catch (err) {
@@ -90,6 +98,41 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     error.value = null
     localStorage.removeItem('authToken')
+    localStorage.removeItem('authUser')
+  }
+
+  async function refreshUser() {
+    const token = localStorage.getItem('authToken')
+    if (!token) {
+      logout()
+      return
+    }
+
+    try {
+      const profile = await authApi.me()
+      user.value = profile
+      localStorage.setItem('authUser', JSON.stringify(profile))
+    } catch (err) {
+      logout()
+    }
+  }
+
+  async function updateProfile(profile: Partial<User>) {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const updatedUser = await authApi.updateProfile(profile)
+      user.value = updatedUser
+      localStorage.setItem('authUser', JSON.stringify(updatedUser))
+      return updatedUser
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during profile update'
+      error.value = errorMessage
+      throw err
+    } finally {
+      isLoading.value = false
+    }
   }
 
   /**
@@ -103,13 +146,25 @@ export const useAuthStore = defineStore('auth', () => {
    * Initialize auth state (e.g., from localStorage on app startup)
    * This should be called when the app mounts to restore session if token exists
    */
-  function initializeAuth() {
+  async function initializeAuth() {
     const token = localStorage.getItem('authToken')
-    // In a real app, you might validate the token or fetch user data from an endpoint
-    // For now, we just check if token exists
+    const savedUser = localStorage.getItem('authUser')
+
     if (!token) {
       logout()
+      return
     }
+
+    if (savedUser) {
+      try {
+        user.value = JSON.parse(savedUser)
+      } catch {
+        logout()
+        return
+      }
+    }
+
+    await refreshUser()
   }
 
   return {
@@ -125,5 +180,7 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     clearError,
     initializeAuth,
+    refreshUser,
+    updateProfile,
   }
 })
