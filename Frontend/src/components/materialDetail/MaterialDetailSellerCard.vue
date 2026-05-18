@@ -79,9 +79,12 @@ const initials = (props.name || 'U')
       >
         {{ isFollowed ? 'Followed' : 'Follow' }}
       </button>
-      <button type="button" class="rounded-full bg-[#ff8c00] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#ff9d21]">
+      <router-link
+        to="/chat"
+        class="flex items-center justify-center rounded-full bg-[#ff8c00] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#ff9d21]"
+      >
         Message
-      </button>
+      </router-link>
     </div>
   </div>
 </template>
