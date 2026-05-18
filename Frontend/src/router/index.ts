@@ -77,10 +77,11 @@ function getRoleFromToken(token: string | null) {
   if (!token) return null
 
   const parts = String(token).split('.')
-  if (parts.length < 2) return null
+  const payloadPart = parts[1]
+  if (!payloadPart) return null
 
   try {
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/')
     const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
     const payload = JSON.parse(atob(padded)) as { role?: string }
     return payload.role ?? null
