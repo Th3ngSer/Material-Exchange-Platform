@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import Footer from '@/components/layout/Footer.vue'
@@ -8,6 +8,7 @@ import MaterialDetailGallery from '@/components/materialDetail/MaterialDetailGal
 import MaterialDetailSellerCard from '@/components/materialDetail/MaterialDetailSellerCard.vue'
 import RelatedMaterialCard from '@/components/materialDetail/MaterialCard.vue'
 import { defaultMaterials, getMaterialById, type MaterialItem, type MaterialTone } from '@/data/materials'
+import MaterialMap from '@/components/materialDetail/MaterialMap.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -83,6 +84,7 @@ const detailStats = computed(() => [
   { label: 'Location', value: currentPost.value.location },
   { label: 'Listed', value: formatRelativeTime(currentPost.value.postedTime) },
 ])
+
 </script>
 
 <template>
@@ -246,14 +248,20 @@ const detailStats = computed(() => [
             </template>
           </div>
 
-          <!-- Location Map Placeholder -->
+          <!-- Location Map -->
           <div class="rounded-lg bg-[#e8f4f7] p-4">
             <div class="flex items-center justify-between rounded-full bg-white px-3 py-2 text-xs font-semibold text-[#1f245e] shadow-sm mb-3">
               <span>{{ currentPost.location }}</span>
               <span>{{ formatRelativeTime(currentPost.postedTime) }}</span>
             </div>
-            <div class="relative min-h-[300px] overflow-hidden rounded-lg bg-[#eef6f8] flex items-center justify-center">
-              <div class="text-[#6b7280] text-lg font-semibold">Map</div>
+
+            <div class="relative min-h-[300px] overflow-hidden rounded-lg bg-[#eef6f8]">
+              <div v-if="typeof currentPost.lat === 'number' && typeof currentPost.lng === 'number'">
+                <MaterialMap :lat="currentPost.lat" :lng="currentPost.lng" :location="currentPost.location" />
+              </div>
+              <div v-else class="flex h-[300px] items-center justify-center">
+                <div class="text-[#6b7280] text-lg font-semibold">Map unavailable for this listing</div>
+              </div>
             </div>
           </div>
         </div>

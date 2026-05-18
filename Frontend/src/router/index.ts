@@ -16,6 +16,7 @@ import EditPost from '../views/EditPost.vue'
 import MaterialDetailView from '../views/MaterialDetailView.vue'
 // HomeView
 import HomeView from '../views/HomeView.vue'
+import BrowseView from '../views/BrowseView.vue'
 // Auth 
 import LoginView from '../views/LoginView.vue'
 import PostsList from '../views/PostsList.vue'
@@ -36,6 +37,7 @@ const router = createRouter({
   routes: [
     { path: '/', redirect: '/home' },
     { path: '/home', name: 'home', component: HomeView },
+    { path: '/browse', name: 'browse', component: BrowseView },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/signup', name: 'signup', component: SignUpView },
 
@@ -66,16 +68,20 @@ const router = createRouter({
     { path: '/admin/transactions', name: 'admin-transactions', component: AdminTransactions, meta: { requiresAdmin: true } },
     { path: '/admin/users', name: 'admin-users', component: AdminUsers, meta: { requiresAdmin: true } },
   ],
+  scrollBehavior(to, from, savedPosition) {
+    return { top: 0 }
+  }
 })
 
 function getRoleFromToken(token: string | null) {
   if (!token) return null
 
   const parts = String(token).split('.')
-  if (parts.length < 2) return null
+  const payloadPart = parts[1]
+  if (!payloadPart) return null
 
   try {
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/')
     const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
     const payload = JSON.parse(atob(padded)) as { role?: string }
     return payload.role ?? null
