@@ -2,9 +2,9 @@ import axios from 'axios'
 
 const API = 'http://localhost:3000/api/trackitemuser'
 
-// Get auth token from localStorage
+// Get auth token from sessionStorage (per-tab)
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('authToken')
+  const token = sessionStorage.getItem('authToken')
   return token ? { headers: { Authorization: `Bearer ${token}` } } : {}
 }
 

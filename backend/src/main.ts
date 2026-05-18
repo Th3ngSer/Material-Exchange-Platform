@@ -37,5 +37,3 @@ async function bootstrap() {
   console.log(`Server running on http://localhost:${process.env.PORT || 3000}`);
 }
 void bootstrap();
-
-

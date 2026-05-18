@@ -36,7 +36,10 @@ export class UsersService {
     return this.userModel.findById(id).exec();
   }
 
-  updateUser(userId: string, update: UpdateUserInput): Promise<UserDocument | null> {
+  updateUser(
+    userId: string,
+    update: UpdateUserInput,
+  ): Promise<UserDocument | null> {
     return this.userModel
       .findByIdAndUpdate(userId, update, { new: true })
       .exec();

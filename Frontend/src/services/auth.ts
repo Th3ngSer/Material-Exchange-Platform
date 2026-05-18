@@ -100,15 +100,9 @@ export const authApi = {
         }
     },
 
-    async me(): Promise<User> {
-        const token = localStorage.getItem('authToken')
-        if (!token) {
-            throw new Error('No auth token found')
-        }
-
+    async getProfile(token: string): Promise<User> {
         try {
             const response = await fetch(`${API_BASE_URL}/auth/me`, {
-                method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
@@ -120,36 +114,6 @@ export const authApi = {
                 throw {
                     statusCode: response.status,
                     message: error.message || 'Failed to load profile.',
-                }
-            }
-
-                    return await response.json()
-        } catch (error) {
-            throw new Error(parseErrorMessage(error))
-        }
-    },
-
-    async updateProfile(payload: Partial<User>): Promise<User> {
-        const token = localStorage.getItem('authToken')
-        if (!token) {
-            throw new Error('No auth token found')
-        }
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/auth/me`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify(payload),
-            })
-
-            if (!response.ok) {
-                const error = await response.json().catch(() => ({}))
-                throw {
-                    statusCode: response.status,
-                    message: error.message || 'Failed to update profile.',
                 }
             }
 

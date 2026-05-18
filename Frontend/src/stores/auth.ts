@@ -40,13 +40,9 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Store user data
       user.value = response.user
-      localStorage.setItem('authUser', JSON.stringify(response.user))
 
-      // Store token in localStorage for subsequent requests
-      const token = response.access_token || response.accessToken
-      if (token) {
-        localStorage.setItem('authToken', token)
-      }
+      // Store token per-tab
+      sessionStorage.setItem('authToken', response.accessToken)
 
       return response
     } catch (err) {
@@ -71,13 +67,9 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Store user data
       user.value = response.user
-      localStorage.setItem('authUser', JSON.stringify(response.user))
 
-      // Store token in localStorage for subsequent requests
-      const token = response.access_token || response.accessToken
-      if (token) {
-        localStorage.setItem('authToken', token)
-      }
+      // Store token per-tab
+      sessionStorage.setItem('authToken', response.accessToken)
 
       return response
     } catch (err) {
@@ -97,42 +89,7 @@ export const useAuthStore = defineStore('auth', () => {
   function logout() {
     user.value = null
     error.value = null
-    localStorage.removeItem('authToken')
-    localStorage.removeItem('authUser')
-  }
-
-  async function refreshUser() {
-    const token = localStorage.getItem('authToken')
-    if (!token) {
-      logout()
-      return
-    }
-
-    try {
-      const profile = await authApi.me()
-      user.value = profile
-      localStorage.setItem('authUser', JSON.stringify(profile))
-    } catch (err) {
-      logout()
-    }
-  }
-
-  async function updateProfile(profile: Partial<User>) {
-    isLoading.value = true
-    error.value = null
-
-    try {
-      const updatedUser = await authApi.updateProfile(profile)
-      user.value = updatedUser
-      localStorage.setItem('authUser', JSON.stringify(updatedUser))
-      return updatedUser
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred during profile update'
-      error.value = errorMessage
-      throw err
-    } finally {
-      isLoading.value = false
-    }
+    sessionStorage.removeItem('authToken')
   }
 
   /**
@@ -147,24 +104,18 @@ export const useAuthStore = defineStore('auth', () => {
    * This should be called when the app mounts to restore session if token exists
    */
   async function initializeAuth() {
-    const token = localStorage.getItem('authToken')
-    const savedUser = localStorage.getItem('authUser')
-
+    const token = sessionStorage.getItem('authToken')
     if (!token) {
       logout()
       return
     }
 
-    if (savedUser) {
-      try {
-        user.value = JSON.parse(savedUser)
-      } catch {
-        logout()
-        return
-      }
+    try {
+      const profile = await authApi.getProfile(token)
+      user.value = profile
+    } catch {
+      logout()
     }
-
-    await refreshUser()
   }
 
   return {
@@ -180,7 +131,5 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     clearError,
     initializeAuth,
-    refreshUser,
-    updateProfile,
   }
 })

@@ -72,8 +72,12 @@ async function handleSubmit() {
     email.value = ''
     password.value = ''
 
-    // Redirect to home or dashboard
-    await router.push({ name: 'home' })
+    // Redirect based on role
+    if (authStore.user?.role === 'admin') {
+      await router.push({ name: 'SuperAdmin' })
+    } else {
+      await router.push({ name: 'home' })
+    }
   } catch (err) {
     // Error is already set in authStore.error
     console.error('Login error:', err)
