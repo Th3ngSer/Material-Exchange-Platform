@@ -76,9 +76,15 @@ onBeforeUnmount(() => {
 
         <div class="flex flex-wrap justify-start gap-5">
           <a
+            class="inline-flex min-w-[220px] items-center justify-center rounded-[12px] border border-white/85 bg-[#f23838] px-7 py-3 text-[1.15rem] font-bold text-white no-underline shadow-[0_16px_26px_rgba(255,75,66,0.24)] transition hover:-translate-y-0.5 max-[960px]:min-w-[190px] max-[960px]:text-[1rem]"
+            href="#categories"
+            >Browse
+          </a>
+          
+          <a
             class="inline-flex min-w-[220px] items-center justify-center rounded-[12px] border border-white/35 bg-[#5f6572]/95 px-7 py-3 text-[1.15rem] font-bold text-white/88 no-underline transition hover:-translate-y-0.5 max-[960px]:min-w-[190px] max-[960px]:text-[1rem]"
             href="#listings"
-          >
+          >Learn more
           </a>
         </div>
       </div>
