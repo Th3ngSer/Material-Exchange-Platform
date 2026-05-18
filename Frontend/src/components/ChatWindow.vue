@@ -20,11 +20,12 @@ type User = {
   chat: Message[]
 }
 
-const props = defineProps<{
+const e = defineProps<{
   selectedUser: User | null
   messages: Message[]
   newMessage: string
 }>()
+
 
 const emit = defineEmits<{
   (e: 'send-message'): void
@@ -45,13 +46,13 @@ const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
 
-  // if (file) {
-  //   if (file.type.startsWith('image/')) {
-  //     emit('send-image', file)
-  //   } else {
-  //     alert('Please select an image file')
-  //   }
-  // }
+  if (file) {
+    if (file.type.startsWith('image/')) {
+      emit('send-image', file)
+    } else {
+      alert('Please select an image file')
+    }
+  }
 
   if (target) {
     target.value = ''

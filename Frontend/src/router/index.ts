@@ -68,9 +68,6 @@ const router = createRouter({
     { path: '/admin/transactions', name: 'admin-transactions', component: AdminTransactions, meta: { requiresAdmin: true } },
     { path: '/admin/users', name: 'admin-users', component: AdminUsers, meta: { requiresAdmin: true } },
   ],
-  scrollBehavior(to, from, savedPosition) {
-    return { top: 0 }
-  }
 })
 
 function getRoleFromToken(token: string | null) {

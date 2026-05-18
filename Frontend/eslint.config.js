@@ -28,6 +28,9 @@ export default [
       ...vuePlugin.configs['flat/recommended'].rules,
       ...tsPlugin.configs.recommended.rules,
       'vue/multi-word-component-names': 'off',
+      'no-undef': 'off',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
 ];
