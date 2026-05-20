@@ -2,6 +2,9 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useLanguageStore } from '@/stores/language'
+
+const languageStore = useLanguageStore()
 
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -51,7 +54,8 @@ async function submitHeaderSearch() {
           ]"
           to="/browse#categories"
         >
-          Browse
+          {{ languageStore.t('browse') }}
+
         </RouterLink>
         <RouterLink
           :class="[
@@ -62,7 +66,8 @@ async function submitHeaderSearch() {
           ]"
           to="/posts/create"
         >
-          Create Post
+          {{ languageStore.t('createPost') }}
+
         </RouterLink>
       </nav>
 
@@ -71,22 +76,23 @@ async function submitHeaderSearch() {
         role="search"
         @submit.prevent="submitHeaderSearch"
       >
-        <label class="sr-only" for="home-search">Search materials</label>
+        <label class="sr-only" for="home-search">{{ languageStore.t('searchMaterials') }}
+        </label>
         <select
           id="home-search-type"
           aria-label="Search type"
           class="appearance-none border-0 border-r border-[#2b2f912e] bg-transparent px-3 text-[#7b7c98] outline-none cursor-pointer hover:text-[#201f62] transition-colors duration-200"
           v-model="selectedType"
         >
-          <option value="All">All Types</option>
-          <option value="Sell">Sell</option>
-          <option value="Exchange">Exchange</option>
-          <option value="Borrow">Borrow</option>
+          <option value="All">{{ languageStore.t('allTypes') }}</option>
+          <option value="Sell">{{ languageStore.t('sell') }}</option>
+          <option value="Exchange">{{ languageStore.t('exchange') }}</option>
+          <option value="Borrow">{{ languageStore.t('borrow') }}</option>
         </select>
         <input
           id="home-search"
           type="search"
-          placeholder="Search materials"
+          :placeholder="languageStore.t('searchMaterials')"
           class="min-w-0 border-0 bg-transparent px-3 outline-none"
           v-model="searchText"
         />
@@ -144,7 +150,7 @@ async function submitHeaderSearch() {
           class="whitespace-nowrap text-[16px] font-bold text-[#201f62] no-underline"
           to="/login"
         >
-          Login/Sign up
+          {{ languageStore.t('loginSignUp') }}
         </RouterLink>
         <RouterLink
           v-else

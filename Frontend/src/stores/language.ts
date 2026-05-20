@@ -498,7 +498,7 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     exchangeForRequired: 'ប្រាប់មនុស្សអំពីទំនិញដែលអ្នកចង់ផ្លាស់ប្តូរ',
     savedListings: 'បញ្ជីដែលបានរក្សាទុក',
     browseSavedPosts: 'រកមើលប្រកាសដែលអ្នកបានរក្សាទុករួចហើយ',
-    createPost: 'បង្កើតប្រកាស',
+    createPost: 'ផុសទំនិញ',
     postsSaved: 'ប្រកាសបានរក្សាទុក',
     postSaved: 'ប្រកាសបានរក្សាទុក',
     refresh: 'ផ្ទុកឡើងវិញ',
