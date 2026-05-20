@@ -1,32 +1,57 @@
 <template>
-  <div class="avatar-container">
-    <!-- Avatar Image -->
-    <img :src="previewImage" class="avatar" />
+  <div class="page">
 
-    <!-- Change Photo Button -->
-    <p class="change-photo" @click="triggerFile">Change photo</p>
-
-    <!-- Welcome Text -->
-    <div class="avatar-text">
-      <p class="welcome">Welcome, {{ name }} !!!</p>
+    <!-- Header -->
+    <div class="header">
+      <button class="back-btn" @click="goBack">
+        <img src="/userprofileImage/back.png" class="back-icon" />
+        Back
+      </button>
     </div>
 
-    <!-- Hidden File Input -->
-    <input ref="fileInput" type="file" accept="image/*" @change="onFileChange" hidden />
+    <!-- Content -->
+    <div class="avatar-container">
+      <img :src="previewImage" class="avatar" />
+
+      <p class="change-photo" @click="triggerFile">
+        Change photo
+      </p>
+
+      <div class="avatar-text">
+        <p class="welcome">Welcome, {{ name }} !!!</p>
+      </div>
+
+      <input
+        ref="fileInput"
+        type="file"
+        accept="image/*"
+        @change="onFileChange"
+        hidden
+      />
+    </div>
+
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
 export default defineComponent({
   props: {
     name: String,
     image: String,
   },
+
   setup(props) {
+    const router = useRouter()
+
     const fileInput = ref<HTMLInputElement | null>(null)
     const previewImage = ref(props.image || '')
+
+    const goBack = () => {
+      router.back()
+    }
 
     const triggerFile = () => {
       fileInput.value?.click()
@@ -49,23 +74,19 @@ export default defineComponent({
 
     onMounted(() => {
       const saved = localStorage.getItem('avatar')
-      if (saved) {
-        previewImage.value = saved
-      }
+      if (saved) previewImage.value = saved
     })
 
-    watch(
-      () => props.image,
-      (newVal) => {
-        if (newVal) previewImage.value = newVal
-      },
-    )
+    watch(() => props.image, (newVal) => {
+      if (newVal) previewImage.value = newVal
+    })
 
     return {
       fileInput,
       previewImage,
       triggerFile,
       onFileChange,
+      goBack,
     }
   },
 })
@@ -108,5 +129,26 @@ export default defineComponent({
   font-weight: bold;
   color: #cbd5e1;
   text-align: center;
+}
+
+.back-btn:hover {
+  background: #334155;
+}
+
+/* Back icon */
+.back-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
 }
 </style>
