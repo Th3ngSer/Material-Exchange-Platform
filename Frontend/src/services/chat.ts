@@ -1,13 +1,20 @@
-import api from './api-chat'
+import api from './api'
 
 export const chatApi = {
-  // send message
-  sendMessage(data: { receiverId: string; content: string }) {
-    return api.post('/chat/send', data)
+  sendMessage(data: {
+    receiverId: string
+    content: string
+    type?: 'text' | 'image' | 'voice'
+  }) {
+    return api.post('/chat/send', {
+      type: 'text',
+      ...data,
+    })
   },
 
-  // conversation between 2 users
-  getConversation(user1: string, user2: string) {
-    return api.get(`/chat/history?user1=${user1}&user2=${user2}`)
+  getConversation(userId: string) {
+    return api.get('/chat/history', {
+      params: { userId },
+    })
   },
 }

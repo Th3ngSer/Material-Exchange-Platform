@@ -6,28 +6,20 @@ export const useChatStore = defineStore('chat', () => {
   const messages = ref<any[]>([])
   const activeUserId = ref<string | null>(null)
 
-  // current logged user (from auth store or localStorage)
-  const currentUserId = localStorage.getItem('userId')
-
-  // LOAD CONVERSATION
   const fetchConversation = async (userId: string) => {
     activeUserId.value = userId
 
-    const res = await chatApi.getConversation(
-      currentUserId!,
-      userId
-    )
-
+    const res = await chatApi.getConversation(userId)
     messages.value = res.data
   }
 
-  // SEND MESSAGE
   const sendMessage = async (content: string) => {
-    if (!activeUserId.value) return
+    if (!activeUserId.value || !content.trim()) return
 
     await chatApi.sendMessage({
       receiverId: activeUserId.value,
       content,
+      type: 'text',
     })
 
     await fetchConversation(activeUserId.value)
