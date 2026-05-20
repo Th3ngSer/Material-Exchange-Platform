@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User, UserDocument, UserRole } from './schemas/user.schema';
+import {
+  User,
+  UserDocument,
+  UserRole,
+  UserStatus,
+} from './schemas/user.schema';
 
 export interface CreateUserInput {
   email: string;
@@ -16,6 +21,17 @@ export interface CreateUserInput {
 }
 
 export type UpdateUserInput = Partial<Omit<CreateUserInput, 'password'>>;
+
+export interface AdminUserSummary {
+  id: string;
+  name?: string;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+  listingsCount: number;
+  rating: number;
+  createdAt?: Date;
+}
 
 @Injectable()
 export class UsersService {
@@ -45,12 +61,23 @@ export class UsersService {
       .exec();
   }
 
-  findAllForAdmin() {
-    return this.userModel
+  async findAllForAdmin(): Promise<AdminUserSummary[]> {
+    const users = await this.userModel
       .find()
       .select('name email role status listingsCount rating createdAt')
       .sort({ createdAt: -1 })
       .lean()
       .exec();
+
+    return users.map((user) => ({
+      id: user._id?.toString?.() ?? String(user._id),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      listingsCount: user.listingsCount ?? 0,
+      rating: user.rating ?? 0,
+      createdAt: user.createdAt,
+    }));
   }
 }
