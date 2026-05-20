@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 const navItems = [
   { label: 'Dashboard', to: '/admin' },
@@ -15,12 +17,11 @@ const navItems = [
   { label: 'Settings', to: '/admin/settings' },
 ]
 
-const statCards = [
-  { label: 'Total users', value: '168,168', delta: '+14.6%', note: 'this month' },
-  { label: 'Active listings', value: '24,580', delta: '+6.4%', note: 'this week' },
-  { label: 'Transactions', value: '7,842', delta: '+12.1%', note: 'this week' },
-  { label: 'Reports', value: '138', delta: '5', note: 'open now' },
-]
+const dashboardStats = ref({
+  totalUsers: 0,
+  activeListings: 0,
+  totalTransactions: 0,
+})
 
 const velocityBars = [42, 58, 72, 48, 64, 78, 90]
 
@@ -50,13 +51,58 @@ const riskFlags = [
   { title: 'Delayed payouts', detail: '6 vendors pending', level: 'Medium' },
 ]
 
+const isLoading = ref(false)
+const errorMessage = ref('')
+
+const formatStat = (value: number) => (isLoading.value ? '...' : value.toLocaleString())
+
+const statCards = computed(() => [
+  { label: 'Total users', value: formatStat(dashboardStats.value.totalUsers), delta: '+14.6%', note: 'this month' },
+  { label: 'Active listings', value: formatStat(dashboardStats.value.activeListings), delta: '+6.4%', note: 'this week' },
+  { label: 'Transactions', value: formatStat(dashboardStats.value.totalTransactions), delta: '+22.1%', note: 'this month' },
+])
+
+const fetchStats = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    const token = sessionStorage.getItem('authToken')
+    const response = await fetch(`${API_BASE_URL}/admin/dashboard/stats`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.message || 'Failed to fetch stats')
+    }
+
+    const data = await response.json()
+
+    dashboardStats.value = {
+      totalUsers: data.totalUsers ?? 0,
+      activeListings: data.activeListings ?? 0,
+      totalTransactions: data.totalTransactions ?? 0,
+    }
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Failed to fetch stats'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchStats()
+})
+
 const route = useRoute()
 const currentPath = computed(() => route.path)
 
 const isActive = (path: string) => {
-  if (path === '/admin') {
-    return currentPath.value === '/admin'
-  }
+  if (path === '/admin') return currentPath.value === '/admin'
   return currentPath.value === path
 }
 </script>
@@ -94,6 +140,8 @@ const isActive = (path: string) => {
           <button class="primary">Create report</button>
         </div>
       </header>
+
+      <p v-if="errorMessage" class="stat-error">{{ errorMessage }}</p>
 
       <section class="stats-grid">
         <article v-for="card in statCards" :key="card.label" class="stat-card">
@@ -329,6 +377,12 @@ const isActive = (path: string) => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
+}
+
+.stat-error {
+  font-size: 12px;
+  color: #ef4444;
+  margin: 0;
 }
 
 .stat-card {

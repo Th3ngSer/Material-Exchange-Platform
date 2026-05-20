@@ -65,9 +65,11 @@ import { reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
 import { useLanguageStore } from '../stores/language'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const languageStore = useLanguageStore()
+const authStore = useAuthStore()
 
 const form = reactive({
   firstName: '',
@@ -80,17 +82,32 @@ const form = reactive({
   email: '',
 })
 
-/* Load data from localStorage */
-const loadProfile = () => {
-  const saved = localStorage.getItem('profile')
+const fillFromAuthUser = () => {
+  if (!authStore.user) return
+  const fullName = authStore.user.name || ''
+  const [firstName, ...rest] = fullName.split(' ')
+  const lastName = rest.join(' ')
 
-  if (saved) {
-    Object.assign(form, JSON.parse(saved))
-  }
+  form.firstName = firstName || ''
+  form.lastName = lastName || ''
+  form.email = authStore.user.email || ''
+  form.username = authStore.user.username || authStore.user.name || authStore.user.email || ''
+  form.birthDate = authStore.user.birthDate || ''
+  form.nationality = authStore.user.nationality || ''
+  form.gender = authStore.user.gender || ''
+  form.phone = authStore.user.phone || ''
 }
 
-onMounted(() => {
-  loadProfile()
+const loadProfile = async () => {
+  if (!authStore.user) {
+    await authStore.refreshUser()
+  }
+
+  fillFromAuthUser()
+}
+
+onMounted(async () => {
+  await loadProfile()
 })
 
 const goToEdit = () => {

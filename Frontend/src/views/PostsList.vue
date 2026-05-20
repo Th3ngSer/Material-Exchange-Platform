@@ -28,7 +28,6 @@ const posts = ref<Post[]>([])
 const total = ref(0)
 const isLoading = ref(false)
 const errorMessage = ref('')
-
 const hasPosts = computed(() => posts.value.length > 0)
 
 function formatType(type: Post['type']) {
@@ -49,6 +48,16 @@ function imageUrl(filename: string) {
   return `${apiBaseUrl}/uploads/${filename}`
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.message ?? fallback
+  }
+  if (error instanceof Error) {
+    return error.message
+  }
+  return fallback
+}
+
 async function loadPosts() {
   isLoading.value = true
   errorMessage.value = ''
@@ -57,8 +66,8 @@ async function loadPosts() {
     const { data } = await axios.get<PostsResponse>(`${apiBaseUrl}/posts`)
     posts.value = data.posts ?? []
     total.value = data.total ?? posts.value.length
-  } catch (error: any) {
-    errorMessage.value = error?.response?.data?.message ?? 'Error loading saved posts.'
+  } catch (error: unknown) {
+    errorMessage.value = getErrorMessage(error, 'Error loading saved posts.')
   } finally {
     isLoading.value = false
   }
@@ -73,8 +82,8 @@ async function deletePost(postId: string, title: string) {
     await axios.delete(`${apiBaseUrl}/posts/${postId}`)
     posts.value = posts.value.filter((p) => p._id !== postId)
     total.value = Math.max(0, total.value - 1)
-  } catch (error: any) {
-    const msg = error?.response?.data?.message ?? 'Failed to delete post.'
+  } catch (error: unknown) {
+    const msg = getErrorMessage(error, 'Failed to delete post.')
     alert(msg)
   }
 }

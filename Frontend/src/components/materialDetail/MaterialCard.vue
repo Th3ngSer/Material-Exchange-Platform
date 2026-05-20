@@ -20,9 +20,15 @@ type MaterialCardItem = {
   postedTime?: string
 }
 
-const props = defineProps<{
-  item: MaterialCardItem
-}>()
+const props = withDefaults(
+  defineProps<{
+    item: MaterialCardItem
+    compact?: boolean
+  }>(),
+  {
+    compact: false,
+  },
+)
 
 const to = computed(() => `/posts/${props.item.id}`)
 
@@ -32,7 +38,11 @@ function scrollToTop() {
 </script>
 
 <template>
-  <RouterLink :to="to" @click="scrollToTop" class="block no-underline transition hover:-translate-y-1 hover:opacity-95">
-    <BaseMaterialCard :item="item" />
+  <RouterLink
+    :to="to"
+    @click="scrollToTop"
+    class="block no-underline transition hover:-translate-y-1 hover:opacity-95"
+  >
+    <BaseMaterialCard :item="item" :compact="compact" />
   </RouterLink>
 </template>

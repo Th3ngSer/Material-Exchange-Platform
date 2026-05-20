@@ -3,7 +3,7 @@
  * Centralized configuration for backend API calls
  */
 
-import type { AuthResponse, LoginCredentials, RegisterCredentials, ApiError } from '@/types/auth'
+import type { AuthResponse, LoginCredentials, RegisterCredentials, ApiError, User } from '@/types/auth'
 
 // Backend API base URL - adjust if your backend runs on a different port/host
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
@@ -91,6 +91,29 @@ export const authApi = {
                 throw {
                     statusCode: response.status,
                     message: error.message || 'Registration failed. Please try again.',
+                }
+            }
+
+            return await response.json()
+        } catch (error) {
+            throw new Error(parseErrorMessage(error))
+        }
+    },
+
+    async getProfile(token: string): Promise<User> {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/me`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}))
+                throw {
+                    statusCode: response.status,
+                    message: error.message || 'Failed to load profile.',
                 }
             }
 

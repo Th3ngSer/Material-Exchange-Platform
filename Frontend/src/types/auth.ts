@@ -7,50 +7,56 @@
  * User object returned from backend
  */
 export interface User {
-    id: string
-    email: string
-    createdAt: string
+  id: string
+  email: string
+  name?: string
+  role?: string
+  status?: string
+  listingsCount?: number
+  rating?: number
+  createdAt?: string
+  updatedAt?: string
 }
 
 /**
  * Login credentials sent to backend
  */
 export interface LoginCredentials {
-    email: string
-    password: string
+  email: string
+  password: string
 }
 
 /**
  * Registration data sent to backend
  */
 export interface RegisterCredentials extends LoginCredentials {
-    confirmPassword?: string
-    name?: string
+  confirmPassword?: string
+  name?: string
 }
 
 /**
  * Authentication response from backend
  */
 export interface AuthResponse {
-    access_token: string
-    user: User
+  accessToken: string
+  user: User
 }
 
 /**
  * Auth state in Pinia store
  */
 export interface AuthState {
-    user: User | null
-    isLoading: boolean
-    error: string | null
-    isAuthenticated: boolean
+  user: User | null
+  isLoading: boolean
+  error: string | null
+  isAuthenticated: boolean
 }
 
 /**
  * API error response structure
  */
 export interface ApiError {
-    statusCode: number
-    message: string | string[]
-    error?: string
+  statusCode: number
+  message: string | string[]
+  error?: string
 }

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useLanguageStore } from '../../stores/language'
+const languageStore = useLanguageStore()
+
 defineProps<{
   categories: string[]
   selectedCategory: string
@@ -22,12 +25,12 @@ defineEmits<{
         id="categories"
         class="mb-2.5 text-[0.82rem] font-black uppercase tracking-[0.18em] text-[#f18b00]"
       >
-        <!-- {{ languageStore.t('marketplace') }} -->Marketplace
+        {{ languageStore.t('marketplace') }} 
       </p>
       <h2
         class="m-0 font-serif text-[clamp(2.4rem,5vw,4rem)] leading-[0.95] tracking-[-0.06em] text-[#15152d]"
       >
-        <!-- {{ languageStore.t('categories') }} -->Categories
+        {{ languageStore.t('categories') }} 
       </h2>
     </div>
 
@@ -35,7 +38,7 @@ defineEmits<{
       class="inline-flex flex-wrap items-center justify-end gap-2 text-[#ff9d1b] font-bold max-[720px]:justify-start"
     >
       <label class="inline-flex items-center gap-2 text-[0.72rem] uppercase tracking-[0.16em]">
-        <!-- {{ languageStore.t('sortBy') }} -->Sort by
+        {{ languageStore.t('sortBy') }} 
         <select
           :value="selectedSort"
           @change="$emit('update:sort', ($event.target as HTMLSelectElement).value)"

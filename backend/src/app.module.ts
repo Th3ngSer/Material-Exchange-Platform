@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
 import { TrackitemuserModule } from './trackitemuser/trackitemuser.module';
 import { UsersModule } from './users/users.module';
+import { AdminDashboardModule } from './admin/admin-dashboard.module';
 
 @Module({
   imports: [
@@ -32,15 +33,17 @@ import { UsersModule } from './users/users.module';
       },
     }),
 
-    MongooseModule.forRoot(
-      process.env.MONGODB_URI ||
-        'mongodb+srv://Akainu_user:<Akainu1234>@material-exchange-platf.ahheacd.mongodb.net/?appName=Material-Exchange-Platform',
-    ),
+    // Atlas connection (keep commented for later use).
+    // MongooseModule.forRoot(
+    //   process.env.MONGODB_URI ||
+    //     'mongodb+srv://Akainu_user:<Akainu1234>@material-exchange-platf.ahheacd.mongodb.net/?appName=Material-Exchange-Platform',
+    // ),
 
     AuthModule,
     ChatModule,
     TrackitemuserModule,
     UsersModule,
+    AdminDashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

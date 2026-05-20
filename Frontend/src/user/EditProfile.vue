@@ -9,22 +9,22 @@
         <!-- Left column -->
         <div class="form-column">
           <div class="field">
-            <!-- <span>{{ languageStore.t('firstName') }}</span> -->
+            <span>{{ languageStore.t('firstName') }}</span>
             <input v-model="form.firstName" type="text" />
           </div>
 
           <div class="field">
-            <!-- <span>{{ languageStore.t('birthDate') }}</span> -->
+            <span>{{ languageStore.t('birthDate') }}</span>
             <input v-model="form.birthDate" type="date" />
           </div>
 
           <div class="field">
-            <!-- <span>{{ languageStore.t('nationality') }}</span> -->
+            <span>{{ languageStore.t('nationality') }}</span>
             <input v-model="form.nationality" type="text" />
           </div>
 
           <div class="field">
-            <!-- <span>{{ languageStore.t('username') }}</span> -->
+            <span>{{ languageStore.t('username') }}</span>
             <input v-model="form.username" type="text" />
           </div>
         </div>
@@ -32,41 +32,41 @@
         <!-- Right column -->
         <div class="form-column">
           <div class="field">
-            <!-- <span>{{ languageStore.t('lastName') }}</span> -->
+            <span>{{ languageStore.t('lastName') }}</span>
             <input v-model="form.lastName" type="text" />
           </div>
 
           <!-- Gender -->
           <div class="field">
-            <!-- <span>{{ languageStore.t('gender') }}</span> -->
+            <span>{{ languageStore.t('gender') }}</span>
 
             <div class="gender-options">
               <label>
                 <input v-model="form.gender" type="radio" value="Male" />
-                <!-- {{ languageStore.t('male') }} -->Male
+                {{ languageStore.t('male') }}
               </label>
 
               <label>
                 <input v-model="form.gender" type="radio" value="Female" />
-                <!-- {{ languageStore.t('female') }} -->Female
+                {{ languageStore.t('female') }}
               </label>
             </div>
           </div>
 
           <div class="field">
-            <!-- <span>{{ languageStore.t('phoneNumber') }}</span> -->
+            <span>{{ languageStore.t('phoneNumber') }}</span>
             <input v-model="form.phone" type="tel" />
           </div>
 
           <div class="field">
-            <!-- <span>{{ languageStore.t('email') }}</span> -->
+            <span>{{ languageStore.t('email') }}</span>
             <input v-model="form.email" type="email" />
           </div>
         </div>
       </div>
 
       <div class="form-actions">
-        <button class="btn" @click="saveProfile"><!-- {{ languageStore.t('saveChanges') }} -->Save Changes</button>
+        <button type="button" class="btn" @click="saveProfile"><!-- {{ languageStore.t('saveChanges') }} -->Save Changes</button>
       </div>
     </div>
   </div>
@@ -77,9 +77,11 @@ import { reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
 import { useLanguageStore } from '../stores/language'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const languageStore = useLanguageStore()
+const authStore = useAuthStore()
 
 const form = reactive({
   firstName: '',
@@ -92,16 +94,42 @@ const form = reactive({
   email: '',
 })
 
+const fillFromAuthUser = () => {
+  if (!authStore.user) return
+  const fullName = authStore.user.name || ''
+  const [firstName, ...rest] = fullName.split(' ')
+  const lastName = rest.join(' ')
+
+  form.firstName = firstName || ''
+  form.lastName = lastName || ''
+  form.email = authStore.user.email || ''
+  form.username = authStore.user.username || authStore.user.name || authStore.user.email || ''
+  form.birthDate = authStore.user.birthDate || ''
+  form.nationality = authStore.user.nationality || ''
+  form.gender = authStore.user.gender || ''
+  form.phone = authStore.user.phone || ''
+}
+
 onMounted(() => {
-  const saved = localStorage.getItem('profile')
-  if (saved) {
-    Object.assign(form, JSON.parse(saved))
-  }
+  fillFromAuthUser()
 })
 
-const saveProfile = () => {
-  localStorage.setItem('profile', JSON.stringify(form))
-  router.push('/personal-info')
+const saveProfile = async () => {
+  try {
+    await authStore.updateProfile({
+      name: `${form.firstName} ${form.lastName}`.trim(),
+      email: form.email,
+      username: form.username,
+      gender: form.gender,
+      phone: form.phone,
+      nationality: form.nationality,
+      birthDate: form.birthDate,
+    })
+
+    router.push('/profile')
+  } catch (err) {
+    console.error('Profile update failed:', err)
+  }
 }
 </script>
 
@@ -169,5 +197,6 @@ const saveProfile = () => {
   font-weight: bold;
   background: #1e1b4b;
   color: white;
+  cursor: pointer;
 }
 </style>

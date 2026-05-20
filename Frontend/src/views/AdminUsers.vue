@@ -58,7 +58,7 @@ const fetchUsers = async () => {
   errorMessage.value = ''
 
   try {
-    const token = localStorage.getItem('authToken')
+    const token = sessionStorage.getItem('authToken')
     const response = await fetch(`${API_BASE_URL}/admin/users`, {
       headers: {
         'Content-Type': 'application/json',
