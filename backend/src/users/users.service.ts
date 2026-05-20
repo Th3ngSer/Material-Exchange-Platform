@@ -70,7 +70,7 @@ export class UsersService {
       .exec();
 
     return users.map((user) => ({
-      id: user._id?.toString?.() ?? String(user._id),
+      id: String(user._id),
       name: user.name,
       email: user.email,
       role: user.role,
