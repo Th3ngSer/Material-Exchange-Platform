@@ -13,7 +13,11 @@ export class Message {
   @Prop({ required: true })
   receiverId: string;
 
-  @Prop({ enum: ['text', 'image', 'voice'], default: 'text' })
+  @Prop({
+    required: true,
+    enum: ['text', 'image', 'voice'],
+    default: 'text',
+  })
   type: MessageType;
 
   @Prop({ required: true })
@@ -21,4 +25,3 @@ export class Message {
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);
-

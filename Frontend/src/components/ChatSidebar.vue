@@ -1,19 +1,19 @@
 <script setup lang="ts">
-type Message = {
-  text: string
-  sender: 'me' | 'them'
-  time: string
-}
+// type Message = {
+//   text: string
+//   sender: 'me' | 'them'
+//   time: string
+// }
 
 type User = {
-  id: number
+  id: string
   name: string
   role: string
   message: string
   time: string
   avatar: string
   online?: boolean
-  chat: Message[]
+  // chat: Message[]
 }
 
 defineProps<{

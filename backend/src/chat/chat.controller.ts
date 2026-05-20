@@ -1,4 +1,3 @@
-// chat/chat.controller.ts
 import {
   Controller,
   Post,
@@ -10,33 +9,39 @@ import {
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SendMessageDto } from './dto/send-message.dto';
+import { GetConversationDto } from './dto/get-conversation.dto';
 
 @Controller('chat')
+@UseGuards(JwtAuthGuard) // Protect all routes in this controller
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Post('send')
   async sendMessage(
-    @Body() body: { receiverId: string; content: string },
+    @Body() body: SendMessageDto,
     @Req() req: any,
   ) {
-    // 🔥 THIS WILL NOW WORK
     const senderId = req.user.id;
 
     return this.chatService.sendMessage(
       senderId,
       body.receiverId,
       body.content,
+      body.type, // supports text, image, voice
     );
   }
 
   @Get('history')
   async getHistory(
-    @Query('user1') user1: string,
-    @Query('user2') user2: string,
+    @Query() query: GetConversationDto,
+    @Req() req: any,
   ) {
-    return this.chatService.getHistory(user1, user2);
+    const currentUserId = req.user.id;
+
+    return this.chatService.getHistory(
+      currentUserId,
+      query.userId,
+    );
   }
 }
-
