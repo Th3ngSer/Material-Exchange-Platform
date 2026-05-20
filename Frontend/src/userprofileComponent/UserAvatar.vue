@@ -50,8 +50,8 @@ export default defineComponent({
     const previewImage = ref(props.image || '')
 
     const goBack = () => {
-      router.back()
-    }
+  router.push('/')
+}
 
     const triggerFile = () => {
       fileInput.value?.click()
