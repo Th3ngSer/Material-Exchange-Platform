@@ -16,6 +16,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Computed
   const isAuthenticated = computed(() => user.value !== null)
+  const token = computed(() => sessionStorage.getItem('authToken'))
 
   /**
    * Get current auth state (for debugging/monitoring)
@@ -100,36 +101,70 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * Initialize auth state (e.g., from localStorage on app startup)
-   * This should be called when the app mounts to restore session if token exists
-   */
-  async function initializeAuth() {
+ * Initialize auth state
+ */
+async function initializeAuth() {
+  const token = sessionStorage.getItem('authToken')
+
+  if (!token) {
+    logout()
+    return
+  }
+
+  try {
+    const profile = await authApi.getProfile(token)
+    user.value = profile
+  } catch {
+    logout()
+  }
+}
+
+/**
+ * Update user profile
+ */
+async function updateProfile(profileData: Partial<User>) {
+  isLoading.value = true
+  error.value = null
+
+  try {
     const token = sessionStorage.getItem('authToken')
+
     if (!token) {
-      logout()
-      return
+      throw new Error('No authentication token found')
     }
 
-    try {
-      const profile = await authApi.getProfile(token)
-      user.value = profile
-    } catch {
-      logout()
-    }
-  }
+    const updatedUser = await authApi.updateProfile(token, profileData)
 
-  return {
-    // State
-    user,
-    isLoading,
-    error,
-    isAuthenticated,
-    state,
-    // Methods
-    login,
-    register,
-    logout,
-    clearError,
-    initializeAuth,
+    user.value = updatedUser
+
+    return updatedUser
+  } catch (err) {
+    const errorMessage =
+      err instanceof Error ? err.message : 'Failed to update profile'
+
+    error.value = errorMessage
+    throw err
+  } finally {
+    isLoading.value = false
   }
+}
+
+return {
+  // State
+  user,
+  isLoading,
+  error,
+  isAuthenticated,
+  state,
+  token,
+
+  // Methods
+  login,
+  register,
+  logout,
+  clearError,
+  initializeAuth,
+  updateProfile,
+}
+
 })
