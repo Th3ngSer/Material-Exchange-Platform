@@ -107,14 +107,11 @@ router.beforeEach((to) => {
   return true
 })
 
-
-// add guard to check for authenticated access before post
-router.beforeEach((to, _from, next) => {
+// Guard to check for authenticated access before post
+router.beforeEach((to) => {
   const authStore = useAuthStore()
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next('/login')
-  } else {
-    next()
+    return '/login'
   }
 })
 

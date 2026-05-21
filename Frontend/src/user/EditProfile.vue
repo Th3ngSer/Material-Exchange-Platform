@@ -3,7 +3,7 @@
     <Sidebar />
 
     <div class="content">
-      <h2 class="title"><!-- {{ languageStore.t('editProfile') }} -->Edit Profile</h2>
+      <h2 class="title">{{ languageStore.t('editProfile') }} </h2>
 
       <div class="info-form">
         <!-- Left column -->
@@ -198,5 +198,19 @@ const saveProfile = async () => {
   background: #1e1b4b;
   color: white;
   cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  pointer-events: auto;
+}
+
+.btn:hover {
+  background: #2d2a5f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 </style>

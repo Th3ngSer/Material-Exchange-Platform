@@ -10,6 +10,12 @@ export interface User {
   id: string
   email: string
   name?: string
+  username?: string
+  gender?: string
+  phone?: string
+  nationality?: string
+  birthDate?: string
+  avatar?: string
   role?: string
   status?: string
   listingsCount?: number
