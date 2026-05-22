@@ -61,7 +61,7 @@ export default defineComponent({
 
 <style scoped>
 .sidebar {
-  width: 260px;
+  width: 310px;
   min-height: 100vh;
   background: #1e1b4b;
   color: white;

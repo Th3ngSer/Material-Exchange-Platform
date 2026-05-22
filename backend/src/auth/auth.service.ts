@@ -117,6 +117,7 @@ export class AuthService {
       phone: user.phone,
       nationality: user.nationality,
       birthDate: user.birthDate,
+      avatar: user.avatar,
       role: user.role,
       status: user.status,
       listingsCount: user.listingsCount,

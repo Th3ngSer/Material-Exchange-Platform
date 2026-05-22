@@ -107,12 +107,11 @@ router.beforeEach((to) => {
   return true
 })
 
-
-// add guard to check for authenticated access before post
+// Guard to check for authenticated access before post
 router.beforeEach((to) => {
   const authStore = useAuthStore()
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    return { name: 'login', query: { redirect: to.fullPath } }
+    return '/login'
   }
 
   return true

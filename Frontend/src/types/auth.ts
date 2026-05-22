@@ -11,11 +11,11 @@ export interface User {
   email: string
   name?: string
   username?: string
-  avatar?: string
   gender?: string
   phone?: string
-  birthDate?: string
   nationality?: string
+  birthDate?: string
+  avatar?: string
   role?: string
   status?: string
   listingsCount?: number
