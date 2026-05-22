@@ -6,12 +6,14 @@ import {
   MessageDocument,
   MessageType,
 } from './schemas/message.schema';
+import { ChatGateway } from './chat.gateway';
 
 @Injectable()
 export class ChatService {
   constructor(
     @InjectModel(Message.name)
     private readonly messageModel: Model<MessageDocument>,
+    private readonly chatGateway: ChatGateway,
   ) {}
 
   // SEND MESSAGE (text, image, voice)
@@ -21,12 +23,23 @@ export class ChatService {
     content: string,
     type: MessageType = 'text',
   ) {
-    return this.messageModel.create({
+    const msg = await this.messageModel.create({
       senderId,
       receiverId,
       content,
       type,
     });
+
+    // emit to receiver if connected via websocket
+    try {
+      this.chatGateway.sendToUser(String(receiverId), 'message', msg)
+      // also emit to sender's own room so sender sees the saved message
+      this.chatGateway.sendToUser(String(senderId), 'message', msg)
+    } catch (err) {
+      // ignore emission errors
+    }
+
+    return msg
   }
 
   // GET CONVERSATION BETWEEN TWO USERS

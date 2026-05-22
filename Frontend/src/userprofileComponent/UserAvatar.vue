@@ -34,8 +34,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch, onMounted } from 'vue'
+import { defineComponent, ref, watch, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 export default defineComponent({
   props: {
@@ -45,9 +46,14 @@ export default defineComponent({
 
   setup(props) {
     const router = useRouter()
+    const authStore = useAuthStore()
+
+    const avatarStorageKey = computed(() => {
+      return authStore.user?.id ? `avatar_${authStore.user.id}` : 'avatar'
+    })
 
     const fileInput = ref<HTMLInputElement | null>(null)
-    const previewImage = ref(props.image || '')
+    const previewImage = ref(props.image || authStore.user?.avatar || '')
 
     const goBack = () => {
       router.back()
@@ -55,6 +61,16 @@ export default defineComponent({
 
     const triggerFile = () => {
       fileInput.value?.click()
+    }
+
+    const setAvatar = (value: string) => {
+      previewImage.value = value
+      if (avatarStorageKey.value) {
+        localStorage.setItem(avatarStorageKey.value, value)
+      }
+      if (authStore.user) {
+        authStore.setAvatar(value)
+      }
     }
 
     const onFileChange = (event: Event) => {
@@ -65,20 +81,28 @@ export default defineComponent({
       const reader = new FileReader()
 
       reader.onload = () => {
-        previewImage.value = reader.result as string
-        localStorage.setItem('avatar', previewImage.value)
+        setAvatar(reader.result as string)
       }
 
       reader.readAsDataURL(file)
     }
 
     onMounted(() => {
-      const saved = localStorage.getItem('avatar')
-      if (saved) previewImage.value = saved
+      const saved = avatarStorageKey.value
+        ? localStorage.getItem(avatarStorageKey.value)
+        : null
+
+      if (saved) {
+        setAvatar(saved)
+      } else if (authStore.user?.avatar) {
+        previewImage.value = authStore.user.avatar
+      }
     })
 
     watch(() => props.image, (newVal) => {
-      if (newVal) previewImage.value = newVal
+      if (newVal) {
+        setAvatar(newVal)
+      }
     })
 
     return {

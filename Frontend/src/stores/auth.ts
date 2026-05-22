@@ -27,6 +27,31 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated: isAuthenticated.value,
   }))
 
+  const getAvatarStorageKey = (userId: string) => `avatar_${userId}`
+
+  function setAvatar(avatar: string) {
+    if (!user.value) return
+    user.value.avatar = avatar
+    localStorage.setItem(getAvatarStorageKey(user.value.id), avatar)
+  }
+
+  async function updateProfile(data: Partial<User>) {
+    if (!user.value) {
+      throw new Error('Not authenticated')
+    }
+
+    user.value = {
+      ...user.value,
+      ...data,
+    }
+
+    if (user.value.avatar) {
+      localStorage.setItem(getAvatarStorageKey(user.value.id), user.value.avatar)
+    }
+
+    return user.value
+  }
+
   /**
    * Login user with email and password
    * @param credentials - Email and password
@@ -37,6 +62,13 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const response = await authApi.login(credentials)
+
+      if (response.user && !response.user.avatar) {
+        const savedAvatar = localStorage.getItem(getAvatarStorageKey(response.user.id))
+        if (savedAvatar) {
+          response.user.avatar = savedAvatar
+        }
+      }
 
       // Store user data
       user.value = response.user
@@ -64,6 +96,13 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const response = await authApi.register(credentials)
+
+      if (response.user && !response.user.avatar) {
+        const savedAvatar = localStorage.getItem(getAvatarStorageKey(response.user.id))
+        if (savedAvatar) {
+          response.user.avatar = savedAvatar
+        }
+      }
 
       // Store user data
       user.value = response.user
@@ -112,6 +151,12 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const profile = await authApi.getProfile(token)
+      if (profile && !profile.avatar) {
+        const savedAvatar = localStorage.getItem(getAvatarStorageKey(profile.id))
+        if (savedAvatar) {
+          profile.avatar = savedAvatar
+        }
+      }
       user.value = profile
     } catch {
       logout()
@@ -131,5 +176,7 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     clearError,
     initializeAuth,
+    setAvatar,
+    updateProfile,
   }
 })

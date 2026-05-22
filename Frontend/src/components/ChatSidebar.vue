@@ -1,31 +1,59 @@
 <script setup lang="ts">
+import { defineProps, defineEmits } from 'vue'
+
 type User = {
   id: string | number
   name: string
   role: string
   message: string
   time: string
-  avatar: string
+  avatar?: string
   online?: boolean
 }
 
-defineProps<{
+const { users, selectedUser } = defineProps<{
   users: User[]
   selectedUser: User | null
 }>()
 
 const emit = defineEmits<{
-  (e: "select-user", user: User): void
+  (e: 'select-user', user: User): void
 }>()
+
+const getAvatarUrl = (user: User) => {
+  const avatarValue = user.avatar?.trim()
+  if (avatarValue) {
+    return avatarValue
+  }
+
+  const stored = localStorage.getItem(`avatar_${String(user.id)}`)
+  if (stored) {
+    return stored
+  }
+
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=0D8ABC&color=fff`
+}
+
+const handleAvatarError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.src = 'https://via.placeholder.com/48'
+}
 </script>
 
 <template>
   <aside class="sidebar">
+
     <div class="sidebar-header">
       <h3>Inboxes</h3>
     </div>
 
-    <div class="conversation-list">
+    <!-- ❗ FIX 1: empty state -->
+    <div v-if="!users || users.length === 0" class="empty">
+      No users found
+    </div>
+
+    <div v-else class="conversation-list">
+
       <div
         v-for="user in users"
         :key="user.id"
@@ -33,11 +61,14 @@ const emit = defineEmits<{
         @click="emit('select-user', user)"
       >
         <div class="avatar-wrapper" :class="{ online: user.online }">
+
           <img
-            :src="user.avatar"
+            :src="getAvatarUrl(user)"
             :alt="user.name"
             class="avatar-img"
+            @error="handleAvatarError"
           />
+
         </div>
 
         <div class="content">
@@ -47,8 +78,11 @@ const emit = defineEmits<{
           </div>
           <p class="message">{{ user.message }}</p>
         </div>
+
       </div>
+
     </div>
+
   </aside>
 </template>
 
@@ -75,53 +109,6 @@ const emit = defineEmits<{
   margin: 0;
   font-size: 18px;
   font-weight: 700;
-}
-
-.new-chat-btn {
-  background: none;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  transition: all 0.2s;
-}
-
-.search-box {
-  padding: 15px 20px;
-  position: relative;
-  box-sizing: border-box;
-}
-
-.search-icon {
-  position: absolute;
-  left: 28px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  color: #64748b;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.search {
-  width: 100%;
-  max-width: 360px;
-  padding: 10px 15px 10px 38px;
-  border-radius: 8px;
-  border: 1px solid #1e293b;
-  background: #1e293b;
-  color: white;
-  font-size: 14px;
-  outline: none;
-  transition: all 0.2s;
-  box-sizing: border-box;
-  margin-left: 0;
-}
-
-.search::placeholder {
-  color: #64748b;
 }
 
 .user {
@@ -154,7 +141,6 @@ const emit = defineEmits<{
   background: #3b82f6;
 }
 
-/* Online Indicator */
 .avatar-wrapper.online::after {
   content: '';
   position: absolute;
@@ -165,7 +151,6 @@ const emit = defineEmits<{
   background: #22c55e;
   border-radius: 50%;
   border: 2px solid #0f172a;
-  z-index: 2;
 }
 
 .content {
@@ -190,7 +175,6 @@ const emit = defineEmits<{
 .time {
   font-size: 12px;
   color: #64748b;
-  flex-shrink: 0;
 }
 
 .message {
@@ -200,5 +184,13 @@ const emit = defineEmits<{
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ❗ FIX 3: empty state style */
+.empty {
+  padding: 20px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
 }
 </style>
