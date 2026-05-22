@@ -62,6 +62,10 @@ type TranslationKey =
   | 'learnMore'
   | 'forSale'
   | 'borrow'
+  | 'all'
+  | 'newest'
+  | 'az'
+  | 'za'
   | 'posted'
   | 'justNow'
   | 'minutesAgo'
@@ -72,6 +76,9 @@ type TranslationKey =
   | 'allTypes'
   | 'loginSignUp'
   | 'footerDescription'
+  | 'productItemAlt'
+  | 'sellerAlt'
+  | 'unknownSeller'
   | 'joinLuminaryNetwork'
   | 'newsletterDescription'
   | 'subscribe'
@@ -237,8 +244,15 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     learnMore: 'Learn more',
     forSale: 'For Sale',
     borrow: 'Borrow',
+    all: 'All',
+    newest: 'Newest',
+    az: 'A-Z',
+    za: 'Z-A',
     posted: 'Posted',
     justNow: 'Just now',
+    productItemAlt: 'Product item',
+    sellerAlt: 'Seller',
+    unknownSeller: 'U',
     minutesAgo: 'm ago',
     hoursAgo: 'h ago',
     daysAgo: 'd ago',
@@ -406,14 +420,21 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     marketplace: 'ទីផ្សារ',
     categories: 'ប្រភេទ',
     sortBy: 'តម្រៀបតាម',
-    xchangeMaterial: 'XChange Material',
+    xchangeMaterial: 'XChange សម្ភារៈ',
     heroDescription: 'វេទិកាដែលគួរឱ្យទុកចិត្តសម្រាប់ការទិញ លក់ និងផ្លាស់ប្តូរទំនិញប្រចាំថ្ងៃដោយងាយស្រួល និងថ្លៃសមរម្យ។',
     browse: 'រកមើល',
     learnMore: 'ស្វែងយល់បន្ថែម',
     forSale: 'សម្រាប់លក់',
     borrow: 'ខ្ចី',
+    all: 'ទាំងអស់',
+    newest: 'ថ្មីជាងគេ',
+    az: 'A-Z',
+    za: 'Z-A',
     posted: 'បានចុះផ្សាយ',
     justNow: 'ថ្មីៗនេះ',
+    productItemAlt: 'ទំនិញផលិតផល',
+    sellerAlt: 'អ្នកលក់',
+    unknownSeller: 'U',
     minutesAgo: 'នាទីមុន',
     hoursAgo: 'ម៉ោងមុន',
     daysAgo: 'ថ្ងៃមុន',

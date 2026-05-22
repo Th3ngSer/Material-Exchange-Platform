@@ -10,6 +10,22 @@ defineProps<{
   resultCount: number
 }>()
 
+const getCategoryLabel = (category: string) => {
+  if (category === 'All') return languageStore.t('all')
+  if (category === 'Sell') return languageStore.t('sell')
+  if (category === 'Exchange') return languageStore.t('exchange')
+  if (category === 'Borrow') return languageStore.t('borrow')
+  return category
+}
+
+const getSortLabel = (sort: string) => {
+  if (sort === 'All') return languageStore.t('all')
+  if (sort === 'Newest') return languageStore.t('newest')
+  if (sort === 'A-Z') return languageStore.t('az')
+  if (sort === 'Z-A') return languageStore.t('za')
+  return sort
+}
+
 defineEmits<{
   (event: 'update:category', value: string): void
   (event: 'update:sort', value: string): void
@@ -45,7 +61,7 @@ defineEmits<{
           class="appearance-none rounded-[4px] border border-[#26276f26] bg-[#202065] px-3 py-2 text-white outline-none"
         >
           <option v-for="option in sortOptions" :key="option" :value="option">
-            {{ option }}
+            {{ getSortLabel(option) }}
           </option>
         </select>
       </label>
@@ -63,7 +79,7 @@ defineEmits<{
       }"
       @click="$emit('update:category', category)"
     >
-      {{ category }}
+      {{ getCategoryLabel(category) }}
     </button>
   </div>
 </template>

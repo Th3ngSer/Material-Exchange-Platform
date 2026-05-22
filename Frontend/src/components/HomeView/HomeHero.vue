@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useLanguageStore } from '@/stores/language'
 
 interface HeroSlide {
   image: string
   title: string
   accent: string
 }
+
+const languageStore = useLanguageStore()
+const heroText = computed(() => languageStore.t('xchangeMaterial'))
+const heroAccent = computed(() => heroText.value.slice(0, 1))
+const heroRest = computed(() => heroText.value.slice(1))
 
 const slides: HeroSlide[] = [
   {
@@ -62,7 +68,7 @@ onBeforeUnmount(() => {
       <div
         class="flex flex-col justify-center gap-6 px-[48px] py-[44px] text-white max-[960px]:px-6 max-[960px]:pt-9"
       >
-        <h1
+         <h1
           class="m-0 text-[clamp(2.25rem,5.2vw,3.9rem)] font-black leading-[0.93] tracking-[-0.03em] text-[#f1f2f4]"
         >
           <span class="text-[#ff4c45]">{{ activeSlide.accent }}</span
@@ -70,21 +76,21 @@ onBeforeUnmount(() => {
         </h1>
         <p
           class="max-w-[560px] text-[clamp(0.95rem,1.2vw,1.25rem)] font-semibold leading-[1.7] text-white/90"
-        > 
-                   A secure platform to buy, sell, exchange, lend, and borrow materials.
+        >
+          {{ languageStore.t('heroDescription') }}
         </p>
 
         <div class="flex flex-wrap justify-start gap-5">
           <a
             class="inline-flex min-w-[220px] items-center justify-center rounded-[12px] border border-white/85 bg-[#f23838] px-7 py-3 text-[1.15rem] font-bold text-white no-underline shadow-[0_16px_26px_rgba(255,75,66,0.24)] transition hover:-translate-y-0.5 max-[960px]:min-w-[190px] max-[960px]:text-[1rem]"
             href="#categories"
-            >Browse
+            >{{ languageStore.t('browse') }}
           </a>
           
           <a
             class="inline-flex min-w-[220px] items-center justify-center rounded-[12px] border border-white/35 bg-[#5f6572]/95 px-7 py-3 text-[1.15rem] font-bold text-white/88 no-underline transition hover:-translate-y-0.5 max-[960px]:min-w-[190px] max-[960px]:text-[1rem]"
             href="#listings"
-          >Learn more
+          >{{ languageStore.t('learnMore') }}
           </a>
         </div>
       </div>
@@ -98,7 +104,7 @@ onBeforeUnmount(() => {
           <div class="pointer-events-none absolute inset-4"></div>
           <img
             :src="activeSlide.image"
-            :alt="activeSlide.title"
+            :alt="heroText"
             class="h-full w-full object-contain p-2 transition-opacity duration-700"
           />
         </div>

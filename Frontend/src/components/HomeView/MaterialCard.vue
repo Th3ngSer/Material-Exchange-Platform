@@ -20,8 +20,15 @@ defineProps<{
 
 const languageStore = useLanguageStore()
 
+function getBadgeLabel(category: string): string {
+  if (category === 'Sell') return languageStore.t('forSale')
+  if (category === 'Exchange') return languageStore.t('exchange')
+  if (category === 'Borrow') return languageStore.t('borrow')
+  return category
+}
+
 function getTimeAgo(dateString: string | undefined): string {
-  if (!dateString) return 'Just now'
+  if (!dateString) return languageStore.t('justNow')
 
   const date = new Date(dateString)
   const now = new Date()
@@ -31,10 +38,10 @@ function getTimeAgo(dateString: string | undefined): string {
   const diffHours = Math.floor(diffMins / 60)
   const diffDays = Math.floor(diffHours / 24)
 
-  if (diffSecs < 60) return 'Just now'
-  if (diffMins < 60) return `${diffMins}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays < 7) return `${diffDays}d ago`
+  if (diffSecs < 60) return languageStore.t('justNow')
+  if (diffMins < 60) return `${diffMins}${languageStore.t('minutesAgo')}`
+  if (diffHours < 24) return `${diffHours}${languageStore.t('hoursAgo')}`
+  if (diffDays < 7) return `${diffDays}${languageStore.t('daysAgo')}`
 
   return date.toLocaleDateString()
 }
@@ -58,13 +65,13 @@ function getTimeAgo(dateString: string | undefined): string {
                 : '#0B6F61',
         }"
       >
-        {{ item.category === 'Sell' ? 'For sale' : item.category === 'Exchange' ? 'Exchange' : 'Borrow' }}
+        {{ getBadgeLabel(item.category) }}
       </div>
 
       <!-- Product Image -->
       <img
         :src="item.images?.[0] || ''"
-        alt="Product item"
+        :alt="languageStore.t('productItemAlt')"
         class="h-full w-full object-contain"
       />
     </div>
@@ -83,7 +90,7 @@ function getTimeAgo(dateString: string | undefined): string {
       </div>
 
       <!-- Posted Time -->
-      <div class="text-xs text-gray-400 mb-2">Posted {{ getTimeAgo(item.postedTime) }}</div>
+      <div class="text-xs text-gray-400 mb-2">{{ languageStore.t('posted') }} {{ getTimeAgo(item.postedTime) }}</div>
 
       <!-- Location -->
       <div class="flex items-center gap-2 text-sm text-gray-300 mb-2">
@@ -110,10 +117,10 @@ function getTimeAgo(dateString: string | undefined): string {
             <img
               v-if="item.avatar"
               :src="item.avatar"
-              alt="Seller"
+              :alt="languageStore.t('sellerAlt')"
               class="w-full h-full object-cover"
             />
-            <span v-else>{{ item.seller?.[0]?.toUpperCase() || 'U' }}</span>
+            <span v-else>{{ item.seller?.[0]?.toUpperCase() || languageStore.t('unknownSeller') }}</span>
           </div>
 
           <!-- Seller Name -->
