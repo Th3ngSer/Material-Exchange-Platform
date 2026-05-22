@@ -15,9 +15,7 @@
         <NavItem :label="languageStore.t('payments')" icon="/userprofileImage/wallet.png" />
       </router-link>
 
-      <router-link to="/profile/language" class="nav-link" active-class="active-link">
-        <NavItem :label="languageStore.t('language')" icon="/userprofileImage/globe.png" />
-      </router-link>
+
 
       <router-link to="/profile/help" class="nav-link" active-class="active-link">
         <NavItem :label="languageStore.t('help')" icon="/userprofileImage/help.png" />
