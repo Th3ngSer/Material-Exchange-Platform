@@ -1,6 +1,30 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+
+type AdminListing = {
+  id: string
+  title: string
+  lister: string
+  category: string
+  price: string
+  type: string
+  status: string
+  date: string
+}
+
+type AdminListingApi = {
+  _id: string
+  title: string
+  listerName?: string
+  category: string
+  price?: number
+  type?: string
+  status?: string
+  createdAt?: string
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 const navItems = [
   { label: 'Dashboard', to: '/admin' },
@@ -15,80 +39,56 @@ const navItems = [
   { label: 'Settings', to: '/admin/settings' },
 ]
 
-const listings = [
-  {
-    title: 'Steel Beam Bundle',
-    lister: 'Yagami',
-    category: 'Materials',
-    price: '$168',
-    type: 'Sell',
-    status: 'Sold',
-    date: '2025-03-20',
-  },
-  {
-    title: 'Steel Beam Bundle',
-    lister: 'Yagami',
-    category: 'Materials',
-    price: '$168',
-    type: 'Exchange',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-  {
-    title: 'Steel Beam Bundle',
-    lister: 'Yagami',
-    category: 'Materials',
-    price: '$168',
-    type: 'Borrow',
-    status: 'Suspended',
-    date: '2025-03-20',
-  },
-  {
-    title: 'Steel Beam Bundle',
-    lister: 'Yagami',
-    category: 'Materials',
-    price: '$168',
-    type: 'Sell',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-  {
-    title: 'Steel Beam Bundle',
-    lister: 'Yagami',
-    category: 'Materials',
-    price: '$168',
-    type: 'Sell',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-  {
-    title: 'Steel Beam Bundle',
-    lister: 'Yagami',
-    category: 'Materials',
-    price: '$168',
-    type: 'Sell',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-  {
-    title: 'Steel Beam Bundle',
-    lister: 'Yagami',
-    category: 'Materials',
-    price: '$168',
-    type: 'Sell',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-  {
-    title: 'Steel Beam Bundle',
-    lister: 'Yagami',
-    category: 'Materials',
-    price: '$168',
-    type: 'Sell',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-]
+const listings = ref<AdminListing[]>([])
+const isLoading = ref(false)
+const errorMessage = ref('')
+
+const formatDate = (value?: string) => {
+  if (!value) return '---'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toISOString().split('T')[0]
+}
+
+const formatPrice = (price?: number) => `$${Number(price ?? 0).toFixed(2)}`
+
+const fetchListings = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    const token = sessionStorage.getItem('authToken')
+    const response = await fetch(`${API_BASE_URL}/posts/admin/all`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.message || 'Failed to load listings')
+    }
+
+    const data = (await response.json()) as AdminListingApi[]
+    listings.value = (data ?? []).map((item) => ({
+      id: item._id,
+      title: item.title,
+      lister: item.listerName ?? '---',
+      category: item.category,
+      price: formatPrice(item.price),
+      type: item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : '---',
+      status: item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Active',
+      date: formatDate(item.createdAt),
+    }))
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Failed to load listings'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchListings)
 
 const route = useRoute()
 const currentPath = computed(() => route.path)
@@ -173,6 +173,8 @@ const isActive = (path: string) => {
         </div>
 
         <div class="table">
+          <p v-if="isLoading" class="table-note">Loading listings...</p>
+          <p v-else-if="errorMessage" class="table-note error">{{ errorMessage }}</p>
           <div class="table-row header">
             <span>Title</span>
             <span>Lister</span>
@@ -183,7 +185,7 @@ const isActive = (path: string) => {
             <span>Date</span>
             <span>Actions</span>
           </div>
-          <div v-for="listing in listings" :key="listing.title + listing.type + listing.status" class="table-row body">
+          <div v-for="listing in listings" :key="listing.id" class="table-row body">
             <span>{{ listing.title }}</span>
             <span>{{ listing.lister }}</span>
             <span>{{ listing.category }}</span>
@@ -450,6 +452,16 @@ select {
 .table {
   display: grid;
   gap: 10px;
+}
+
+.table-note {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.table-note.error {
+  color: #ef4444;
 }
 
 .table-row {

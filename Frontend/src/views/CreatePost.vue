@@ -2,7 +2,7 @@
 import { reactive, ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
-import { useLanguageStore } from '@/stores/language'
+// import { useLanguageStore } from '@/stores/language'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ListingType = 'Sell' | 'Exchange' | 'Lend'
@@ -40,9 +40,9 @@ const submitted = ref(false)
 const submitError = ref('')
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const activeThumb = ref(0)
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const router = useRouter()
-const languageStore = useLanguageStore()
+// const languageStore = useLanguageStore()
 
 const form = reactive<FormState>({
   type: 'Sell',

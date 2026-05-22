@@ -23,7 +23,7 @@ type PostsResponse = {
   posts: Post[]
 }
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 const posts = ref<Post[]>([])
 const total = ref(0)
 const isLoading = ref(false)
@@ -105,10 +105,9 @@ onMounted(loadPosts)
         </div>
 
         <router-link
-          to="/create"
+          to="/posts/create"
           class="inline-flex items-center justify-center rounded-full bg-[#FF8C00] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600"
-        >
-          <!-- {{ languageStore.t('createPost') }} -->Create post
+        >Create post
         </router-link>
       </div>
 
@@ -117,14 +116,13 @@ onMounted(loadPosts)
       >
         <p class="text-sm text-slate-600">
           <span class="font-semibold text-slate-900">{{ total }}</span>
-          <!-- {{ languageStore.t('postsSaved') }} -->posts saved
+            posts saved
         </p>
         <button
           type="button"
           class="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-          @click="loadPosts"
-        >
-          <!-- {{ languageStore.t('refresh') }} -->Refresh
+          @click="loadPosts">
+            Refresh
         </button>
       </div>
 

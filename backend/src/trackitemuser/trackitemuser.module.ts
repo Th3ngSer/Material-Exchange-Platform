@@ -9,6 +9,7 @@ import {
   TrackItemUserSchema,
 } from './schemas/trackitemuser.schema';
 import { Counter, CounterSchema } from './schemas/counter.schema';
+import { TransactionsModule } from '../transactions/transactions.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { Counter, CounterSchema } from './schemas/counter.schema';
       { name: TrackItemUser.name, schema: TrackItemUserSchema },
       { name: Counter.name, schema: CounterSchema },
     ]),
+    TransactionsModule,
   ],
   controllers: [TrackitemuserController],
   providers: [TrackitemuserService],

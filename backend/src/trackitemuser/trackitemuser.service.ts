@@ -8,6 +8,7 @@ import {
 } from './schemas/trackitemuser.schema';
 import { CreateTrackItemUserDto } from './dto/create-trackitemuser.dto';
 import { UpdateTrackStatusUserDto } from './dto/update-trackstatususer.dto';
+import { TransactionsService } from '../transactions/transactions.service';
 
 @Injectable()
 export class TrackitemuserService {
@@ -17,6 +18,7 @@ export class TrackitemuserService {
 
     @InjectModel(Counter.name)
     private counterModel: Model<CounterDocument>, // 👈 ADD THIS
+    private readonly transactionsService: TransactionsService,
   ) {}
   private async getNextSequence(): Promise<number> {
     const counter = await this.counterModel.findByIdAndUpdate(
@@ -35,8 +37,18 @@ export class TrackitemuserService {
       ...dto,
       customId: nextId,
     });
+    const saved = await created.save();
 
-    return created.save();
+    await this.transactionsService.create({
+      buyerName: dto.buyerName ?? dto.name,
+      sellerName: dto.sellerName ?? '---',
+      itemTitle: dto.itemTitle ?? dto.name,
+      amount: dto.amount,
+      type: dto.type ?? 'sell',
+      status: dto.transactionStatus ?? 'active',
+    });
+
+    return saved;
   }
 
   async findOneByCustomId(id: number) {
