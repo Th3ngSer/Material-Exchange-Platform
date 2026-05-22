@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import Footer from '@/components/layout/Footer.vue'
@@ -63,7 +63,7 @@ const relatedCardItems = computed(() =>
   defaultMaterials
     .filter(post => post.id !== currentPost.value.id)
     .slice(0, 4)
-    .map((post, index) => ({
+    .map((post) => ({
       id: post.id,
       title: post.title,
       price: formatPrice(post),

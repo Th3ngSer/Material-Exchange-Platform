@@ -25,7 +25,7 @@ import { PostsModule } from './posts/posts.module';
       useFactory: (config: ConfigService) => {
         const uri =
           config.get<string>('MONGODB_URI') ||
-          'mongodb://127.0.0.1:27017/material_xchange';
+          'mongodb://127.0.0.1:27017/material_xchange?directConnection=true';
 
         console.log('🔥 Mongo URI:', uri);
 

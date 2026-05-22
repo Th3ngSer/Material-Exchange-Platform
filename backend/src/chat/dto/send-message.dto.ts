@@ -1,12 +1,15 @@
-import { IsString } from 'class-validator';
+import { IsString, IsIn, IsNotEmpty, IsMongoId } from 'class-validator';
 
 export class SendMessageDto {
-  @IsString()
-  receiverId: string;
+  @IsMongoId()
+  @IsNotEmpty()
+  receiverId!: string;
 
   @IsString()
-  type: 'text' | 'image' | 'voice';
+  @IsIn(['text', 'image', 'voice'])
+  type!: 'text' | 'image' | 'voice';
 
   @IsString()
-  content: string;
+  @IsNotEmpty()
+  content!: string;
 }

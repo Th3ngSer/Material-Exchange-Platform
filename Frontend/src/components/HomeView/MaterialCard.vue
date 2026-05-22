@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useLanguageStore } from '@/stores/language'
 
 type Tone = 'gold' | 'orange' | 'rose'
 
@@ -18,7 +17,6 @@ defineProps<{
   }
 }>()
 
-const languageStore = useLanguageStore()
 
 function getTimeAgo(dateString: string | undefined): string {
   if (!dateString) return 'Just now'

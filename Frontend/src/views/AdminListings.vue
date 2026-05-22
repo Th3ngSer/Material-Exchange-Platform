@@ -57,7 +57,7 @@ const fetchListings = async () => {
   errorMessage.value = ''
 
   try {
-    const token = sessionStorage.getItem('authToken')
+    const token = localStorage.getItem('authToken')
     const response = await fetch(`${API_BASE_URL}/posts/admin/all`, {
       headers: {
         'Content-Type': 'application/json',

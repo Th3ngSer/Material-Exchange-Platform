@@ -4,7 +4,7 @@ const API = 'http://localhost:3000/api/trackitemuser'
 
 // Get auth token from sessionStorage (per-tab)
 const getAuthHeaders = () => {
-  const token = sessionStorage.getItem('authToken')
+  const token = localStorage.getItem('authToken')
   return token ? { headers: { Authorization: `Bearer ${token}` } } : {}
 }
 
