@@ -23,7 +23,7 @@ import { AdminDashboardModule } from './admin/admin-dashboard.module';
       useFactory: (config: ConfigService) => {
         const uri =
           config.get<string>('MONGODB_URI') ||
-          'mongodb://127.0.0.1:27017/material_xchange';
+          'mongodb://127.0.0.1:27017/material_xchange?directConnection=true';
 
         console.log('🔥 Mongo URI:', uri);
 
@@ -49,3 +49,4 @@ import { AdminDashboardModule } from './admin/admin-dashboard.module';
   providers: [AppService],
 })
 export class AppModule {}
+

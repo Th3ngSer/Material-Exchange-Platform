@@ -14,9 +14,9 @@ async function bootstrap() {
   // Global validation pipe -- auto-validates all DTOs
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // strip unknown fields
+      whitelist: true,
       forbidNonWhitelisted: false,
-      transform: true, // auto-cast types
+      transform: true,
     }),
   );
 
@@ -26,6 +26,7 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Static uploads
   // Prefix all routes with /api so frontend can call /api/auth/login and /api/auth/register
   app.setGlobalPrefix('api');
 
@@ -40,4 +41,6 @@ async function bootstrap() {
   await app.listen(process.env.PORT || 3000);
   console.log(`Server running on http://localhost:${process.env.PORT || 3000}`);
 }
+
 void bootstrap();
+
