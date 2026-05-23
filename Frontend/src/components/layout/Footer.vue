@@ -5,6 +5,7 @@
         class="grid grid-cols-[minmax(280px,0.9fr)_minmax(360px,1.1fr)] items-start gap-7 max-[900px]:grid-cols-1"
       >
         <div class="max-w-[320px]">
+          <img :src="Logo" alt="Material Exchange logo" class="h-10 mb-3" />
           <h3 class="m-0 mb-2 text-[1rem] font-bold text-white">{{ languageStore.t('xchangeMaterial') }}</h3>
           <p class="m-0 max-w-[250px] leading-[1.7] text-white/72">
             {{ languageStore.t('footerDescription') }}
@@ -117,6 +118,8 @@
 
 <script setup lang="ts">
 import { useLanguageStore } from '@/stores/language'
+// use the user-provided footer logo
+import Logo from '@/assets/images/Logo (1).png'
 
 const languageStore = useLanguageStore()
 </script>

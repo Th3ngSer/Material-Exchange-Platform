@@ -5,6 +5,7 @@
  */
 
 import SignUpForm from '@/components/auth/SignUpForm.vue'
+import Logo from '@/assets/images/Logo.png'
 </script>
 
 <template>
@@ -12,9 +13,7 @@ import SignUpForm from '@/components/auth/SignUpForm.vue'
     <div class="signup-shell">
       <section class="signup-brand" aria-label="Brand">
         <div class="brand-content">
-          <h1 class="brand-title">
-            <span class="brand-primary">Do</span><span class="brand-accent">Ot</span>
-          </h1>
+          <img :src="Logo" alt="Material Exchange logo" class="h-20 mb-20" />
           <p class="brand-tagline">
             an exchange online website platform
             that use for exchange everything.
