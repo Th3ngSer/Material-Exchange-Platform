@@ -205,6 +205,10 @@ type TranslationKey =
   | 'confirmLogout'
   | 'confirmLogoutMessage'
   | 'cancel'
+  | 'materialListings'
+  | 'noResultsFound'
+  | 'noResultsDescription'
+  | 'loadingMoreMaterials'
 
 const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = {
   English: {
@@ -409,7 +413,10 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     confirmLogout: 'Confirm Logout',
     confirmLogoutMessage: 'Are you sure you want to logout?',
     cancel: 'Cancel',
-    
+    materialListings: 'Material listings',
+    noResultsFound: 'No Results found',
+    noResultsDescription: 'We couldn\'t find what you searched for. Try searching again.',
+    loadingMoreMaterials: 'Loading more materials...',
   },
   Khmer: {
     personalInformation: 'ព័ត៌មានផ្ទាល់ខ្លួន',
@@ -613,6 +620,10 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     confirmLogout: 'បញ្ជាក់ការចាកចេញ',
     confirmLogoutMessage: 'តើអ្នកប្រាកដថាចង់ចាកចេញមែនទេ?',
     cancel: 'បោះបង់',
+    materialListings: 'បញ្ជីសម្ភារៈ',
+    noResultsFound: 'មិនមានលទ្ធផល',
+    noResultsDescription: 'យើងមិនអាចស្វែងរកអ្វីដែលអ្នកបានស្វែងរកទេ។ សូមព្យាយាមស្វែងរកម្តងទៀត។',
+    loadingMoreMaterials: 'កំពុងផ្ទុកសម្ភារៈបន្ថែម...',
   },
 }
 
