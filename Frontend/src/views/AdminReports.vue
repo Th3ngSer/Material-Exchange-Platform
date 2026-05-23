@@ -58,11 +58,12 @@ const reportCards = computed(() => {
   ]
 })
 
-const formatDate = (value: string): string => {
+const formatDate = (value?: string): string => {
   if (!value) return '---'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value || '---'
-  return date.toISOString().split('T')[0]
+  const parts = date.toISOString().split('T')
+  return parts[0] ?? '---'
 }
 
 const fetchReports = async () => {
