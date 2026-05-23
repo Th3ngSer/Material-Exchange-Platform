@@ -43,11 +43,11 @@ const listings = ref<AdminListing[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
 
-const formatDate = (value?: string) => {
+const formatDate = (value?: string): string => {
   if (!value) return '---'
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toISOString().split('T')[0]
+  if (Number.isNaN(date.getTime())) return value ?? '---'
+  return date.toISOString().split('T')[0] ?? '---'
 }
 
 const formatPrice = (price?: number) => `$${Number(price ?? 0).toFixed(2)}`

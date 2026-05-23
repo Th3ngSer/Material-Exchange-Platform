@@ -1,31 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from "vue"
 import { useAuthStore } from "../stores/auth"
-
-type Message = {
-  text: string
-  sender: "me" | "them"
-  time: string
-  type?: "text" | "image" | "voice"
-  imageUrl?: string
-  audioUrl?: string
-  duration?: number
-}
-
-type User = {
-  id: string | number
-  name: string
-  role: string
-  message: string
-  time: string
-  avatar: string
-  online?: boolean
-  chat: Message[]
-}
+import type { ChatMessage, ChatUser } from '@/types/chat'
 
 const props = defineProps<{
-  selectedUser: User | null
-  messages: Message[]
+  selectedUser: ChatUser | null
+  messages: ChatMessage[]
   newMessage: string
 }>()
 
@@ -71,7 +51,7 @@ const currentUserAvatar = computed(() => {
   )
 })
 
-const getAvatarFromStore = (user: User | null) => {
+const getAvatarFromStore = (user: ChatUser | null) => {
   if (!user) {
     return 'https://via.placeholder.com/48'
   }
@@ -232,7 +212,7 @@ const stopVoice = () => {
   voiceDuration.value = 0
 }
 
-const playVoice = (msg: Message, index: number) => {
+const playVoice = (msg: ChatMessage, index: number) => {
   if (!msg.audioUrl) return
 
   if (activeVoiceIndex.value === index) {
