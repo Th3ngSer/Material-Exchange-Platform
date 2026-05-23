@@ -13,10 +13,10 @@ import Chat from '../views/Chat.vue'
 // Posts Create
 import CreatePost from '../views/CreatePost.vue'
 import EditPost from '../views/EditPost.vue'
-import { useAuthStore } from '@/stores/auth'
 import MaterialDetailView from '../views/MaterialDetailView.vue'
 // HomeView
 import HomeView from '../views/HomeView.vue'
+import BrowseView from '../views/BrowseView.vue'
 // Auth 
 import LoginView from '../views/LoginView.vue'
 import PostsList from '../views/PostsList.vue'
@@ -29,13 +29,19 @@ import LangaugeInformation from '../user/LangaugeInformation.vue'
 import LogoutInformation from '@/user/LogoutInformation.vue'
 import PaymentInformation from '@/user/PaymentInformation.vue'
 import TrackingInformation from '@/user/TrackingInformation.vue'
+import { useAuthStore } from '@/stores/auth'
 
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  // Always scroll to top on route navigation so pages start at the top
+  scrollBehavior() {
+    return { left: 0, top: 0 }
+  },
   routes: [
     { path: '/', redirect: '/home' },
     { path: '/home', name: 'home', component: HomeView },
+    { path: '/browse', name: 'browse', component: BrowseView },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/signup', name: 'signup', component: SignUpView },
 
@@ -54,29 +60,71 @@ const router = createRouter({
     { path: '/profile/language', name: 'language-information', component: LangaugeInformation },
     { path: '/profile/logout', name: 'logout-information', component: LogoutInformation },
     { path: '/profile/payment', name: 'payment-information', component: PaymentInformation },
-    { path: '/profile/tracker', name: 'trackItem', component: TrackingInformation},
+    { path: '/profile/tracker', name: 'trackItem', component: TrackingInformation },
 
     // Admin routes
-    { path: '/admin', name: 'SuperAdmin', component: AdminDashboard },
-    { path: '/admin/activity', name: 'admin-activity', component: AdminActivity },
-    { path: '/admin/listings', name: 'admin-listings', component: AdminListings },
-    { path: '/admin/notifications', name: 'admin-notifications', component: AdminNotifications },
-    { path: '/admin/reports', name: 'admin-reports', component: AdminReports },
-    { path: '/admin/reviews', name: 'admin-reviews', component: AdminReviews },
-    { path: '/admin/transactions', name: 'admin-transactions', component: AdminTransactions },
-    { path: '/admin/users', name: 'admin-users', component: AdminUsers },
+    { path: '/admin', name: 'SuperAdmin', component: AdminDashboard, meta: { requiresAdmin: true } },
+    { path: '/admin/activity', name: 'admin-activity', component: AdminActivity, meta: { requiresAdmin: true } },
+    { path: '/admin/listings', name: 'admin-listings', component: AdminListings, meta: { requiresAdmin: true } },
+    { path: '/admin/notifications', name: 'admin-notifications', component: AdminNotifications, meta: { requiresAdmin: true } },
+    { path: '/admin/reports', name: 'admin-reports', component: AdminReports, meta: { requiresAdmin: true } },
+    { path: '/admin/reviews', name: 'admin-reviews', component: AdminReviews, meta: { requiresAdmin: true } },
+    { path: '/admin/transactions', name: 'admin-transactions', component: AdminTransactions, meta: { requiresAdmin: true } },
+    { path: '/admin/users', name: 'admin-users', component: AdminUsers, meta: { requiresAdmin: true } },
   ],
 })
 
+function getRoleFromToken(token: string | null) {
+  if (!token) return null
 
-// add guard to check for authenticated access before post
-router.beforeEach((to, _from, next) => {
-  const authStore = useAuthStore()
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next('/login')
-  } else {
-    next()
+  const parts = String(token).split('.')
+  const payloadPart = parts[1]
+  if (!payloadPart) return null
+
+  try {
+    const base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
+    const payload = JSON.parse(atob(padded)) as { role?: string }
+    return payload.role ?? null
+  } catch {
+    return null
   }
+}
+
+router.beforeEach((to) => {
+  if (!to.matched.some((record) => record.meta?.requiresAdmin)) {
+    return true
+  }
+
+  const authStore = useAuthStore()
+  const token = sessionStorage.getItem('authToken')
+  const role = authStore.user?.role ?? getRoleFromToken(token)
+
+  if (!token) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
+  if (role !== 'admin') {
+    return { name: 'home' }
+  }
+
+  return true
+})
+
+// Guard to check for authenticated access before post
+router.beforeEach((to) => {
+  const authStore = useAuthStore()
+  const token = sessionStorage.getItem('authToken')
+
+  if ((to.name === 'login' || to.name === 'signup') && authStore.isAuthenticated) {
+    return { name: 'home' }
+  }
+
+  if (to.meta.requiresAuth && !token) {
+    return '/login'
+  }
+
+  return true
 })
 
 export default router

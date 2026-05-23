@@ -1,42 +1,106 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-
-type Message = {
-  text: string
-  sender: 'me' | 'them'
-  time: string
-  type?: 'text' | 'image'
-  imageUrl?: string
-}
-
-type User = {
-  id: number
-  name: string
-  role: string
-  message: string
-  time: string
-  avatar: string
-  online?: boolean
-  chat: Message[]
-}
+import { ref, computed, watch, nextTick } from "vue"
+import { useAuthStore } from "../stores/auth"
+import type { ChatMessage, ChatUser } from '@/types/chat'
 
 const props = defineProps<{
-  selectedUser: User | null
-  messages: Message[]
+  selectedUser: ChatUser | null
+  messages: ChatMessage[]
   newMessage: string
 }>()
 
 const emit = defineEmits<{
-  (e: 'send-message'): void
-  (e: 'update:newMessage', value: string): void
-  (e: 'send-image', file: File): void // ✅ Added: Image send event
+  (e: "send-message"): void
+  (e: "update:newMessage", value: string): void
+  (e: "send-image", file: File): void
+  (e: "send-voice", audio: Blob): void
 }>()
 
-// Current user's avatar
-const currentUserAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=CurrentUser'
-
 const fileInput = ref<HTMLInputElement | null>(null)
+const messagesArea = ref<HTMLElement | null>(null)
+const mediaRecorder = ref<MediaRecorder | null>(null)
+const audioChunks = ref<Blob[]>([])
+const isRecording = ref(false)
+const voiceAudio = ref<HTMLAudioElement | null>(null)
+const activeVoiceIndex = ref<number | null>(null)
+const voiceProgress = ref(0)
+const voiceDuration = ref(0)
+const voiceCurrentTime = ref(0)
+const recordingElapsed = ref(0)
+let recordingInterval: number | null = null
+const shouldSendRecording = ref(true)
 
+const authStore = useAuthStore()
+const currentUserName = computed(() => authStore.user?.name || 'You')
+const normalizeAvatarUrl = (value: string | undefined | null, fallbackName = 'User') => {
+  const normalized = String(value || '').trim()
+  if (!normalized || normalized.toLowerCase() === 'null' || normalized.toLowerCase() === 'undefined') {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(fallbackName)}&background=0D8ABC&color=fff`
+  }
+  return normalized
+}
+
+const currentUserAvatar = computed(() => {
+  const savedAvatar = authStore.user?.id
+    ? localStorage.getItem(`avatar_${authStore.user.id}`)
+    : null
+
+  return normalizeAvatarUrl(
+    authStore.user?.avatar || savedAvatar,
+    authStore.user?.name || 'User',
+  )
+})
+
+const getAvatarFromStore = (user: ChatUser | null) => {
+  if (!user) {
+    return 'https://via.placeholder.com/48'
+  }
+
+  if (user.avatar) {
+    return normalizeAvatarUrl(user.avatar, user.name)
+  }
+
+  const stored = localStorage.getItem(`avatar_${String(user.id)}`)
+  if (stored) {
+    return normalizeAvatarUrl(stored, user.name)
+  }
+
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+    user.name || 'User'
+  )}&background=0D8ABC&color=fff`
+}
+
+const updateNewMessage = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  emit("update:newMessage", target.value)
+}
+
+// Auto-scroll to bottom when messages change
+const scrollToBottom = async () => {
+  await nextTick()
+  if (messagesArea.value) {
+    messagesArea.value.scrollTop = messagesArea.value.scrollHeight
+  }
+}
+watch(
+  () => props.messages,
+  () => {
+    scrollToBottom()
+  },
+  { deep: true }
+)
+
+//Scroll when user changes
+watch(
+  () => props.selectedUser,
+  () => {
+    scrollToBottom()
+  }
+)
+
+// =========================
+// ATTACH FILE
+// =========================
 const handleAttachClick = () => {
   fileInput.value?.click()
 }
@@ -45,334 +109,392 @@ const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
 
-  // if (file) {
-  //   if (file.type.startsWith('image/')) {
-  //     emit('send-image', file)
-  //   } else {
-  //     alert('Please select an image file')
-  //   }
-  // }
-
-  if (target) {
-    target.value = ''
+  if (file && file.type.startsWith("image/")) {
+    emit("send-image", file)
   }
+
+  target.value = ""
+}
+
+const startRecording = async () => {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    window.alert('Voice recording is not supported in this browser.')
+    return
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    const recorder = new MediaRecorder(stream)
+    mediaRecorder.value = recorder
+    audioChunks.value = []
+
+    recorder.ondataavailable = (event: BlobEvent) => {
+      if (event.data.size > 0) {
+        audioChunks.value.push(event.data)
+      }
+    }
+
+    recorder.onstop = () => {
+      const audioBlob = new Blob(audioChunks.value, { type: 'audio/webm' })
+      if (shouldSendRecording.value) {
+        emit('send-voice', audioBlob)
+      }
+      stream.getTracks().forEach((track) => track.stop())
+      isRecording.value = false
+      recordingElapsed.value = 0
+      if (recordingInterval !== null) {
+        window.clearInterval(recordingInterval)
+        recordingInterval = null
+      }
+      audioChunks.value = []
+      shouldSendRecording.value = true
+    }
+
+    recorder.start()
+    isRecording.value = true
+    recordingElapsed.value = 0
+    shouldSendRecording.value = true
+    recordingInterval = window.setInterval(() => {
+      recordingElapsed.value += 1
+    }, 1000)
+  } catch (err) {
+    console.error('Recording failed', err)
+    window.alert('Unable to start audio recording.')
+  }
+}
+
+const stopRecording = () => {
+  if (mediaRecorder.value?.state === 'recording') {
+    // by default, stopping will send the recording
+    shouldSendRecording.value = true
+    mediaRecorder.value.stop()
+  }
+}
+
+const cancelRecording = () => {
+  // stop and discard the recording
+  if (mediaRecorder.value?.state === 'recording') {
+    shouldSendRecording.value = false
+    mediaRecorder.value.stop()
+  }
+  audioChunks.value = []
+  isRecording.value = false
+  recordingElapsed.value = 0
+  if (recordingInterval !== null) {
+    window.clearInterval(recordingInterval)
+    recordingInterval = null
+  }
+}
+
+const toggleRecording = () => {
+  if (isRecording.value) {
+    stopRecording()
+  } else {
+    startRecording()
+  }
+}
+
+const formatSeconds = (value: number) => {
+  const seconds = Math.floor(value)
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+const stopVoice = () => {
+  if (voiceAudio.value) {
+    voiceAudio.value.pause()
+    voiceAudio.value.currentTime = 0
+  }
+  activeVoiceIndex.value = null
+  voiceProgress.value = 0
+  voiceCurrentTime.value = 0
+  voiceDuration.value = 0
+}
+
+const playVoice = (msg: ChatMessage, index: number) => {
+  if (!msg.audioUrl) return
+
+  if (activeVoiceIndex.value === index) {
+    stopVoice()
+    return
+  }
+
+  stopVoice()
+
+  const audio = new Audio(msg.audioUrl)
+  voiceAudio.value = audio
+  activeVoiceIndex.value = index
+
+  audio.onloadedmetadata = () => {
+    voiceDuration.value = audio.duration || 0
+  }
+
+  audio.ontimeupdate = () => {
+    voiceCurrentTime.value = audio.currentTime
+    voiceProgress.value = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0
+  }
+
+  audio.onended = () => {
+    stopVoice()
+  }
+
+  audio.play().catch((err) => {
+    console.error('Voice playback failed', err)
+    stopVoice()
+  })
 }
 </script>
 
 <template>
   <main class="chat-main">
-    <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileChange" />
 
-    <section v-if="!selectedUser" class="empty-state">
-      <div class="empty-icon">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          class="icon-large"
-        >
-          <path
-            fill-rule="evenodd"
-            d="M4.804 21.644A6.707 6.707 0 006 21.75a6.721 6.721 0 003.583-1.029c.774.182 1.584.279 2.417.279 5.322 0 9.75-3.97 9.75-9 0-5.03-4.428-9-9.75-9s-9.75 3.97-9.75 9c0 2.409 1.025 4.587 2.674 6.192.232.226.277.428.254.543a3.73 3.73 0 01-.814 1.686.75.75 0 00.44 1.223zM8.25 10.875a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25zM10.875 12a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875-1.125a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25z"
-            clip-rule="evenodd"
-          />
-        </svg>
-      </div>
-      <h2><!-- {{ languageStore.t('selectConversation') }} -->Select a conversation</h2>
-      <p class="empty-desc">
-        A secure and integrated platform that empowers professionals to connect, collaborate, and
-        conduct transactions, including the buying, selling, exchanging, lending, and borrowing of
-        materials and services.
-      </p>
-      <button class="new-message-btn"><!-- {{ languageStore.t('newMessage') }} -->New Message</button>
+    <input
+      ref="fileInput"
+      type="file"
+      accept="image/*"
+      class="hidden"
+      @change="handleFileChange"
+    />
+
+    <section v-if="!props.selectedUser" class="empty-state">
+      <h2>Select a conversation</h2>
     </section>
 
     <section v-else class="chat-active">
-      <!-- Security Bar -->
-      <div class="security-bar">
-        <div class="security-left">
-          <span class="security-item"><span class="green-dot"></span><!-- {{ languageStore.t('secureConnection') }} -->Secure connection</span>
-          <span class="security-divider"></span>
-          <span class="security-item">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              class="lock-icon"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <!-- {{ languageStore.t('endToEndEncrypted') }} -->End-to-end encrypted
-          </span>
-        </div>
-        <div class="security-right">
-          <button class="security-icon-btn" title="Help">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              class="sec-icon"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm11.378-3.917c-.89-.777-2.366-.777-3.255 0a.75.75 0 01-.988-1.129c1.454-1.272 3.776-1.272 5.23 0 1.513 1.324 1.513 3.518 0 4.842a3.75 3.75 0 01-.837.552c-.676.328-1.028.774-1.028 1.152v.75a.75.75 0 01-1.5 0v-.75c0-1.279 1.06-2.107 1.875-2.502.182-.088.351-.199.503-.331.83-.727.83-1.857 0-2.584zM12 18a.75.75 0 100-1.5.75.75 0 000 1.5z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </button>
-          <button class="security-icon-btn" title="Settings">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              class="sec-icon"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 00-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 00-2.282.819l-.922 1.597a1.875 1.875 0 00.432 2.385l.84.692c.095.078.17.229.154.43a7.598 7.598 0 000 1.139c.015.2-.059.352-.153.43l-.841.692a1.875 1.875 0 00-.432 2.385l.922 1.597a1.875 1.875 0 002.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 002.28-.819l.923-1.597a1.875 1.875 0 00-.432-2.385l-.84-.692c-.095-.078-.17-.229-.154-.43a7.614 7.614 0 000-1.139c-.016-.2.059-.352.153-.43l.84-.692c.708-.582.891-1.59.433-2.385l-.922-1.597a1.875 1.875 0 00-2.282-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 00-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 00-1.85-1.567h-1.843zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </button>
-        </div>
-      </div>
 
       <!-- Chat Header -->
       <div class="chat-header">
         <div class="header-user">
           <div class="avatar-wrapper">
-            <img
-              :src="selectedUser.avatar"
-              :alt="selectedUser.name"
+            <img 
+              :src="getAvatarFromStore(props.selectedUser)"
+              :alt="props.selectedUser?.name || ''"
               class="avatar-img medium"
-              @error="
-                ($event.target as HTMLImageElement).src =
-                  'https://api.dicebear.com/7.x/avataaars/svg?seed=' + selectedUser.name
-              "
             />
-            <span v-if="selectedUser.online" class="online-dot"></span>
+            <div v-if="props.selectedUser?.online" class="online-dot"></div>
           </div>
           <div class="header-info">
-            <h2 class="user-name">{{ selectedUser.name }}</h2>
-            <p class="user-role">{{ selectedUser.role }}</p>
+            <p class="user-name">{{ props.selectedUser?.name }}</p>
+            <p class="user-role">{{ props.selectedUser?.role }}</p>
           </div>
-        </div>
-        <div class="header-actions">
-          <button class="action-btn" title="Call">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="action-icon"
-            >
-              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-              <path
-                d="M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -15 -15a2 2 0 0 1 2 -2"
-              />
-            </svg>
-          </button>
-          <button class="action-btn" title="Video call">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              class="action-icon"
-            >
-              <path
-                d="M4.5 4.5a3 3 0 00-3 3v9a3 3 0 003 3h8.25a3 3 0 003-3v-9a3 3 0 00-3-3H4.5zM19.94 18.75l-2.69-2.69V7.94l2.69-2.69c.944-.945 2.56-.276 2.56 1.06v11.38c0 1.336-1.616 2.005-2.56 1.06z"
-              />
-            </svg>
-          </button>
-          <button class="action-btn" title="Search">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              class="action-icon"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </button>
-          <button class="action-btn" title="More">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              class="action-icon"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M10.5 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </button>
-          <button class="action-btn" title="Close">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              class="action-icon"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </button>
         </div>
       </div>
 
-      <!-- Messages -->
-      <div class="messages-area">
-        <div class="date-label"><span>MARCH 24, 2026</span></div>
+      <!-- messages -->
+      <div ref="messagesArea" class="messages-area">
 
-        <template v-for="(msg, index) in messages" :key="index">
-          <!-- RECEIVED (Them): Avatar Left, Bubble Right -->
+        <div v-for="(msg, index) in props.messages" :key="index" class="msg-row-container">
+
+          <!-- THEM -->
           <div v-if="msg.sender === 'them'" class="msg-row them">
-            <div class="msg-avatar">
-              <div class="avatar-wrapper">
-                <img
-                  :src="selectedUser.avatar"
-                  :alt="selectedUser.name"
-                  class="avatar-img small"
-                  @error="
-                    ($event.target as HTMLImageElement).src =
-                      'https://api.dicebear.com/7.x/avataaars/svg?seed=' + selectedUser.name
-                  "
-                />
-                <span v-if="selectedUser.online" class="online-dot"></span>
-              </div>
-            </div>
+            <img
+              class="msg-avatar"
+              :src="getAvatarFromStore(props.selectedUser)"
+              :alt="props.selectedUser?.name || 'Sender'"
+            />
             <div class="msg-body">
-              <!--  Image Message -->
-              <div v-if="msg.type === 'image' && msg.imageUrl" class="msg-image-bubble">
-                <img :src="msg.imageUrl" alt="Shared image" class="message-image" />
+              <div class="msg-meta">
+                <span class="msg-sender">{{ props.selectedUser?.name || 'Seller' }}</span>
               </div>
-              <!-- Text Message -->
-              <div v-else class="msg-bubble">{{ msg.text }}</div>
+
+              <!-- FIX 2: SAFE IMAGE -->
+              <div v-if="msg.type === 'image' && msg.imageUrl">
+                <img :src="msg.imageUrl" class="message-image" />
+              </div>
+
+              <div v-else-if="msg.type === 'voice' && msg.audioUrl" :class="['voice-bubble','voice-them',{playing: activeVoiceIndex === index}]">
+                <button
+                  type="button"
+                  class="voice-play-button"
+                  @click="playVoice(msg, index)"
+                >
+                  <span v-if="activeVoiceIndex === index">❚❚</span>
+                  <span v-else>▶</span>
+                </button>
+                <div class="voice-content">
+                  <div class="voice-track">
+                    <div
+                      class="voice-progress"
+                      :style="{ width: activeVoiceIndex === index ? `${voiceProgress}%` : '0%' }"
+                    />
+                  </div>
+                  <div class="voice-meta">
+                    <!-- LEFT: total duration -->
+                    <!-- <span class="voice-duration-left">
+                      {{ formatSeconds(voiceDuration) }}
+                    </span> -->
+
+                    <!-- RIGHT: current playing time -->
+                    <span class="voice-duration-right">
+                      {{ activeVoiceIndex === index
+                        ? formatSeconds(voiceCurrentTime)
+                        : formatSeconds(voiceDuration) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else class="msg-bubble">
+                {{ msg.text }}
+              </div>
+
               <div class="msg-info">
                 <span class="msg-time">{{ msg.time }}</span>
-                <span class="msg-dot">·</span>
-                <span class="msg-read">READ</span>
               </div>
+
             </div>
           </div>
 
-          <div v-if="msg.sender === 'me'" class="msg-row me">
+          <!-- ME -->
+          <div v-else class="msg-row me">
             <div class="msg-body">
-              <div v-if="msg.type === 'image' && msg.imageUrl" class="msg-image-bubble">
-                <img :src="msg.imageUrl" alt="Sent image" class="message-image" />
+              <div class="msg-meta msg-meta-right">
+                <span class="msg-sender">{{ currentUserName }}</span>
               </div>
-              <div v-else class="msg-bubble">{{ msg.text }}</div>
+
+              <!-- FIX 2: SAFE IMAGE -->
+              <div v-if="msg.type === 'image' && msg.imageUrl">
+                <img :src="msg.imageUrl" class="message-image" />
+              </div>
+
+              <div v-else-if="msg.type === 'voice' && msg.audioUrl" :class="['voice-bubble','voice-me',{playing: activeVoiceIndex === index}]">
+                <button
+                  type="button"
+                  class="voice-play-button"
+                  @click="playVoice(msg, index)"
+                >
+                  <span v-if="activeVoiceIndex === index">❚❚</span>
+                  <span v-else>▶</span>
+                </button>
+                <div class="voice-content">
+                  <div class="voice-track">
+                    <div
+                      class="voice-progress"
+                      :style="{ width: activeVoiceIndex === index ? `${voiceProgress}%` : '0%' }"
+                    />
+                  </div>
+                  <div class="voice-meta">
+                    <!-- LEFT: total duration -->
+                    <!-- <span class="voice-duration-left">
+                      {{ formatSeconds(voiceDuration) }}
+                    </span> -->
+
+                    <!-- RIGHT: current playing time -->
+                    <span class="voice-duration-right">
+                      {{ activeVoiceIndex === index
+                        ? formatSeconds(voiceCurrentTime)
+                        : formatSeconds(voiceDuration) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else class="msg-bubble">
+                {{ msg.text }}
+              </div>
+
               <div class="msg-info">
                 <span class="msg-time">{{ msg.time }}</span>
-                <span class="msg-dot">·</span>
-                <span class="msg-read">READ</span>
               </div>
+
             </div>
-            <div class="msg-avatar">
-              <div class="avatar-wrapper">
-                <img :src="currentUserAvatar" alt="Me" class="avatar-img small" />
-              </div>
-            </div>
+            <img
+              class="msg-avatar"
+              :src="currentUserAvatar"
+              :alt="currentUserName"
+            />
           </div>
-        </template>
+
+        </div>
+
       </div>
 
-      <!-- Input Bar -->
+      <!-- input -->
+      <div v-if="isRecording" class="recording-overlay">
+        <div class="recording-inner">
+          <div class="recording-left">
+            <div class="recording-dot">●</div>
+            <div class="recording-time">{{ formatSeconds(recordingElapsed) }}</div>
+          </div>
+          <div class="recording-actions">
+            <button @click="cancelRecording" class="record-btn cancel">Cancel</button>
+            <button @click="stopRecording" class="record-btn stop">Stop</button>
+          </div>
+        </div>
+      </div>
+
       <div class="input-bar">
         <div class="input-inner">
-          <button class="input-icon-btn" title="Voice message">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              class="ico"
-            >
-              <path d="M8.25 4.5a3.75 3.75 0 117.5 0v8.25a3.75 3.75 0 11-7.5 0V4.5z" />
-              <path
-                d="M6 10.5a.75.75 0 01.75.75v1.5a5.25 5.25 0 1010.5 0v-1.5a.75.75 0 011.5 0v1.5a6.751 6.751 0 01-6 6.709v2.291h3a.75.75 0 010 1.5h-7.5a.75.75 0 010-1.5h3v-2.291a6.751 6.751 0 01-6-6.709v-1.5A.75.75 0 016 10.5z"
-              />
+          <button @click="handleAttachClick" title="Attach image" class="p-2 rounded-full hover:bg-gray-100">
+            
+            <!-- Paperclip icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.5l-8.6 8.6a5.5 5.5 0 01-7.8-7.8l9.2-9.2a3.8 3.8 0 015.4 5.4l-9.2 9.2a2.2 2.2 0 01-3.1-3.1l8.6-8.6"/>
             </svg>
-          </button>
 
-          <button class="input-icon-btn" title="Attach file" @click="handleAttachClick">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="ico"
-            >
-              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-              <path
-                d="M15 7l-6.5 6.5a1.5 1.5 0 0 0 3 3l6.5 -6.5a3 3 0 0 0 -6 -6l-6.5 6.5a4.5 4.5 0 0 0 9 9l6.5 -6.5"
-              />
-            </svg>
-          </button>
-
-          <input
-            :value="newMessage"
-            @input="emit('update:newMessage', ($event.target as HTMLInputElement).value)"
-            @keyup.enter="emit('send-message')"
-            placeholder="Type your message"
-            class="text-input"
-          />
-
-          <button class="input-icon-btn" title="Emoji">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              class="ico"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-2.625 6c-.54 0-.828.419-.936.634a1.96 1.96 0 00-.189.866c0 .298.059.605.189.866.108.215.395.634.936.634.54 0 .828-.419.936-.634.13-.26.189-.568.189-.866 0-.298-.059-.605-.189-.866-.108-.215-.395-.634-.936-.634zm4.314.634c.108-.215.395-.634.936-.634.54 0 .828.419.936.634.13.26.189.568.189.866 0 .298-.059.605-.189.866-.108.215-.395.634-.936.634-.54 0-.828-.419-.936-.634a1.96 1.96 0 01-.189-.866c0-.298.059-.605.189-.866zm2.023 6.828a.75.75 0 10-1.06-1.06 3.75 3.75 0 01-5.304 0 .75.75 0 00-1.06 1.06 5.25 5.25 0 007.424 0z"
-                clip-rule="evenodd"
-              />
-            </svg>
           </button>
 
           <button
-            class="send-icon-btn"
-            @click="emit('send-message')"
-            :disabled="!newMessage.trim()"
+            @click="toggleRecording"
+            type="button"
+            class="voice-btn"
+            :class="{ recording: isRecording }"
+            title="Record voice message"
           >
+            <!-- Mic icon (Telegram style) -->
+            <svg
+              v-if="!isRecording"
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+            </svg>
+
+            <!-- Recording icon -->
+            <span v-else class="recording-dot">●</span>
+          </button>
+
+          <input
+            :value="props.newMessage"
+            @input="updateNewMessage"
+            @keyup.enter="emit('send-message')"
+            placeholder="Type message"
+            class="text-input"
+          />
+
+          <button @click="emit('send-message')" type="button" class="send-icon-btn" title="Send message">
+            <!-- Send Icon (same style as voice icon) -->
             <svg
               xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
-              fill="currentColor"
-              class="send-ico"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
-              <path
-                d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z"
-              />
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
             </svg>
           </button>
+
         </div>
       </div>
+
     </section>
   </main>
 </template>
@@ -542,11 +664,18 @@ const handleFileChange = (event: Event) => {
 .avatar-wrapper {
   position: relative;
   flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
 }
 
 .avatar-img {
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
+  overflow: hidden;
   background: #3b82f6;
 }
 
@@ -696,8 +825,196 @@ const handleFileChange = (event: Event) => {
   transition: transform 0.2s;
 }
 
-.msg-info {
+.message-audio {
+  width: 100%;
+  max-width: 240px;
+  border-radius: 12px;
+}
+
+.voice-bubble {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 20px;
+  max-width: 360px;
+}
+
+/* Incoming (left) */
+.voice-bubble.voice-them {
+  background: #f3f4f6;
+  color: #0f172a;
+  flex-direction: row; /* play button left */
+}
+
+.voice-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e8ecf1;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+}
+
+.voice-btn.recording {
+  background: #ff3b30;
+  color: white;
+}
+
+.record-dot {
+  color: white;
+  font-size: 18px;
+}
+
+.voice-meta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 4px;
+  font-size: 11px;
+  width: 100%;
+}
+/* 
+.voice-duration-left {
+  opacity: 0.7;
+}
+
+.voice-duration-right {
+  font-weight: 600;
+} */
+
+/* Outgoing (right) - Telegram blue */
+.voice-bubble.voice-me {
+  background: linear-gradient(90deg,#2a9df4,#1b85e6);
+  color: #fff;
+  flex-direction: row; /* play button left */
+}
+
+/* play button */
+.voice-play-button {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.voice-bubble.voice-them .voice-play-button {
+  background: #ffffff;
+  color: #1e88f0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+.voice-bubble.voice-me .voice-play-button {
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+}
+
+/* waveform track */
+.voice-track {
+  width: 220px;
+  height: 36px;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 6px, rgba(255,255,255,0.02) 6px 12px);
+}
+
+.voice-bubble.voice-them .voice-track {
+  background: repeating-linear-gradient(90deg, rgba(15,23,42,0.04) 0 6px, rgba(15,23,42,0.02) 6px 12px);
+}
+
+.voice-progress {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0%;
+  transition: width 0.12s linear;
+}
+
+.voice-bubble.voice-me .voice-progress {
+  background: linear-gradient(90deg, rgba(255,255,255,0.25), rgba(255,255,255,0.12));
+}
+
+.voice-bubble.voice-them .voice-progress {
+  background: linear-gradient(90deg, rgba(37,99,235,0.18), rgba(96,165,250,0.06));
+}
+
+.voice-bubble.playing .voice-play-button {
+  transform: scale(0.98);
+  box-shadow: 0 0 8px rgba(0,0,0,0.08) inset;
+}
+
+.voice-label {
+  font-size: 12px;
+  color: inherit;
+}
+
+.input-inner button.recording {
+  background: #ef4444;
+  color: white;
+}
+
+.recording-overlay {
+  padding: 10px 16px;
+  background: rgba(15,23,42,0.02);
+  border-radius: 12px;
+  margin: 12px 24px;
+}
+
+.recording-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recording-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* .recording-dot {
+  color: #ef4444;
+  font-size: 18px;
+} */
+
+.recording-time {
+  font-weight: 700;
+}
+
+.recording-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.record-btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.record-btn.cancel {
+  background: transparent;
+  color: #ef4444;
+}
+
+.record-btn.stop {
+  background: #ef4444;
+  color: white;
+}
+
+.msg-info {
   align-items: center;
   gap: 5px;
   padding: 0 4px;
@@ -713,9 +1030,45 @@ const handleFileChange = (event: Event) => {
   font-weight: 500;
 }
 
-.msg-dot {
-  font-size: 10px;
-  color: #cbd5e1;
+.msg-avatar {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  overflow: hidden;
+  border: 2px solid #e2e8f0;
+  background: #cbd5e1;
+}
+
+.msg-row-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.msg-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.msg-meta-right {
+  justify-content: flex-end;
+}
+
+.msg-sender {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.msg-dot { 
+  font-size: 10px; 
+  color: #CBD5E1; 
 }
 
 .msg-read {

@@ -7,20 +7,22 @@ export type TrackItemUserDocument = TrackItemUser & Document;
   timestamps: true,
   toJSON: {
     transform: (doc, ret) => {
-      const { _id, __v, ...result } = ret;
+      const { _id: _unusedId, __v: _unusedV, ...result } = ret;
+      void _unusedId;
+      void _unusedV;
       return result;
     },
   },
 })
 export class TrackItemUser {
   @Prop()
-  customId: number;
+  customId!: number;
 
   @Prop({ required: true })
-  name: string;
+  name!: string;
 
   @Prop({ default: 'Available' })
-  status: string;
+  status!: string;
 
   @Prop([
     {
@@ -29,7 +31,7 @@ export class TrackItemUser {
       reason: String,
     },
   ])
-  history: {
+  history!: {
     status: string;
     time: string;
     reason?: string;

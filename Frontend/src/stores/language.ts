@@ -173,6 +173,9 @@ type TranslationKey =
   | 'selectConversation'
   | 'secureConnection'
   | 'endToEndEncrypted'
+  | 'confirmLogout'
+  | 'confirmLogoutMessage'
+  | 'cancel'
 
 const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = {
   English: {
@@ -345,6 +348,10 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     selectConversation: 'Select a conversation',
     secureConnection: 'STATUS: SECURE CONNECTION',
     endToEndEncrypted: 'END-TO-END ENCRYPTED',
+    confirmLogout: 'Confirm Logout',
+    confirmLogoutMessage: 'Are you sure you want to logout?',
+    cancel: 'Cancel',
+    
   },
   Khmer: {
     personalInformation: 'ព័ត៌មានផ្ទាល់ខ្លួន',
@@ -498,7 +505,7 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     exchangeForRequired: 'ប្រាប់មនុស្សអំពីទំនិញដែលអ្នកចង់ផ្លាស់ប្តូរ',
     savedListings: 'បញ្ជីដែលបានរក្សាទុក',
     browseSavedPosts: 'រកមើលប្រកាសដែលអ្នកបានរក្សាទុករួចហើយ',
-    createPost: 'បង្កើតប្រកាស',
+    createPost: 'ផុសទំនិញ',
     postsSaved: 'ប្រកាសបានរក្សាទុក',
     postSaved: 'ប្រកាសបានរក្សាទុក',
     refresh: 'ផ្ទុកឡើងវិញ',
@@ -516,6 +523,9 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     selectConversation: 'ជ្រើសរើសស话្ហាប',
     secureConnection: 'ស្ថានភាព៖ ការតភ្ជាប់ដែលមានសុវត្ថិភាព',
     endToEndEncrypted: 'អ៊ិនគ្រីបពីចុងទៅចុង',
+    confirmLogout: 'បញ្ជាក់ការចាកចេញ',
+    confirmLogoutMessage: 'តើអ្នកប្រាកដថាចង់ចាកចេញមែនទេ?',
+    cancel: 'បោះបង់',
   },
 }
 

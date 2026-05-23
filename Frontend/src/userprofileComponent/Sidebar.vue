@@ -31,10 +31,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent, computed } from 'vue'
 import UserAvatar from './UserAvatar.vue'
 import NavItem from './NavItem.vue'
 import { useLanguageStore } from '../stores/language'
+import { useAuthStore } from '@/stores/auth'
 
 export default defineComponent({
   components: {
@@ -43,11 +44,12 @@ export default defineComponent({
   },
   setup() {
     const languageStore = useLanguageStore()
+    const authStore = useAuthStore()
 
-    const user = {
-      name: 'Steav',
-      avatar: '/userprofileImage/avatar.png',
-    }
+    const user = computed(() => ({
+      name: authStore.user?.name || 'Guest',
+      avatar: authStore.user?.avatar || '/userprofileImage/avatar.png',
+    }))
 
     return {
       languageStore,
@@ -59,7 +61,7 @@ export default defineComponent({
 
 <style scoped>
 .sidebar {
-  width: 260px;
+  width: 310px;
   min-height: 100vh;
   background: #1e1b4b;
   color: white;

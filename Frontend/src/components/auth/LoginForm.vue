@@ -10,6 +10,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { validateEmail } from '@/utils/validation'
 import type { LoginCredentials } from '@/types/auth'
+import Logo from '@/assets/images/Logo.png'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -72,8 +73,12 @@ async function handleSubmit() {
     email.value = ''
     password.value = ''
 
-    // Redirect to home or dashboard
-    await router.push({ name: 'home' })
+    // Redirect based on role
+    if (authStore.user?.role === 'admin') {
+      await router.push({ name: 'SuperAdmin' })
+    } else {
+      await router.push({ name: 'home' })
+    }
   } catch (err) {
     // Error is already set in authStore.error
     console.error('Login error:', err)
@@ -85,7 +90,7 @@ async function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit" class="login-form">
-    <h1 class="login-title">Login into DoOt</h1>
+    <h1 class="login-title">Login into <img :src="Logo" alt="Material Exchange logo" class="inline-block h-5 align-middle ml-2" /></h1>
 
     <!-- Error Display -->
     <div v-if="authStore.error" class="error-message" role="alert">

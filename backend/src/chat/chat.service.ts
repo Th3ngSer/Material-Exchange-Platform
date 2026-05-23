@@ -1,26 +1,48 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Message, MessageDocument } from './schemas/message.schema';
+import {
+  Message,
+  MessageDocument,
+  MessageType,
+} from './schemas/message.schema';
+import { ChatGateway } from './chat.gateway';
 
 @Injectable()
 export class ChatService {
   constructor(
     @InjectModel(Message.name)
-    private messageModel: Model<MessageDocument>,
+    private readonly messageModel: Model<MessageDocument>,
+    private readonly chatGateway: ChatGateway,
   ) {}
 
-  // ✔ Send message
-  async sendMessage(senderId: string, receiverId: string, content: string) {
-    return this.messageModel.create({
+  // SEND MESSAGE (text, image, voice)
+  async sendMessage(
+    senderId: string,
+    receiverId: string,
+    content: string,
+    type: MessageType = 'text',
+  ) {
+    const msg = await this.messageModel.create({
       senderId,
       receiverId,
-      type: 'text',
       content,
+      type,
     });
+
+    // emit to receiver if connected via websocket
+    try {
+      this.chatGateway.sendToUser(String(receiverId), 'message', msg);
+      // also emit to sender's own room so sender sees the saved message
+      this.chatGateway.sendToUser(String(senderId), 'message', msg);
+    } catch {
+      // ignore emission errors
+    }
+
+    return msg;
   }
 
-  // ✔ FIXED: full chat (A ↔ B)
+  // GET CONVERSATION BETWEEN TWO USERS
   async getHistory(user1: string, user2: string) {
     return this.messageModel
       .find({
@@ -29,13 +51,7 @@ export class ChatService {
           { senderId: user2, receiverId: user1 },
         ],
       })
-      .sort({ createdAt: 1 });
-  }
-
-  // ✔ user messages
-  async getMessages(userId: string) {
-    return this.messageModel.find({
-      $or: [{ senderId: userId }, { receiverId: userId }],
-    });
+      .sort({ createdAt: 1 })
+      .exec();
   }
 }

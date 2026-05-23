@@ -7,7 +7,8 @@ import { AppModule } from './../src/app.module';
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
-  beforeEach(async () => {
+  // 1. Initialize the app before all tests
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -16,10 +17,20 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
+  // 2. Shut down the app (and MongoDB connection) after all tests finish
+  afterAll(async () => {
+    await app.close();
+  });
+
+  // 3. Test your actual database status route instead of the deleted Hello World route
+  it('/db-status (GET)', () => {
     return request(app.getHttpServer())
-      .get('/')
+      .get('/db-status')
       .expect(200)
-      .expect('Hello World!');
+      .expect((res) => {
+        // Verify the response contains the status properties from your controller
+        expect(res.body).toHaveProperty('status');
+        expect(res.body).toHaveProperty('readyState');
+      });
   });
 });

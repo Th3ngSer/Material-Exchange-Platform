@@ -10,10 +10,19 @@ import {
 import { TrackitemuserService } from './trackitemuser.service';
 import { CreateTrackItemUserDto } from './dto/create-trackitemuser.dto';
 import { UpdateTrackStatusUserDto } from './dto/update-trackstatususer.dto';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from '../auth/guards/admin.guard';
 
 @Controller('trackitemuser')
 export class TrackitemuserController {
   constructor(private readonly service: TrackitemuserService) {}
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Get('admin/all')
+  findAllForAdmin() {
+    return this.service.findAll();
+  }
 
   @Post()
   create(@Body() dto: CreateTrackItemUserDto) {

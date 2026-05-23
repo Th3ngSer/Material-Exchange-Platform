@@ -24,6 +24,24 @@ export class User {
   @Prop({ trim: true })
   name?: string;
 
+  @Prop({ trim: true })
+  username?: string;
+
+  @Prop({ trim: true })
+  gender?: string;
+
+  @Prop({ trim: true })
+  phone?: string;
+
+  @Prop({ trim: true })
+  nationality?: string;
+
+  @Prop({ trim: true })
+  birthDate?: string;
+
+  @Prop({ trim: true })
+  avatar?: string;
+
   @Prop({ type: String, enum: UserRole, default: UserRole.USER })
   role!: UserRole;
 

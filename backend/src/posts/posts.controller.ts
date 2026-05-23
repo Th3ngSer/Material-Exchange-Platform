@@ -23,6 +23,9 @@ import * as fs from 'fs';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from '../auth/guards/admin.guard';
 
 // ── Multer storage config (reused for both create & update) ──────────────────
 function multerStorage() {
@@ -49,6 +52,12 @@ export class PostsController {
   private readonly logger = new Logger(PostsController.name);
 
   constructor(private readonly postsService: PostsService) {}
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Get('admin/all')
+  async findAllForAdmin() {
+    return this.postsService.findAllForAdmin();
+  }
 
   // ─── HEALTH CHECK ──────────────────────────────────────────────────────────
   @Get('health/db')
@@ -136,6 +145,14 @@ export class PostsController {
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   remove(@Param('id') id: string) {
+    return this.postsService.remove(id);
+  }
+
+  // ─── DELETE /posts/admin/:id ─────────────────────────────────────────────
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Delete('admin/:id')
+  @HttpCode(HttpStatus.OK)
+  removeForAdmin(@Param('id') id: string) {
     return this.postsService.remove(id);
   }
 }

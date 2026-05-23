@@ -1,74 +1,186 @@
 <template>
-  <div class="avatar-container">
-    <!-- Avatar Image -->
-    <img :src="previewImage" class="avatar" />
+  <div class="page">
 
-    <!-- Change Photo Button -->
-    <p class="change-photo" @click="triggerFile">Change photo</p>
-
-    <!-- Welcome Text -->
-    <div class="avatar-text">
-      <p class="welcome">Welcome, {{ name }} !!!</p>
+    <!-- Header -->
+    <div class="header">
+      <button class="back-btn" @click="goBack">
+        <img src="/userprofileImage/back.png" class="back-icon" />
+        Back
+      </button>
     </div>
 
-    <!-- Hidden File Input -->
-    <input ref="fileInput" type="file" accept="image/*" @change="onFileChange" hidden />
+    <!-- Avatar -->
+    <div class="avatar-container">
+
+      <img
+        :src="previewImage"
+        class="avatar"
+        alt="avatar"
+        @error="onImageError"
+      />
+
+      <p class="change-photo" @click="triggerFile">
+        Change photo
+      </p>
+
+      <div class="avatar-text">
+        <p class="welcome">
+          Welcome, {{ welcomeName }} 👋
+        </p>
+      </div>
+
+      <input
+        ref="fileInput"
+        type="file"
+        accept="image/*"
+        @change="onFileChange"
+        hidden
+      />
+
+    </div>
+
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, watch, onMounted } from 'vue'
+<script setup lang="ts">
+import { computed, ref, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import axios from 'axios'
+import { useAuthStore } from '@/stores/auth'
 
-export default defineComponent({
-  props: {
-    name: String,
-    image: String,
+const router = useRouter()
+const authStore = useAuthStore()
+
+const fileInput = ref<HTMLInputElement | null>(null)
+const welcomeName = computed(() => {
+  const fullName = authStore.user?.name?.trim() || ''
+  if (fullName) {
+    return fullName.split(' ')[0]
+  }
+
+  return authStore.user?.email?.split('@')[0] || 'Guest'
+})
+
+const API_URL = 'http://localhost:3000'
+const DEFAULT_AVATAR = '/userprofileImage/avatar.png'
+
+const previewImage = ref<string>(DEFAULT_AVATAR)
+
+/**
+ * Convert backend avatar to full URL
+ */
+const normalizeAvatar = (avatar?: string | null) => {
+  if (!avatar) return DEFAULT_AVATAR
+  if (avatar.startsWith('http')) return avatar
+  return `${API_URL}/${avatar}`
+}
+
+/**
+ * Sync with store
+ */
+watch(
+  () => authStore.user,
+  (user) => {
+    previewImage.value = normalizeAvatar(user?.avatar)
   },
-  setup(props) {
-    const fileInput = ref<HTMLInputElement | null>(null)
-    const previewImage = ref(props.image || '')
+  { immediate: true, deep: true }
+)
 
-    const triggerFile = () => {
-      fileInput.value?.click()
+/**
+ * Fallback if image fails
+ */
+const onImageError = () => {
+  previewImage.value = DEFAULT_AVATAR
+}
+
+/**
+ * Back button
+ */
+const route = useRoute()
+
+const goBack = () => {
+  // If a `from` was provided in the query (e.g. ?from=/browse?q=...), prefer that
+  const from = typeof route.query.from === 'string' ? route.query.from : ''
+  if (from) {
+    router.push(from)
+    return
+  }
+
+  // Prefer history navigation when possible
+  try {
+    if (window.history.length > 1) {
+      router.back()
+      return
     }
+  } catch (e) {
+    // ignore errors and fall back
+  }
 
-    const onFileChange = (event: Event) => {
-      const target = event.target as HTMLInputElement
-      const file = target.files?.[0]
-      if (!file) return
+  // Fallback to Browse
+  router.push({ name: 'browse' })
+}
 
-      const reader = new FileReader()
+/**
+ * Open file picker
+ */
+const triggerFile = () => {
+  fileInput.value?.click()
+}
 
-      reader.onload = () => {
-        previewImage.value = reader.result as string
-        localStorage.setItem('avatar', previewImage.value)
+/**
+ * Upload avatar
+ */
+const onFileChange = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+
+  if (!file || !authStore.user) return
+
+  const formData = new FormData()
+
+  // ⚠️ IMPORTANT: must match backend (MOST COMMON FIX)
+  formData.append('avatar', file)
+
+  try {
+    const response = await axios.post(
+      `${API_URL}/api/auth/upload-avatar`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${authStore.token || ''}`
+        }
       }
-
-      reader.readAsDataURL(file)
-    }
-
-    onMounted(() => {
-      const saved = localStorage.getItem('avatar')
-      if (saved) {
-        previewImage.value = saved
-      }
-    })
-
-    watch(
-      () => props.image,
-      (newVal) => {
-        if (newVal) previewImage.value = newVal
-      },
     )
 
-    return {
-      fileInput,
-      previewImage,
-      triggerFile,
-      onFileChange,
+    // SAFE response handling (backend may differ)
+    const avatarPath =
+      response.data.avatar ||
+      response.data.path ||
+      response.data.file
+
+    if (!avatarPath) {
+      throw new Error('No avatar path returned from backend')
     }
-  },
-})
+
+    // update UI instantly
+    previewImage.value = normalizeAvatar(avatarPath)
+
+    // update store safely
+    authStore.user = {
+      ...authStore.user,
+      avatar: avatarPath
+    }
+
+  } catch (error) {
+    console.error('Upload failed:', error)
+  } finally {
+    // allow re-upload same file
+    if (fileInput.value) {
+      fileInput.value.value = ''
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -77,36 +189,47 @@ export default defineComponent({
   flex-direction: column;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Avatar image */
 .avatar {
   width: 100px;
   height: 100px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255,255,255,0.2);
 }
 
-/* Change photo */
 .change-photo {
   font-size: 12px;
   color: #60a5fa;
   cursor: pointer;
   margin-top: 6px;
-  margin-bottom: 6px;
 }
 
 .change-photo:hover {
   text-decoration: underline;
 }
 
-/* Welcome text */
 .avatar-text .welcome {
   font-size: 24px;
   font-weight: bold;
   color: #cbd5e1;
   text-align: center;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+}
+
+.back-icon {
+  width: 16px;
+  height: 16px;
 }
 </style>

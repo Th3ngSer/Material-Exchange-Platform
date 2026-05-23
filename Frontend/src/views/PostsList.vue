@@ -23,12 +23,11 @@ type PostsResponse = {
   posts: Post[]
 }
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 const posts = ref<Post[]>([])
 const total = ref(0)
 const isLoading = ref(false)
 const errorMessage = ref('')
-
 const hasPosts = computed(() => posts.value.length > 0)
 
 function formatType(type: Post['type']) {
@@ -49,6 +48,16 @@ function imageUrl(filename: string) {
   return `${apiBaseUrl}/uploads/${filename}`
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.message ?? fallback
+  }
+  if (error instanceof Error) {
+    return error.message
+  }
+  return fallback
+}
+
 async function loadPosts() {
   isLoading.value = true
   errorMessage.value = ''
@@ -57,8 +66,8 @@ async function loadPosts() {
     const { data } = await axios.get<PostsResponse>(`${apiBaseUrl}/posts`)
     posts.value = data.posts ?? []
     total.value = data.total ?? posts.value.length
-  } catch (error: any) {
-    errorMessage.value = error?.response?.data?.message ?? 'Error loading saved posts.'
+  } catch (error: unknown) {
+    errorMessage.value = getErrorMessage(error, 'Error loading saved posts.')
   } finally {
     isLoading.value = false
   }
@@ -73,8 +82,8 @@ async function deletePost(postId: string, title: string) {
     await axios.delete(`${apiBaseUrl}/posts/${postId}`)
     posts.value = posts.value.filter((p) => p._id !== postId)
     total.value = Math.max(0, total.value - 1)
-  } catch (error: any) {
-    const msg = error?.response?.data?.message ?? 'Failed to delete post.'
+  } catch (error: unknown) {
+    const msg = getErrorMessage(error, 'Failed to delete post.')
     alert(msg)
   }
 }
@@ -96,10 +105,9 @@ onMounted(loadPosts)
         </div>
 
         <router-link
-          to="/create"
+          to="/posts/create"
           class="inline-flex items-center justify-center rounded-full bg-[#FF8C00] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600"
-        >
-          <!-- {{ languageStore.t('createPost') }} -->Create post
+        >Create post
         </router-link>
       </div>
 
@@ -108,14 +116,13 @@ onMounted(loadPosts)
       >
         <p class="text-sm text-slate-600">
           <span class="font-semibold text-slate-900">{{ total }}</span>
-          <!-- {{ languageStore.t('postsSaved') }} -->posts saved
+            posts saved
         </p>
         <button
           type="button"
           class="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-          @click="loadPosts"
-        >
-          <!-- {{ languageStore.t('refresh') }} -->Refresh
+          @click="loadPosts">
+            Refresh
         </button>
       </div>
 

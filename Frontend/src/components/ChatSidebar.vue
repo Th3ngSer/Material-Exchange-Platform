@@ -1,85 +1,64 @@
 <script setup lang="ts">
-type Message = {
-  text: string
-  sender: 'me' | 'them'
-  time: string
-}
+import type { ChatUser } from '@/types/chat'
 
-type User = {
-  id: number
-  name: string
-  role: string
-  message: string
-  time: string
-  avatar: string
-  online?: boolean
-  chat: Message[]
-}
-
-defineProps<{
-  users: User[]
-  selectedUser: User | null
+const { users, selectedUser } = defineProps<{
+  users: ChatUser[]
+  selectedUser: ChatUser | null
 }>()
 
 const emit = defineEmits<{
-  (e: 'select-user', user: User): void
+  (e: 'select-user', user: ChatUser): void
 }>()
+
+const getAvatarUrl = (user: ChatUser) => {
+  const avatarValue = user.avatar?.trim()
+  if (avatarValue) {
+    return avatarValue
+  }
+
+  const stored = localStorage.getItem(`avatar_${String(user.id)}`)
+  if (stored) {
+    return stored
+  }
+
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=0D8ABC&color=fff`
+}
+
+const handleAvatarError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.src = 'https://via.placeholder.com/48'
+}
 </script>
 
 <template>
   <aside class="sidebar">
+
     <div class="sidebar-header">
-      <h3><!-- {{ languageStore.t('inboxes') }} -->Inboxes</h3>
-      <button class="new-chat-btn" title="New message">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          class="icon"
-        >
-          <path
-            fill-rule="evenodd"
-            d="M12 3.75a.75.75 0 01.75.75v6.75h6.75a.75.75 0 010 1.5h-6.75v6.75a.75.75 0 01-1.5 0v-6.75H4.5a.75.75 0 010-1.5h6.75V4.5a.75.75 0 01.75-.75z"
-            clip-rule="evenodd"
-          />
-        </svg>
-      </button>
+      <h3>Inboxes</h3>
     </div>
 
-    <div class="search-box">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        class="search-icon"
-      >
-        <path
-          fill-rule="evenodd"
-          d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z"
-          clip-rule="evenodd"
-        />
-      </svg>
-      <input class="search" placeholder="Search conversations" />
+    <!-- ❗ FIX 1: empty state -->
+    <div v-if="!users || users.length === 0" class="empty">
+      No users found
     </div>
 
-    <div class="conversation-list">
+    <div v-else class="conversation-list">
+
       <div
         v-for="user in users"
         :key="user.id"
         :class="['user', { active: selectedUser?.id === user.id }]"
         @click="emit('select-user', user)"
       >
-        <!-- Profile Avatar (Image) -->
         <div class="avatar-wrapper" :class="{ online: user.online }">
+
           <img
-            :src="user.avatar"
+            :src="getAvatarUrl(user)"
             :alt="user.name"
             class="avatar-img"
-            @error="
-              ($event.target as HTMLImageElement).src =
-                'https://api.dicebear.com/7.x/avataaars/svg?seed=' + user.name
-            "
+            @error="handleAvatarError"
           />
+
         </div>
 
         <div class="content">
@@ -89,8 +68,11 @@ const emit = defineEmits<{
           </div>
           <p class="message">{{ user.message }}</p>
         </div>
+
       </div>
+
     </div>
+
   </aside>
 </template>
 
@@ -117,53 +99,6 @@ const emit = defineEmits<{
   margin: 0;
   font-size: 18px;
   font-weight: 700;
-}
-
-.new-chat-btn {
-  background: none;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  transition: all 0.2s;
-}
-
-.search-box {
-  padding: 15px 20px;
-  position: relative;
-  box-sizing: border-box;
-}
-
-.search-icon {
-  position: absolute;
-  left: 28px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  color: #64748b;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.search {
-  width: 100%;
-  max-width: 360px;
-  padding: 10px 15px 10px 38px;
-  border-radius: 8px;
-  border: 1px solid #1e293b;
-  background: #1e293b;
-  color: white;
-  font-size: 14px;
-  outline: none;
-  transition: all 0.2s;
-  box-sizing: border-box;
-  margin-left: 0;
-}
-
-.search::placeholder {
-  color: #64748b;
 }
 
 .user {
@@ -196,7 +131,6 @@ const emit = defineEmits<{
   background: #3b82f6;
 }
 
-/* Online Indicator */
 .avatar-wrapper.online::after {
   content: '';
   position: absolute;
@@ -207,7 +141,6 @@ const emit = defineEmits<{
   background: #22c55e;
   border-radius: 50%;
   border: 2px solid #0f172a;
-  z-index: 2;
 }
 
 .content {
@@ -232,7 +165,6 @@ const emit = defineEmits<{
 .time {
   font-size: 12px;
   color: #64748b;
-  flex-shrink: 0;
 }
 
 .message {
@@ -242,5 +174,13 @@ const emit = defineEmits<{
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ❗ FIX 3: empty state style */
+.empty {
+  padding: 20px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
 }
 </style>
