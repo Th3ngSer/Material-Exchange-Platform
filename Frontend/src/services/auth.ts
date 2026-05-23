@@ -76,7 +76,9 @@ export const authApi = {
     async register(credentials: RegisterCredentials): Promise<AuthResponse> {
         try {
             // Remove confirmPassword before sending to backend
+            // remove confirmPassword before sending to backend
             const { confirmPassword, ...data } = credentials
+            void confirmPassword
 
             const response = await fetch(`${API_BASE_URL}/auth/register`, {
                 method: 'POST',
@@ -126,28 +128,28 @@ export const authApi = {
     /**
  * Update user profile
  */
-async updateProfile(token: string, profileData: Partial<User>): Promise<User> {
-    try {
-        const response = await fetch(`${API_BASE_URL}/auth/me`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(profileData),
-        })
+    async updateProfile(token: string, profileData: Partial<User>): Promise<User> {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/me`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(profileData),
+            })
 
-        if (!response.ok) {
-            const error = await response.json().catch(() => ({}))
-            throw {
-                statusCode: response.status,
-                message: error.message || 'Failed to update profile.',
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}))
+                throw {
+                    statusCode: response.status,
+                    message: error.message || 'Failed to update profile.',
+                }
             }
-        }
 
-        return await response.json()
-    } catch (error) {
-        throw new Error(parseErrorMessage(error))
+            return await response.json()
+        } catch (error) {
+            throw new Error(parseErrorMessage(error))
+        }
     }
-}
 }

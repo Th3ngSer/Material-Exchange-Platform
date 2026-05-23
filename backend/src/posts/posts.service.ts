@@ -60,6 +60,32 @@ export class PostsService {
       throw error;
     }
   }
+  async findAllForAdmin() {
+    try {
+      this.logger.log('Fetching all posts for admin');
+      const posts = await this.postModel
+        .find()
+        .select(
+          'type title category condition price createdAt listerName status',
+        )
+        .sort({ createdAt: -1 })
+        .lean()
+        .exec();
+      this.logger.log(`✅ Found ${posts.length} posts for admin`);
+      return posts;
+    } catch (error: unknown) {
+      const err = error as { message?: string; name?: string };
+      this.logger.error(
+        `❌ Failed to fetch posts for admin: ${err?.message || String(error)}`,
+      );
+      if (err?.name === 'MongoServerSelectionError') {
+        throw new BadRequestException(
+          'Database is not connected. Please ensure MongoDB is running on localhost:27017',
+        );
+      }
+      throw error;
+    }
+  }
 
   // ─── READ ALL (with optional filters + pagination) ─────────────────────
   async findAll(query: {

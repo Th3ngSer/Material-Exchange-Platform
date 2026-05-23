@@ -93,7 +93,7 @@ router.beforeEach((to) => {
   }
 
   const authStore = useAuthStore()
-  const token = sessionStorage.getItem('authToken')
+  const token = localStorage.getItem('authToken')
   const role = authStore.user?.role ?? getRoleFromToken(token)
 
   if (!token) {
@@ -113,6 +113,8 @@ router.beforeEach((to) => {
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return '/login'
   }
+
+  return true
 })
 
 export default router

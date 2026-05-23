@@ -1,6 +1,7 @@
-import { IsString } from 'class-validator';
+import { IsMongoId, IsNotEmpty } from 'class-validator';
 
 export class GetConversationDto {
-  @IsString()
-  userId: string;
+  @IsMongoId()
+  @IsNotEmpty()
+  userId!: string;
 }

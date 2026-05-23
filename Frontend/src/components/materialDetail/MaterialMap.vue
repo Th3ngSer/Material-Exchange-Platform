@@ -31,10 +31,10 @@ async function initMap() {
   if (!hasCoordinates()) return
 
   // cleanup
-  if (gmarker) try { gmarker.setMap(null) } catch {}
+  if (gmarker) try { gmarker.setMap(null) } catch { /* ignore cleanup errors */ }
   gmap = null
-  if (lmarker) try { lmarker.remove() } catch {}
-  if (lmap) try { lmap.remove() } catch {}
+  if (lmarker) try { lmarker.remove() } catch { /* ignore cleanup errors */ }
+  if (lmap) try { lmap.remove() } catch { /* ignore cleanup errors */ }
   lmap = null
   lmarker = null
 
@@ -99,10 +99,10 @@ watch(() => [props.lat, props.lng], () => {
 })
 
 onBeforeUnmount(() => {
-  if (gmarker) try { gmarker.setMap(null) } catch {}
+  if (gmarker) try { gmarker.setMap(null) } catch { /* ignore cleanup errors */ }
   gmap = null
-  if (lmarker) try { lmarker.remove() } catch {}
-  if (lmap) try { lmap.remove() } catch {}
+  if (lmarker) try { lmarker.remove() } catch { /* ignore cleanup errors */ }
+  if (lmap) try { lmap.remove() } catch { /* ignore cleanup errors */ }
   lmap = null
   lmarker = null
 })

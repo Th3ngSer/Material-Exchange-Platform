@@ -16,13 +16,13 @@ export type TrackItemUserDocument = TrackItemUser & Document;
 })
 export class TrackItemUser {
   @Prop()
-  customId: number;
+  customId!: number;
 
   @Prop({ required: true })
-  name: string;
+  name!: string;
 
   @Prop({ default: 'Available' })
-  status: string;
+  status!: string;
 
   @Prop([
     {
@@ -31,7 +31,7 @@ export class TrackItemUser {
       reason: String,
     },
   ])
-  history: {
+  history!: {
     status: string;
     time: string;
     reason?: string;

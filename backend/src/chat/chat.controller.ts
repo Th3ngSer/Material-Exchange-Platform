@@ -1,36 +1,49 @@
-import { Controller, Post, Body, Get, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ChatService } from './chat.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SendMessageDto } from './dto/send-message.dto';
+import { GetConversationDto } from './dto/get-conversation.dto';
+import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
+
+interface AuthenticatedRequest {
+  user: { id: string } & JwtPayload;
+}
 
 @Controller('chat')
+@UseGuards(JwtAuthGuard) // Protect all routes in this controller
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
-  // ✔ send message
   @Post('send')
-  sendMessage(
-    @Body()
-    body: {
-      senderId: string;
-      receiverId: string;
-      content: string;
-    },
+  async sendMessage(
+    @Body() body: SendMessageDto,
+    @Req() req: AuthenticatedRequest,
   ) {
+    const senderId = req.user.id;
+
     return this.chatService.sendMessage(
-      body.senderId,
+      senderId,
       body.receiverId,
       body.content,
+      body.type, // supports text, image, voice
     );
   }
 
-  // ✔ chat history A ↔ B
   @Get('history')
-  getHistory(@Query('user1') user1: string, @Query('user2') user2: string) {
-    return this.chatService.getHistory(user1, user2);
-  }
+  async getHistory(
+    @Query() query: GetConversationDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const currentUserId = req.user.id;
 
-  // ✔ single user messages
-  @Get('messages/:userId')
-  getMessages(@Param('userId') userId: string) {
-    return this.chatService.getMessages(userId);
+    return this.chatService.getHistory(currentUserId, query.userId);
   }
 }

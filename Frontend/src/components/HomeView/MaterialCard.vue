@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useLanguageStore } from '@/stores/language'
 
 type Tone = 'gold' | 'orange' | 'rose'
 
@@ -18,7 +17,6 @@ defineProps<{
   }
 }>()
 
-const languageStore = useLanguageStore()
 
 function getBadgeLabel(category: string): string {
   if (category === 'Sell') return languageStore.t('forSale')

@@ -32,6 +32,16 @@ export class Post {
   @Prop({ required: true })
   location!: string;
 
+  @Prop({ trim: true })
+  listerName?: string;
+
+  @Prop({
+    type: String,
+    enum: ['active', 'suspended', 'sold'],
+    default: 'active',
+  })
+  status!: string;
+
   @Prop({ type: [String], default: [] })
   images!: string[];
 }

@@ -27,7 +27,6 @@ const props = withDefaults(defineProps<Props>(), {
 const route = useRoute()
 
 const categoryOptions: Category[] = ['All', 'Sell', 'Exchange', 'Borrow']
-const sortOptions: SortOption[] = ['Newest', 'A-Z', 'Z-A', 'Price: Low to High', 'Price: High to Low']
 const conditionOptions: Condition[] = ['New', 'Like new', 'Good', 'Fair']
 
 const selectedCategory = ref<Category>('All')

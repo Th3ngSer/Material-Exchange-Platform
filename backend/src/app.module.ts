@@ -8,6 +8,8 @@ import { ChatModule } from './chat/chat.module';
 import { TrackitemuserModule } from './trackitemuser/trackitemuser.module';
 import { UsersModule } from './users/users.module';
 import { AdminDashboardModule } from './admin/admin-dashboard.module';
+import { TransactionsModule } from './transactions/transactions.module';
+import { PostsModule } from './posts/posts.module';
 
 @Module({
   imports: [
@@ -23,7 +25,7 @@ import { AdminDashboardModule } from './admin/admin-dashboard.module';
       useFactory: (config: ConfigService) => {
         const uri =
           config.get<string>('MONGODB_URI') ||
-          'mongodb://127.0.0.1:27017/material_xchange';
+          'mongodb://127.0.0.1:27017/material_xchange?directConnection=true';
 
         console.log('🔥 Mongo URI:', uri);
 
@@ -41,9 +43,11 @@ import { AdminDashboardModule } from './admin/admin-dashboard.module';
 
     AuthModule,
     ChatModule,
+    PostsModule,
     TrackitemuserModule,
     UsersModule,
     AdminDashboardModule,
+    TransactionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

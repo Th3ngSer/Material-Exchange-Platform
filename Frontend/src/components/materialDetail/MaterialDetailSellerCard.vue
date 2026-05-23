@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 const isFollowed = ref(false)
 
@@ -15,13 +15,21 @@ const props = defineProps<{
   avatar?: string
 }>()
 
-const initials = (props.name || 'U')
-  .split(' ')
-  .filter(Boolean)
-  .map(part => part[0])
-  .slice(0, 2)
-  .join('')
-  .toUpperCase()
+const getAvatarUrl = (avatar?: string) => {
+  const normalized = String(avatar || '').trim()
+  if (!normalized || normalized.toLowerCase() === 'null' || normalized.toLowerCase() === 'undefined') {
+    return 'https://via.placeholder.com/48'
+  }
+  return normalized
+}
+
+const avatarUrl = computed(() => getAvatarUrl(props.avatar))
+
+const handleAvatarError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.onerror = null
+  img.src = 'https://via.placeholder.com/48'
+}
 </script>
 
 <template>
@@ -32,12 +40,11 @@ const initials = (props.name || 'U')
     >
       <div class="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-[#23216e] text-sm font-bold text-white">
         <img
-          v-if="avatar"
-          :src="avatar"
+          :src="avatarUrl"
           :alt="name"
           class="h-full w-full object-cover"
+          @error="handleAvatarError"
         />
-        <span v-else>{{ initials }}</span>
       </div>
 
       <div class="min-w-0 flex-1">
@@ -80,7 +87,15 @@ const initials = (props.name || 'U')
         {{ isFollowed ? 'Followed' : 'Follow' }}
       </button>
       <router-link
-        to="/chat"
+        :to="{
+          name: 'chat',
+          query: {
+            sellerId: props.name,
+            sellerName: props.name,
+            sellerAvatar: getAvatarUrl(props.avatar),
+            sellerLocation: props.location,
+          },
+        }"
         class="flex items-center justify-center rounded-full bg-[#ff8c00] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#ff9d21]"
       >
         Message
