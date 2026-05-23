@@ -139,6 +139,9 @@ type TranslationKey =
   | 'select'
   | 'condition'
   | 'new'
+  | 'likeNew'
+  | 'good'
+  | 'fair'
   | 'used'
   | 'price'
   | 'exchangeFor'
@@ -175,6 +178,25 @@ type TranslationKey =
   | 'cannotBeUndone'
   | 'openToTrade'
   | 'wants'
+  | 'items'
+  | 'users'
+  | 'openFilters'
+  | 'results'
+  | 'reset'
+  | 'up'
+  | 'closeFiltersBackdrop'
+  | 'closeFilters'
+  | 'filters'
+  | 'priceRange'
+  | 'minimumPrice'
+  | 'maximumPrice'
+  | 'minimumPriceSlider'
+  | 'maximumPriceSlider'
+  | 'transactionType'
+  | 'conditions'
+  | 'minimumSellerRating'
+  | 'priceLowToHigh'
+  | 'priceHighToLow'
   | 'inboxes'
   | 'searchConversations'
   | 'selectConversation'
@@ -321,6 +343,9 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     select: 'Select…',
     condition: 'Condition',
     new: 'New',
+    likeNew: 'Like new',
+    good: 'Good',
+    fair: 'Fair',
     used: 'Used',
     price: 'Price',
     exchangeFor: 'Exchange for',
@@ -357,6 +382,25 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     cannotBeUndone: 'This cannot be undone.',
     openToTrade: 'Open to trade',
     wants: 'Wants:',
+    items: 'Items',
+    users: 'Users',
+    openFilters: 'Open filters',
+    results: 'Results',
+    reset: 'Reset',
+    up: 'and up',
+    closeFiltersBackdrop: 'Close filters backdrop',
+    closeFilters: 'Close filters',
+    filters: 'Filters',
+    priceRange: 'Price Range',
+    minimumPrice: 'Minimum price',
+    maximumPrice: 'Maximum price',
+    minimumPriceSlider: 'Minimum price slider',
+    maximumPriceSlider: 'Maximum price slider',
+    transactionType: 'Transaction type',
+    conditions: 'Conditions',
+    minimumSellerRating: 'Minimum seller rating',
+    priceLowToHigh: 'Price: Low to High',
+    priceHighToLow: 'Price: High to Low',
     inboxes: 'Inboxes',
     searchConversations: 'Search conversations...',
     selectConversation: 'Select a conversation',
@@ -503,6 +547,9 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     select: 'ជ្រើសរើស…',
     condition: 'ស្ថានភាព',
     new: 'ថ្មី',
+    likeNew: 'ដូចថ្មី',
+    good: 'ល្អ',
+    fair: 'ធម្មតា',
     used: 'ប្រើរួច',
     price: 'តម្លៃ',
     exchangeFor: 'ផ្លាស់ប្តូរសម្រាប់',
@@ -539,6 +586,25 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     cannotBeUndone: 'វាមិនអាចត្រឡប់វិញបានទេ។',
     openToTrade: 'បើកចំពោះការជួញដូរ',
     wants: 'ចង់បាន:',
+    items: 'ទំនិញ',
+    users: 'អ្នកប្រើ',
+    openFilters: 'បើកចម្រៀង',
+    results: 'លទ្ធផល',
+    reset: 'កំណត់ឡើងវិញ',
+    up: 'ឡើង',
+    closeFiltersBackdrop: 'បិទផ្ទាំងចម្រៀង',
+    closeFilters: 'បិទចម្រៀង',
+    filters: 'តម្រៀបតាម',
+    priceRange: 'លំដាប់តម្លៃ',
+    minimumPrice: 'តម្លៃអប្បបរមា',
+    maximumPrice: 'តម្លៃអតិបរមា',
+    minimumPriceSlider: 'រើសតម្លៃអប្បបរមា',
+    maximumPriceSlider: 'រើសតម្លៃអតិបរមា',
+    transactionType: 'ប្រភេទប្រតិបត្តិការ',
+    conditions: 'លក្ខខណ្ឌ',
+    minimumSellerRating: 'ពិន្ទុអ្នកលក់អប្បបរមា',
+    priceLowToHigh: 'តម្លៃ៖ ទាបទៅខ្ពស់',
+    priceHighToLow: 'តម្លៃ៖ ខ្ពស់ទៅទាប',
     inboxes: 'ប្រអប់ពត៌មាន',
     searchConversations: 'ស្វែងរកស话្ហាបាន...',
     selectConversation: 'ជ្រើសរើសស话្ហាប',

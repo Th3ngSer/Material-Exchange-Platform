@@ -17,6 +17,10 @@ defineProps<{
   }
 }>()
 
+import { useLanguageStore } from '@/stores/language'
+
+const languageStore = useLanguageStore()
+
 
 function getBadgeLabel(category: string): string {
   if (category === 'Sell') return languageStore.t('forSale')
