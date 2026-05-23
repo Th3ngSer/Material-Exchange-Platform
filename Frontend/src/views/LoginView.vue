@@ -6,14 +6,34 @@
 
 import LoginForm from '@/components/auth/LoginForm.vue'
 import Logo from '@/assets/images/Logo.png'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+function goBack() {
+  router.push({ name: 'home' })
+}
 </script>
 
 <template>
   <div class="login-page">
+    
     <div class="login-shell">
+      <button
+        @click="goBack"
+        aria-label="Go back"
+        title="Back"
+        class="absolute left-4 top-4 z-30 h-10 px-3 rounded-full bg-transparent text-[#12305f] flex items-center gap-2 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#12305f]"
+      >
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+        <span class="font-medium">Back</span>
+        <span class="sr-only">Back</span>
+      </button>
       <section class="login-brand" aria-label="Brand">
         <div class="brand-content">
-          <img :src="Logo" alt="Material Exchange logo" class="h-20 mb-20" />
+          <img :src="Logo" alt="Material Exchange logo" class="h-20 mb-8" />
           <p class="brand-tagline">
             an exchange online website platform
             that use for exchange everything.
