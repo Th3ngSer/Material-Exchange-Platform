@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 
 import HomeCategories from '../components/HomeView/HomeCategories.vue'
 import HomeHero from '../components/HomeView/HomeHero.vue'
+import CategoryMarquee from '../components/HomeView/CategoryMarquee.vue'
 import MaterialCard from '@/components/materialDetail/MaterialCard.vue'
 import Footer from '@/components/layout/Footer.vue'
 import Header from '@/components/layout/Header.vue'
@@ -68,12 +69,15 @@ const featuredCount = computed(() => filteredMaterials.value.length)
 
 // Limit displayed materials to 20 items for any category/filter
 const displayedMaterials = computed(() => filteredMaterials.value.slice(0, 20))
+
 </script>
 
 <template>
   <div class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.9),_rgba(245,245,250,0.95)_30%,_#f5f5f7_65%),linear-gradient(180deg,_#f4f4f8_0%,_#ffffff_20%,_#ffffff_100%)] text-[#15152d]">
     <Header />
     <HomeHero class="pl-20"/>
+
+    <CategoryMarquee :selected-category="selectedCategory" @update:category="handleCategoryUpdate" />
     <main class="mx-auto w-[min(1500px,calc(100%-32px))] max-[768px]:w-[min(100%-20px,100%)]">
       
 
@@ -97,3 +101,5 @@ const displayedMaterials = computed(() => filteredMaterials.value.slice(0, 20))
     <Footer />
   </div>
 </template>
+
+
