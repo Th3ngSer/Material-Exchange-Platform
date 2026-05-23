@@ -10,6 +10,7 @@ import { UsersModule } from './users/users.module';
 import { AdminDashboardModule } from './admin/admin-dashboard.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { PostsModule } from './posts/posts.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { PostsModule } from './posts/posts.module';
     UsersModule,
     AdminDashboardModule,
     TransactionsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

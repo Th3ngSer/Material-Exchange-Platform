@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 const navItems = [
@@ -15,54 +15,127 @@ const navItems = [
   { label: 'Settings', to: '/admin/settings' },
 ]
 
-const reportCards = [
-  { label: 'Total reports', value: 5, tone: 'danger' },
-  { label: 'Pending', value: 5, tone: 'warning' },
-  { label: 'Reviewed', value: 4, tone: 'success' },
-]
+type AdminReport = {
+  id: string
+  name: string
+  email: string
+  phone: string
+  message: string
+  request: string
+  status: string
+  date: string
+}
 
-const reports = [
-  {
-    id: '#1',
-    type: 'User',
-    reason: 'Fake account',
-    target: 'Mike Williams',
-    status: 'Pending',
-    date: '2025-03-20',
-  },
-  {
-    id: '#2',
-    type: 'Listing',
-    reason: 'Misleading description',
-    target: 'Chainsaw - Like New',
-    status: 'Reviewed',
-    date: '2025-03-20',
-  },
-  {
-    id: '#3',
-    type: 'Listing',
-    reason: 'Misleading description',
-    target: 'Chainsaw - Like New',
-    status: 'Reviewed',
-    date: '2025-03-20',
-  },
-  {
-    id: '#4',
-    type: 'Listing',
-    reason: 'Misleading description',
-    target: 'Chainsaw - Like New',
-    status: 'Reviewed',
-    date: '2025-03-20',
-  },
-  {
-    id: '#5',
-    type: 'Listing',
-    reason: 'Misleading description',
-    target: 'Chainsaw - Like New',
-    status: 'Reviewed',
-    date: '2025-03-20',
-  },
-]
+type AdminReportApi = {
+  _id: string
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  message: string
+  request: string
+  status: string
+  createdAt?: string
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+
+const reports = ref<AdminReport[]>([])
+const isLoading = ref(false)
+const errorMessage = ref('')
+
+const reportCards = computed(() => {
+  const total = reports.value.length
+  const pending = reports.value.filter((r) => r.status === 'Pending').length
+  const reviewed = reports.value.filter((r) => r.status === 'Reviewed').length
+  const done = reports.value.filter((r) => r.status === 'Done').length
+
+  return [
+    { label: 'Total reports', value: total, tone: 'danger' },
+    { label: 'Pending', value: pending, tone: 'warning' },
+    { label: 'Reviewed', value: reviewed, tone: 'success' },
+    { label: 'Done', value: done, tone: 'success' },
+  ]
+})
+
+const formatDate = (value: string): string => {
+  if (!value) return '---'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value || '---'
+  return date.toISOString().split('T')[0]
+}
+
+const fetchReports = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    const token = sessionStorage.getItem('authToken')
+    const response = await fetch(`${API_BASE_URL}/admin/reports`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.message || 'Failed to load reports')
+    }
+
+    const data = (await response.json()) as AdminReportApi[]
+    reports.value = (data ?? []).map((item) => ({
+      id: item._id,
+      name: `${item.firstName} ${item.lastName}`.trim(),
+      email: item.email,
+      phone: item.phone,
+      message: item.message,
+      request: item.request,
+      status: item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Pending',
+      date: formatDate(item.createdAt ?? ''),
+    }))
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Failed to load reports'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const updateStatus = async (reportId: string, status: 'reviewed' | 'done') => {
+  try {
+    const token = sessionStorage.getItem('authToken')
+    const response = await fetch(`${API_BASE_URL}/admin/reports/${reportId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ status }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.message || 'Failed to update report')
+    }
+
+    const updated = (await response.json()) as AdminReportApi
+    reports.value = reports.value.map((report) =>
+      report.id === updated._id
+        ? {
+            ...report,
+            status: updated.status
+              ? updated.status.charAt(0).toUpperCase() + updated.status.slice(1)
+              : report.status,
+          }
+        : report,
+    )
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to update report'
+    alert(message)
+  }
+}
+
+onMounted(fetchReports)
 
 const route = useRoute()
 const currentPath = computed(() => route.path)
@@ -159,18 +232,33 @@ const isActive = (path: string) => {
             <span>Date</span>
             <span>Actions</span>
           </div>
+          <p v-if="isLoading" class="table-note">Loading reports...</p>
+          <p v-else-if="errorMessage" class="table-note error">{{ errorMessage }}</p>
           <div v-for="report in reports" :key="report.id" class="table-row body">
-            <span>{{ report.id }}</span>
-            <span class="type" :class="report.type.toLowerCase()">{{ report.type }}</span>
-            <span>{{ report.reason }}</span>
-            <span>{{ report.target }}</span>
+            <span>#{{ report.id.slice(-6) }}</span>
+            <span class="type">Help</span>
+            <span class="reason">{{ report.message }}</span>
+            <span class="target">{{ report.name }}</span>
             <span class="status" :class="report.status.toLowerCase()">{{ report.status }}</span>
             <span>{{ report.date }}</span>
-            <button class="dots" aria-label="More actions">
-              <span></span>
-              <span></span>
-              <span></span>
-            </button>
+            <div class="actions">
+              <button
+                type="button"
+                class="action review"
+                :disabled="report.status !== 'Pending'"
+                @click="updateStatus(report.id, 'reviewed')"
+              >
+                Review
+              </button>
+              <button
+                type="button"
+                class="action done"
+                :disabled="report.status === 'Done'"
+                @click="updateStatus(report.id, 'done')"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -192,6 +280,7 @@ const isActive = (path: string) => {
 
 .admin-shell {
   min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: 260px 1fr;
   background: radial-gradient(circle at top left, #fff5e1 0%, #f7f0ff 32%, #edf3ff 70%);
@@ -207,6 +296,11 @@ const isActive = (path: string) => {
   display: flex;
   flex-direction: column;
   gap: 32px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  align-self: start;
+  overflow-y: auto;
   z-index: 1;
 }
 
@@ -256,6 +350,7 @@ const isActive = (path: string) => {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  overflow-y: auto;
   z-index: 1;
 }
 
@@ -368,6 +463,45 @@ const isActive = (path: string) => {
   gap: 10px;
 }
 
+.actions {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.action {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.action.review {
+  background: #fff7ed;
+  color: #9a3412;
+  border-color: #fed7aa;
+}
+
+.action.done {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+.action:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.12);
+}
+
+.action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .card-label {
   font-size: 12px;
   color: #64748b;
@@ -470,6 +604,23 @@ select {
 .table {
   display: grid;
   gap: 10px;
+}
+
+.table-note {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.table-note.error {
+  color: #ef4444;
+}
+
+.reason,
+.target {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .table-row {
@@ -581,6 +732,8 @@ select {
 @media (max-width: 1024px) {
   .admin-shell {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
   }
 
   .admin-sidebar {
@@ -599,6 +752,10 @@ select {
 
   .logout {
     margin-top: 0;
+  }
+
+  .admin-main {
+    overflow: visible;
   }
 }
 

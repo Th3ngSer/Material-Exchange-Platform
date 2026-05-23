@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import LoginPromptModal from '@/components/LoginPromptModal.vue'
 import { connectSocket, getSocket, disconnectSocket } from '@/services/socket'
 import api from '@/services/api'
-import type { ChatMessage, ChatUser } from '@/types/chat'
+import type { ChatUser } from '@/types/chat'
 
 import ChatSidebar from "../components/ChatSidebar.vue"
 import ChatWindow from "../components/ChatWindow.vue"
