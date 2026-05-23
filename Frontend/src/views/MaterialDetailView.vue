@@ -17,6 +17,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const activeTab = ref<'description' | 'specifications'>('description')
 const errorMessage = ref('')
+const showDeleteModal = ref(false)
 
 // Scroll to top when route ID changes
 watch(
@@ -89,11 +90,16 @@ const isOwner = computed(() => Boolean(currentPost.value?.ownerId && authStore.u
 const canDelete = computed(() => Boolean(currentPost.value && authStore.isAuthenticated && isOwner.value))
 
 // ── Actions ─────────────────────────────────────────────────────────────────
-async function deletePost() {
-  if (!currentPost.value?._id) return
+function openDeleteModal() {
+  showDeleteModal.value = true
+}
 
-  const confirmed = window.confirm(`Delete "${currentPost.value.title}"? This action cannot be undone.`)
-  if (!confirmed) return
+function closeDeleteModal() {
+  showDeleteModal.value = false
+}
+
+async function confirmDeletePost() {
+  if (!currentPost.value?._id) return
 
   try {
     const endpoint = isAdmin.value
@@ -105,6 +111,7 @@ async function deletePost() {
         Authorization: `Bearer ${sessionStorage.getItem('authToken') ?? ''}`,
       },
     })
+    showDeleteModal.value = false
     await router.push('/posts')
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
@@ -275,7 +282,7 @@ const detailStats = computed(() => [
             <button
               type="button"
               class="rounded-lg border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100"
-              @click="deletePost"
+              @click="openDeleteModal"
             >
               Delete post
             </button>
@@ -368,6 +375,34 @@ const detailStats = computed(() => [
           </div>
         </div>
       </section>
+
+      <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
+        <div class="w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-[0_25px_70px_rgba(15,23,42,0.25)]">
+          <h3 class="text-2xl font-bold text-[#1e1b4b]">Confirm Delete</h3>
+
+          <p class="mt-3 text-sm leading-6 text-slate-600">
+            Are you sure you want to delete "{{ currentPost.title }}"? This action cannot be undone.
+          </p>
+
+          <div class="mt-6 flex justify-center gap-3">
+            <button
+              type="button"
+              class="rounded-lg bg-slate-200 px-5 py-2.5 font-semibold text-slate-700 transition hover:bg-slate-300"
+              @click="closeDeleteModal"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              class="rounded-lg bg-[#1e1b4b] px-5 py-2.5 font-semibold text-white transition hover:bg-[#2a2566]"
+              @click="confirmDeletePost"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- Related Listings -->
       <section class="mt-16">

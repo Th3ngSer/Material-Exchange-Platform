@@ -31,8 +31,6 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/a
 const posts = ref<Post[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
-const showDeleteModal = ref(false)
-const deleteTarget = ref<{ id: string; title: string } | null>(null)
 const authStore = useAuthStore()
 const currentUserIdentifiers = computed(() => {
   const identifiers = [authStore.user?.id, authStore.user?.name, authStore.user?.username, authStore.user?.email]
@@ -113,22 +111,11 @@ async function loadPosts() {
   }
 }
 
-function openDeleteModal(postId: string, title: string) {
-  deleteTarget.value = { id: postId, title }
-  showDeleteModal.value = true
-}
-
-function closeDeleteModal() {
-  showDeleteModal.value = false
-  deleteTarget.value = null
-}
-
-async function confirmDeletePost() {
-  if (!deleteTarget.value) {
+async function deletePost(postId: string, title: string) {
+  if (!confirm(`Delete "${title}"? This action cannot be undone.`)) {
     return
   }
 
-  const { id: postId } = deleteTarget.value
   const isAdmin = authStore.user?.role === 'admin'
   const endpoint = isAdmin ? `${apiBaseUrl}/posts/admin/${postId}` : `${apiBaseUrl}/posts/${postId}`
 
@@ -139,7 +126,6 @@ async function confirmDeletePost() {
       },
     })
     posts.value = posts.value.filter((p) => p._id !== postId)
-    closeDeleteModal()
   } catch (error: unknown) {
     const msg = getErrorMessage(error, 'Failed to delete post.')
     alert(msg)
@@ -278,7 +264,7 @@ onMounted(loadPosts)
                 v-if="canManagePost(post)"
                 type="button"
                 class="flex-1 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-700"
-                @click="openDeleteModal(post._id, post.title)"
+                @click="deletePost(post._id, post.title)"
               >
                 <!-- {{ languageStore.t('delete') }} -->Delete
               </button>
@@ -287,37 +273,6 @@ onMounted(loadPosts)
         </article>
       </div>
       </section>
-
-      <div
-        v-if="showDeleteModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm"
-      >
-        <div class="w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-[0_25px_70px_rgba(15,23,42,0.25)]">
-          <h3 class="text-2xl font-bold text-[#1e1b4b]">Confirm Delete</h3>
-
-          <p class="mt-3 text-sm leading-6 text-slate-600">
-            Are you sure you want to delete "{{ deleteTarget?.title }}"? This action cannot be undone.
-          </p>
-
-          <div class="mt-6 flex justify-center gap-3">
-            <button
-              type="button"
-              class="rounded-lg bg-slate-200 px-5 py-2.5 font-semibold text-slate-700 transition hover:bg-slate-300"
-              @click="closeDeleteModal"
-            >
-              Cancel
-            </button>
-
-            <button
-              type="button"
-              class="rounded-lg bg-[#1e1b4b] px-5 py-2.5 font-semibold text-white transition hover:bg-[#2a2566]"
-              @click="confirmDeletePost"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
     </main>
 
     <Footer />
