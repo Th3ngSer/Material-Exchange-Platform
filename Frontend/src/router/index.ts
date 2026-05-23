@@ -93,7 +93,7 @@ router.beforeEach((to) => {
   }
 
   const authStore = useAuthStore()
-  const token = localStorage.getItem('authToken')
+  const token = sessionStorage.getItem('authToken')
   const role = authStore.user?.role ?? getRoleFromToken(token)
 
   if (!token) {
@@ -110,7 +110,13 @@ router.beforeEach((to) => {
 // Guard to check for authenticated access before post
 router.beforeEach((to) => {
   const authStore = useAuthStore()
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  const token = sessionStorage.getItem('authToken')
+
+  if ((to.name === 'login' || to.name === 'signup') && authStore.isAuthenticated) {
+    return { name: 'home' }
+  }
+
+  if (to.meta.requiresAuth && !token) {
     return '/login'
   }
 

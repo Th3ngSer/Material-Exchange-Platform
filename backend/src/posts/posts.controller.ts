@@ -147,4 +147,12 @@ export class PostsController {
   remove(@Param('id') id: string) {
     return this.postsService.remove(id);
   }
+
+  // ─── DELETE /posts/admin/:id ─────────────────────────────────────────────
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Delete('admin/:id')
+  @HttpCode(HttpStatus.OK)
+  removeForAdmin(@Param('id') id: string) {
+    return this.postsService.remove(id);
+  }
 }
