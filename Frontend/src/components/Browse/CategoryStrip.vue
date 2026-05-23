@@ -74,7 +74,7 @@ watch(() => props.modelValue, () => {
           :key="cat"
           type="button"
           role="listitem"
-          class="rounded-full px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
+          class="rounded-full px-4 py-2 text-sm font-semibold transition whitespace-nowrap cursor-pointer active:scale-95"
           :class="props.modelValue === cat ? 'bg-[#1b1748] text-white shadow-[0_10px_20px_rgba(27,23,72,0.2)]' : 'bg-[#cfd3f3] text-[#3e4474] hover:bg-[#c2c8ef]'"
           @click="$emit('update:modelValue', cat)"
         >
@@ -86,7 +86,7 @@ watch(() => props.modelValue, () => {
     <button
       v-show="showLeft"
       @click="scrollLeft()"
-      class="absolute left-0 top-1/2 -translate-y-1/2 z-20 ml-1 rounded-full bg-white/90 p-1 shadow-md hover:bg-white"
+      class="absolute left-0 top-1/2 -translate-y-1/2 z-20 ml-1 rounded-full bg-white/90 p-1 shadow-md hover:bg-white cursor-pointer"
       aria-label="Scroll categories left"
     >
       <svg class="h-5 w-5 text-[#1b1748]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -95,7 +95,7 @@ watch(() => props.modelValue, () => {
     <button
       v-show="showRight"
       @click="scrollRight()"
-      class="absolute right-0 top-1/2 -translate-y-1/2 z-20 mr-1 rounded-full bg-white/90 p-1 shadow-md hover:bg-white"
+      class="absolute right-0 top-1/2 -translate-y-1/2 z-20 mr-1 rounded-full bg-white/90 p-1 shadow-md hover:bg-white cursor-pointer"
       aria-label="Scroll categories right"
     >
       <svg class="h-5 w-5 text-[#1b1748]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>

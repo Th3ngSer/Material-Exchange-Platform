@@ -217,9 +217,12 @@ function applyHeaderSearchFromRoute() {
   const routeQuery = typeof route.query.q === 'string' ? route.query.q : ''
   const routeType = typeof route.query.type === 'string' ? route.query.type : 'All'
   const normalizedType = categoryOptions.includes(routeType as Category) ? (routeType as Category) : 'All'
+  const routeCategory = typeof route.query.category === 'string' ? route.query.category : 'All'
+  const normalizedCategory = (itemCategoryOptions as string[]).includes(routeCategory) ? routeCategory : 'All'
 
   searchQuery.value = routeQuery
   selectedCategory.value = normalizedType
+  selectedItemCategory.value = normalizedCategory
   browseType.value = 'items'
 }
 

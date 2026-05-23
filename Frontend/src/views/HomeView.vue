@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import HomeCategories from '../components/HomeView/HomeCategories.vue'
 import HomeHero from '../components/HomeView/HomeHero.vue'
@@ -25,13 +26,19 @@ const props = withDefaults(defineProps<Props>(), {
   sortOptions: () => ['All', 'Newest', 'A-Z', 'Z-A'],
 })
 
+const router = useRouter()
 const selectedCategory = ref<Category>(props.categories?.[0] ?? 'All')
 const selectedSort = ref<SortOption>(props.sortOptions?.[0] ?? 'All')
 
 function handleCategoryUpdate(value: string) {
+  // If the clicked value matches a transaction category, update locally.
   if ((props.categories ?? []).includes(value as Category)) {
     selectedCategory.value = value as Category
+    return
   }
+
+  // Otherwise treat as a product category from the marquee and navigate to Browse.
+  router.push({ name: 'browse', query: { category: value } })
 }
 
 function handleSortUpdate(value: string) {
