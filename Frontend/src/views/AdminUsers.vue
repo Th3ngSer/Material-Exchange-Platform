@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 type AdminUser = {
@@ -10,6 +10,17 @@ type AdminUser = {
   status: string
   listingsCount: number
   rating: number
+  createdAt?: string
+}
+
+type AdminUserApi = {
+  _id: string
+  name?: string
+  email: string
+  role?: string
+  status?: string
+  listingsCount?: number
+  rating?: number
   createdAt?: string
 }
 
@@ -31,6 +42,11 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const users = ref<AdminUser[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
+const isDeleting = ref(false)
+const searchQuery = ref('')
+const page = ref(1)
+const lastPage = ref(1)
+const total = ref(0)
 
 const route = useRoute()
 const currentPath = computed(() => route.path)
@@ -58,8 +74,15 @@ const fetchUsers = async () => {
   errorMessage.value = ''
 
   try {
-    const token = localStorage.getItem('authToken')
-    const response = await fetch(`${API_BASE_URL}/admin/users`, {
+    const token = sessionStorage.getItem('authToken')
+    const params = new URLSearchParams()
+    params.set('page', String(page.value))
+    params.set('limit', '10')
+    if (searchQuery.value.trim()) {
+      params.set('search', searchQuery.value.trim())
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/users?${params.toString()}`, {
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -71,13 +94,84 @@ const fetchUsers = async () => {
       throw new Error(error.message || 'Failed to load users')
     }
 
-    users.value = await response.json()
+    const payload = (await response.json()) as {
+      data: AdminUserApi[]
+      meta: { total: number; page: number; lastPage: number }
+    }
+
+    users.value = (payload.data ?? []).map((item) => ({
+      id: item._id,
+      name: item.name,
+      email: item.email,
+      role: item.role ?? 'user',
+      status: item.status ?? 'active',
+      listingsCount: item.listingsCount ?? 0,
+      rating: item.rating ?? 0,
+      createdAt: item.createdAt,
+    }))
+    total.value = payload.meta?.total ?? 0
+    page.value = payload.meta?.page ?? 1
+    lastPage.value = payload.meta?.lastPage ?? 1
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Failed to load users'
   } finally {
     isLoading.value = false
   }
 }
+
+const deleteUser = async (userId: string, email: string) => {
+  if (!confirm(`Delete user "${email}"? This cannot be undone.`)) {
+    return
+  }
+
+  isDeleting.value = true
+  try {
+    const token = sessionStorage.getItem('authToken')
+    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.message || 'Failed to delete user')
+    }
+
+    await fetchUsers()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to delete user'
+    alert(message)
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+const canGoPrev = computed(() => page.value > 1)
+const canGoNext = computed(() => page.value < lastPage.value)
+
+const goPrev = () => {
+  if (!canGoPrev.value) return
+  page.value -= 1
+  fetchUsers()
+}
+
+const goNext = () => {
+  if (!canGoNext.value) return
+  page.value += 1
+  fetchUsers()
+}
+
+let searchTimer: number | undefined
+watch(searchQuery, () => {
+  window.clearTimeout(searchTimer)
+  searchTimer = window.setTimeout(() => {
+    page.value = 1
+    fetchUsers()
+  }, 300)
+})
 
 onMounted(fetchUsers)
 </script>
@@ -130,7 +224,7 @@ onMounted(fetchUsers)
         <div class="filters">
           <label class="search">
             <span class="search-icon"></span>
-            <input type="text" placeholder="Search users..." />
+            <input v-model="searchQuery" type="text" placeholder="Search users..." />
           </label>
           <div class="filter-group">
             <label class="filter">
@@ -181,12 +275,25 @@ onMounted(fetchUsers)
               {{ Number(user.rating || 0).toFixed(1) }}
             </span>
             <span class="joined">{{ formatDate(user.createdAt) }}</span>
-            <button class="dots" aria-label="More actions">
-              <span></span>
-              <span></span>
-              <span></span>
+            <button
+              class="delete"
+              type="button"
+              :disabled="isDeleting"
+              @click="deleteUser(user.id, user.email)"
+            >
+              Delete
             </button>
           </div>
+        </div>
+
+        <div class="pagination">
+          <button class="ghost" type="button" :disabled="!canGoPrev" @click="goPrev">
+            Previous
+          </button>
+          <span class="page-meta">Page {{ page }} of {{ lastPage }} · {{ total }} users</span>
+          <button class="ghost" type="button" :disabled="!canGoNext" @click="goNext">
+            Next
+          </button>
         </div>
       </section>
     </main>
@@ -207,6 +314,7 @@ onMounted(fetchUsers)
 
 .admin-shell {
   min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: 260px 1fr;
   background: radial-gradient(circle at top left, #fff5e1 0%, #f7f0ff 32%, #edf3ff 70%);
@@ -222,6 +330,11 @@ onMounted(fetchUsers)
   display: flex;
   flex-direction: column;
   gap: 32px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  align-self: start;
+  overflow-y: auto;
   z-index: 1;
 }
 
@@ -271,6 +384,7 @@ onMounted(fetchUsers)
   display: flex;
   flex-direction: column;
   gap: 24px;
+  overflow-y: auto;
   z-index: 1;
 }
 
@@ -490,6 +604,20 @@ select {
   border-bottom: none;
 }
 
+.pagination {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.page-meta {
+  font-weight: 600;
+}
+
 .name-cell {
   display: flex;
   align-items: center;
@@ -541,6 +669,26 @@ select {
   display: block;
 }
 
+.delete {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delete:hover:not(:disabled) {
+  background: #dc2626;
+}
+
 .ambient {
   position: absolute;
   inset: 0;
@@ -583,6 +731,8 @@ select {
 @media (max-width: 1024px) {
   .admin-shell {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
   }
 
   .admin-sidebar {
@@ -601,6 +751,10 @@ select {
 
   .logout {
     margin-top: 0;
+  }
+
+  .admin-main {
+    overflow: visible;
   }
 }
 

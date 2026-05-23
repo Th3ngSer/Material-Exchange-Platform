@@ -42,6 +42,7 @@ const navItems = [
 const listings = ref<AdminListing[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
+const isDeleting = ref(false)
 
 const formatDate = (value?: string): string => {
   if (!value) return '---'
@@ -57,7 +58,7 @@ const fetchListings = async () => {
   errorMessage.value = ''
 
   try {
-    const token = localStorage.getItem('authToken')
+    const token = sessionStorage.getItem('authToken')
     const response = await fetch(`${API_BASE_URL}/posts/admin/all`, {
       headers: {
         'Content-Type': 'application/json',
@@ -85,6 +86,36 @@ const fetchListings = async () => {
     errorMessage.value = error instanceof Error ? error.message : 'Failed to load listings'
   } finally {
     isLoading.value = false
+  }
+}
+
+const deleteListing = async (listingId: string, title: string) => {
+  if (!confirm(`Delete listing "${title}"? This cannot be undone.`)) {
+    return
+  }
+
+  isDeleting.value = true
+  try {
+    const token = sessionStorage.getItem('authToken')
+    const response = await fetch(`${API_BASE_URL}/posts/admin/${listingId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.message || 'Failed to delete listing')
+    }
+
+    listings.value = listings.value.filter((item) => item.id !== listingId)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to delete listing'
+    alert(message)
+  } finally {
+    isDeleting.value = false
   }
 }
 
@@ -193,10 +224,13 @@ const isActive = (path: string) => {
             <span>{{ listing.type }}</span>
             <span class="status" :class="listing.status.toLowerCase()">{{ listing.status }}</span>
             <span>{{ listing.date }}</span>
-            <button class="dots" aria-label="More actions">
-              <span></span>
-              <span></span>
-              <span></span>
+            <button
+              class="delete"
+              type="button"
+              :disabled="isDeleting"
+              @click="deleteListing(listing.id, listing.title)"
+            >
+              Delete
             </button>
           </div>
         </div>
@@ -219,6 +253,7 @@ const isActive = (path: string) => {
 
 .admin-shell {
   min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: 260px 1fr;
   background: radial-gradient(circle at top left, #fff5e1 0%, #f7f0ff 32%, #edf3ff 70%);
@@ -234,6 +269,11 @@ const isActive = (path: string) => {
   display: flex;
   flex-direction: column;
   gap: 32px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  align-self: start;
+  overflow-y: auto;
   z-index: 1;
 }
 
@@ -283,6 +323,7 @@ const isActive = (path: string) => {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  overflow-y: auto;
   z-index: 1;
 }
 
@@ -523,6 +564,26 @@ select {
   display: block;
 }
 
+.delete {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delete:hover:not(:disabled) {
+  background: #dc2626;
+}
+
 .ambient {
   position: absolute;
   inset: 0;
@@ -565,6 +626,8 @@ select {
 @media (max-width: 1024px) {
   .admin-shell {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
   }
 
   .admin-sidebar {
@@ -583,6 +646,10 @@ select {
 
   .logout {
     margin-top: 0;
+  }
+
+  .admin-main {
+    overflow: visible;
   }
 }
 

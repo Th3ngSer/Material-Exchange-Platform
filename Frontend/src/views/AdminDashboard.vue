@@ -23,6 +23,9 @@ const dashboardStats = ref({
   totalTransactions: 0,
 })
 
+const healthStatus = ref<'connected' | 'disconnected' | 'unknown'>('unknown')
+const healthMessage = ref('')
+
 const velocityBars = [42, 58, 72, 48, 64, 78, 90]
 
 const categoryMix = [
@@ -67,7 +70,7 @@ const fetchStats = async () => {
   errorMessage.value = ''
 
   try {
-    const token = localStorage.getItem('authToken')
+    const token = sessionStorage.getItem('authToken')
     const response = await fetch(`${API_BASE_URL}/admin/dashboard/stats`, {
       headers: {
         'Content-Type': 'application/json',
@@ -94,8 +97,25 @@ const fetchStats = async () => {
   }
 }
 
+const fetchHealth = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/posts/health/db`)
+    if (!response.ok) {
+      throw new Error('Health check failed')
+    }
+
+    const data = await response.json()
+    healthStatus.value = data.status === 'connected' ? 'connected' : 'disconnected'
+    healthMessage.value = data.message ?? ''
+  } catch {
+    healthStatus.value = 'disconnected'
+    healthMessage.value = 'Unable to reach database'
+  }
+}
+
 onMounted(() => {
   fetchStats()
+  fetchHealth()
 })
 
 const route = useRoute()
@@ -152,6 +172,17 @@ const isActive = (path: string) => {
             <span class="stat-note">{{ card.note }}</span>
           </p>
         </article>
+      </section>
+
+      <section class="health-panel">
+        <div class="panel-header">
+          <h2>Platform health</h2>
+          <span class="panel-note">Database</span>
+        </div>
+        <div class="health-row">
+          <span class="health-pill" :class="healthStatus">{{ healthStatus }}</span>
+          <span class="health-message">{{ healthMessage || 'Status unknown' }}</span>
+        </div>
       </section>
 
       <section class="main-grid">
@@ -258,6 +289,7 @@ const isActive = (path: string) => {
 
 .admin-shell {
   min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: 260px 1fr;
   background: radial-gradient(circle at top left, #fef3c7 0%, #ecfeff 40%, #fef2f2 90%);
@@ -273,6 +305,11 @@ const isActive = (path: string) => {
   display: flex;
   flex-direction: column;
   gap: 32px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  align-self: start;
+  overflow-y: auto;
   z-index: 1;
 }
 
@@ -322,6 +359,7 @@ const isActive = (path: string) => {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  overflow-y: auto;
   z-index: 1;
 }
 
@@ -391,6 +429,48 @@ const isActive = (path: string) => {
   padding: 18px 20px;
   box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
   animation: fadeUp 0.6s ease both;
+}
+
+.health-panel {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 20px;
+  padding: 20px 24px;
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+}
+
+.health-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.health-pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.health-pill.connected {
+  background: rgba(16, 185, 129, 0.15);
+  color: #0f766e;
+}
+
+.health-pill.disconnected {
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+}
+
+.health-pill.unknown {
+  background: rgba(148, 163, 184, 0.2);
+  color: #475569;
+}
+
+.health-message {
+  color: #475569;
+  font-size: 14px;
 }
 
 .stat-label {
@@ -697,6 +777,8 @@ const isActive = (path: string) => {
 @media (max-width: 1024px) {
   .admin-shell {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
   }
 
   .admin-sidebar {
@@ -714,6 +796,10 @@ const isActive = (path: string) => {
 
   .logout {
     margin-top: 0;
+  }
+
+  .admin-main {
+    overflow: visible;
   }
 }
 
