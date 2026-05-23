@@ -129,6 +129,11 @@ type TranslationKey =
   | 'loginHere'
   | 'letsReleaseProduct'
   | 'search'
+  | 'viewProfile'
+  | 'loadingMoreUsers'
+  | 'noUsersFound'
+  | 'noUsersDescription'
+  | 'item'
   | 'fillDetailsBelow'
   | 'listingType'
   | 'listingInformation'
@@ -338,6 +343,12 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     loginHere: 'Login here',
     letsReleaseProduct: "Let's release your new product",
     search: 'Search',
+    viewProfile: 'View Profile',
+    loadingMoreUsers: 'Loading more users...',
+    noUsersFound: 'No users found',
+    noUsersDescription: 'Try a different search term to find users.',
+    item: 'item',
+    items: 'items',
     fillDetailsBelow: 'Fill in the details below to list your item',
     listingType: 'Listing type',
     listingInformation: 'Listing Information of Product',
@@ -388,7 +399,6 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     cannotBeUndone: 'This cannot be undone.',
     openToTrade: 'Open to trade',
     wants: 'Wants:',
-    items: 'Items',
     users: 'Users',
     openFilters: 'Open filters',
     results: 'Results',
@@ -546,6 +556,12 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     loginHere: 'ចូលនៅទីនេះ',
     letsReleaseProduct: 'តោះចេញផលិតផលថ្មីរបស់អ្នក',
     search: 'ស្វែងរក',
+    viewProfile: 'មើលប្រវត្តិរូប',
+    loadingMoreUsers: 'កំពុងផ្ទុកអ្នកប្រើបន្ថែម...',
+    noUsersFound: 'មិនមានអ្នកប្រើ',
+    noUsersDescription: 'សូមស្វែងរកឈ្មោះផ្សេងទៀតដើម្បីរកអ្នកប្រើ។',
+    item: 'ទំនិញ',
+    items: 'ទំនិញ',
     fillDetailsBelow: 'បំពេញព័ត៌មានខាងក្រោមដើម្បីចុះបញ្ជីទំនិញរបស់អ្នក',
     listingType: 'ប្រភេទបញ្ជី',
     listingInformation: 'ព័ត៌មានបញ្ជីនៃផលិតផល',
@@ -596,7 +612,6 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     cannotBeUndone: 'វាមិនអាចត្រឡប់វិញបានទេ។',
     openToTrade: 'បើកចំពោះការជួញដូរ',
     wants: 'ចង់បាន:',
-    items: 'ទំនិញ',
     users: 'អ្នកប្រើ',
     openFilters: 'បើកចម្រៀង',
     results: 'លទ្ធផល',

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import NoResults from './NoResults.vue'
+import { useLanguageStore } from '../../stores/language'
 
 interface User {
   name: string
@@ -12,6 +13,8 @@ interface Props {
   users: User[]
   isLoading?: boolean
 }
+
+const languageStore = useLanguageStore()
 
 withDefaults(defineProps<Props>(), {
   isLoading: false
@@ -40,14 +43,17 @@ withDefaults(defineProps<Props>(), {
               </svg>
               {{ user.rating.toFixed(1) }}
             </span>
-            <span>{{ user.itemsCount }} item{{ user.itemsCount !== 1 ? 's' : '' }}</span>
+            <span>
+              {{ user.itemsCount }}
+              {{ languageStore.t(user.itemsCount === 1 ? 'item' : 'items') }}
+            </span>
           </div>
         </div>
         <button
           type="button"
           class="rounded-full bg-[#1b1748] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[#242163]"
         >
-          View Profile
+          {{ languageStore.t('viewProfile') }}
         </button>
       </div>
 
@@ -56,15 +62,15 @@ withDefaults(defineProps<Props>(), {
         class="flex items-center justify-center py-8 text-sm font-semibold text-[#6a6f93]"
         aria-hidden="true"
       >
-        Loading more users...
+        {{ languageStore.t('loadingMoreUsers') }}
       </div>
     </div>
 
     <NoResults
       v-else
       type="users"
-      message="No users found"
-      description="Try a different search term to find users."
+      :message="languageStore.t('noUsersFound')"
+      :description="languageStore.t('noUsersDescription')"
     />
   </div>
 </template>
