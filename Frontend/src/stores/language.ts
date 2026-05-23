@@ -176,6 +176,7 @@ type TranslationKey =
   | 'confirmLogout'
   | 'confirmLogoutMessage'
   | 'cancel'
+  | 'mypost'
 
 const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = {
   English: {
@@ -351,6 +352,7 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     confirmLogout: 'Confirm Logout',
     confirmLogoutMessage: 'Are you sure you want to logout?',
     cancel: 'Cancel',
+    mypost: 'My Post',
     
   },
   Khmer: {
@@ -526,6 +528,7 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     confirmLogout: 'បញ្ជាក់ការចាកចេញ',
     confirmLogoutMessage: 'តើអ្នកប្រាកដថាចង់ចាកចេញមែនទេ?',
     cancel: 'បោះបង់',
+    mypost: 'ប្រកាសរបស់ខ្ញុំ',
   },
 }
 

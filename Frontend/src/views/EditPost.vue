@@ -43,7 +43,7 @@ const submitted = ref(false)
 const submitError = ref('')
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const activeThumb = ref(0)
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const existingImages = ref<string[]>([])
 
 const form = reactive<FormState>({
@@ -66,14 +66,15 @@ const previewUrls = ref<string[]>([])
 // ─── Computed ─────────────────────────────────────────────────────────────────
 const activeImage = computed(() => {
   if (activeThumb.value < existingImages.value.length) {
-    return `${apiBaseUrl}/uploads/${existingImages.value[activeThumb.value]}`
+    const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '')
+    return `${uploadBaseUrl}/uploads/${existingImages.value[activeThumb.value]}`
   }
   const offset = activeThumb.value - existingImages.value.length
   return previewUrls.value[offset] ?? ''
 })
 
 const allImages = computed(() => [
-  ...existingImages.value.map((img) => `${apiBaseUrl}/uploads/${img}`),
+  ...existingImages.value.map((img) => `${apiBaseUrl.replace(/\/api\/?$/, '')}/uploads/${img}`),
   ...previewUrls.value,
 ])
 
@@ -244,11 +245,16 @@ async function submit() {
       fd.append('exchangeFor', form.exchangeFor.trim())
     }
     fd.append('location', form.location)
+    fd.append('retainImages', JSON.stringify(existingImages.value))
     form.images.forEach((file) => fd.append('images', file))
 
-    await axios.patch(`${apiBaseUrl}/posts/${postId}`, fd)
+    await axios.patch(`${apiBaseUrl}/posts/${postId}`, fd, {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem('authToken') ?? ''}`,
+      },
+    })
     submitted.value = true
-    await router.push('/posts')
+    await router.push('/home')
   } catch (err: any) {
     const message = err?.response?.data?.message
     submitError.value = Array.isArray(message)
@@ -276,6 +282,17 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="min-h-screen bg-[#F7FDFE] px-4 py-10">
+    <div class="mx-auto mb-6 max-w-2xl">
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+        @click="router.push('/posts')"
+      >
+        <span aria-hidden="true">←</span>
+        Back to posts
+      </button>
+    </div>
+
     <div v-if="isLoadingPost" class="max-w-2xl mx-auto text-center">
       <p class="text-slate-600">Loading post...</p>
     </div>

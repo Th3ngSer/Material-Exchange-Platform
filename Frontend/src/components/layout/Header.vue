@@ -63,13 +63,26 @@ async function submitHeaderSearch() {
         <RouterLink
           :class="[
             'ml-20 text-[16px] font-bold no-underline text-center cursor-pointer transition-colors duration-200',
-            router.currentRoute.value.path.startsWith('/posts/create')
+            router.currentRoute.value.name === 'create-post'
               ? 'text-[#ff4b42]'
               : 'text-[#201f62] hover:text-[#ff4b42]'
           ]"
           to="/posts/create"
         >
           {{ languageStore.t('createPost') }}
+
+        </RouterLink>
+
+        <RouterLink
+          :class="[
+            'ml-20 text-[16px] font-bold no-underline text-center cursor-pointer transition-colors duration-200',
+            router.currentRoute.value.name === 'posts'
+              ? 'text-[#ff4b42]'
+              : 'text-[#201f62] hover:text-[#ff4b42]'
+          ]"
+          to="/posts"
+        >
+          {{ languageStore.t('mypost') }}
 
         </RouterLink>
       </nav>
