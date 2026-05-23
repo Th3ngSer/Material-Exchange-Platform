@@ -127,6 +127,8 @@ type TranslationKey =
   | 'signUpHere'
   | 'alreadyHaveAccount'
   | 'loginHere'
+  | 'loginRequired'
+  | 'loginPromptMessage'
   | 'letsReleaseProduct'
   | 'search'
   | 'viewProfile'
@@ -341,6 +343,8 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     signUpHere: 'Sign up here',
     alreadyHaveAccount: 'Already have an account?',
     loginHere: 'Login here',
+    loginRequired: 'Login required',
+    loginPromptMessage: 'You need to be logged in to use chat. Would you like to login now?',
     letsReleaseProduct: "Let's release your new product",
     search: 'Search',
     viewProfile: 'View Profile',
@@ -554,6 +558,8 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     signUpHere: 'ចុះឈ្មោះនៅទីនេះ',
     alreadyHaveAccount: 'មានគណនីរួចហើយ?',
     loginHere: 'ចូលនៅទីនេះ',
+    loginRequired: 'តម្រូវការចូលគណនី',
+    loginPromptMessage: 'អ្នកត្រូវតែចូលគណនីដើម្បីប្រើការជជែក។ តើអ្នកចង់ចូលឥឡូវនេះទេ?',
     letsReleaseProduct: 'តោះចេញផលិតផលថ្មីរបស់អ្នក',
     search: 'ស្វែងរក',
     viewProfile: 'មើលប្រវត្តិរូប',
