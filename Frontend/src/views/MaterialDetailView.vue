@@ -38,8 +38,8 @@ function titleCase(value: string) {
 }
 
 function formatPrice(post: MaterialItem) {
-  if (post.category === 'Exchange') return 'Open to trade'
-  if (post.category === 'Borrow') return post.price ? `$${Number(post.price || 0).toFixed(2)}/day` : 'Open to borrow'
+  if (post.type === 'Exchange') return 'Open to trade'
+  if (post.type === 'Borrow') return post.price ? `$${Number(post.price || 0).toFixed(2)}/day` : 'Open to borrow'
   return `$${Number(post.price || 0).toFixed(2)}`
 }
 
@@ -68,6 +68,7 @@ const relatedCardItems = computed(() =>
       title: post.title,
       price: formatPrice(post),
       location: post.location,
+      type: post.type,
       category: post.category,
       tone: post.tone as MaterialTone,
       seller: post.seller || 'Marketplace seller',
@@ -115,7 +116,7 @@ const detailStats = computed(() => [
         <div class="flex flex-col gap-6">
           <!-- Status Badge -->
           <div class="inline-block w-fit rounded-full bg-[#31d07f] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#0f3d25]">
-            {{ currentPost.category === 'Sell' ? 'AVAILABLE' : currentPost.category === 'Exchange' ? 'EXCHANGE' : 'BORROW' }}
+            {{ currentPost.type === 'Sell' ? 'AVAILABLE' : currentPost.type === 'Exchange' ? 'EXCHANGE' : 'BORROW' }}
           </div>
 
           <!-- Title & Subtitle -->
@@ -129,13 +130,13 @@ const detailStats = computed(() => [
 
           <!-- Action Button (shows only the relevant action per category) -->
           <div>
-            <template v-if="currentPost.category === 'Sell'">
+            <template v-if="currentPost.type === 'Sell'">
               <button type="button" class="rounded-lg bg-[#1b1748] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#29255f]">
                 Buy now
               </button>
             </template>
 
-            <template v-else-if="currentPost.category === 'Exchange'">
+            <template v-else-if="currentPost.type === 'Exchange'">
               <button type="button" class="rounded-lg border-2 border-[#ff8c00] bg-[#fff6ef] px-4 py-3 text-sm font-bold text-[#ff8c00] transition hover:bg-orange-50">
                 Contact to exchange
               </button>
