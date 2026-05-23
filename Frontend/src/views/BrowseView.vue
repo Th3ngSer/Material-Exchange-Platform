@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 
 import Footer from '@/components/layout/Footer.vue'
 import Header from '@/components/layout/Header.vue'
+import CategoryStrip from '@/components/Browse/CategoryStrip.vue'
 import BrowseTypeSwitcher from '@/components/Browse/BrowseTypeSwitcher.vue'
 import SearchBar from '@/components/Browse/SearchBar.vue'
 import FilterButton from '@/components/Browse/FilterButton.vue'
@@ -28,6 +29,22 @@ const route = useRoute()
 
 const categoryOptions: Category[] = ['All', 'Sell', 'Exchange', 'Borrow']
 const conditionOptions: Condition[] = ['New', 'Like new', 'Good', 'Fair']
+
+// Visual item categories (product categories) shown under Items view
+const itemCategoryOptions = [
+  'All',
+  'Clothing',
+  'Electronics',
+  'Books',
+  'Furniture',
+  'Sports',
+  'Toys',
+  'Vehicles',
+  'Home & Garden',
+  'Food & Drink',
+  'Others',
+]
+const selectedItemCategory = ref<string>('All')
 
 const selectedCategory = ref<Category>('All')
 const selectedSort = ref<SortOption>('Newest')
@@ -193,23 +210,47 @@ function clearFilters() {
   maxPrice.value = priceUpperBound.value
   searchQuery.value = ''
   browseType.value = 'items'
+  selectedItemCategory.value = 'All'
 }
 
 function applyHeaderSearchFromRoute() {
   const routeQuery = typeof route.query.q === 'string' ? route.query.q : ''
   const routeType = typeof route.query.type === 'string' ? route.query.type : 'All'
   const normalizedType = categoryOptions.includes(routeType as Category) ? (routeType as Category) : 'All'
+  const routeCategory = typeof route.query.category === 'string' ? route.query.category : 'All'
+  const normalizedCategory = (itemCategoryOptions as string[]).includes(routeCategory) ? routeCategory : 'All'
 
   searchQuery.value = routeQuery
   selectedCategory.value = normalizedType
+  selectedItemCategory.value = normalizedCategory
   browseType.value = 'items'
+}
+
+// Lightweight product category detector for existing sample data
+function getProductCategory(item: MaterialItem) {
+  // prefer explicit product `category` if present in data
+  if ((item as any).category) return (item as any).category
+
+  const text = ((item.title || '') + ' ' + (item.description || '')).toLowerCase()
+
+  if (/cloth|shirt|jacket|hoodie|pants|dress|clothing|t-shirt/.test(text)) return 'Clothing'
+  if (/phone|laptop|monitor|keyboard|electronic|electrics|electronics|charger|speaker|lamp/.test(text)) return 'Electronics'
+  if (/book|novel|magazine|textbook|comic/.test(text)) return 'Books'
+  if (/sofa|chair|table|desk|furniture|shelf|cabinet|rack|storage/.test(text)) return 'Furniture'
+  if (/sport|ball|racket|bike|bicycle|fitness|gym|sports/.test(text)) return 'Sports'
+  if (/toy|lego|game|doll|play/.test(text)) return 'Toys'
+  if (/car|vehicle|van|truck|motorcycle|bike|bicycle/.test(text)) return 'Vehicles'
+  if (/home|garden|plant|sofa|cushion|bed|kitchen|decor/.test(text)) return 'Home & Garden'
+  if (/food|drink|grocery|snack|beverage|coffee/.test(text)) return 'Food & Drink'
+
+  return 'Others'
 }
 
 const filteredMaterials = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
 
   const pool = props.materials.filter((item) => {
-    const matchesCategory = selectedCategory.value === 'All' || item.category === selectedCategory.value
+    const matchesCategory = selectedCategory.value === 'All' || item.type === selectedCategory.value
     const isUsedConditionSelected = selectedConditions.value.some((condition) => condition !== 'New')
     const matchesCondition =
       selectedConditions.value.length === 0 ||
@@ -230,10 +271,13 @@ const filteredMaterials = computed(() => {
 
     const priceValue = Number(item.price || 0)
     const matchesPrice =
-      item.category !== 'Sell' ||
+      item.type !== 'Sell' ||
       (priceValue >= minPrice.value && priceValue <= maxPrice.value)
 
-    return matchesCategory && matchesCondition && matchesRating && matchesSearch && matchesPrice
+    const productCategory = getProductCategory(item)
+    const matchesProductCategory = selectedItemCategory.value === 'All' || productCategory === selectedItemCategory.value
+
+    return matchesCategory && matchesCondition && matchesRating && matchesSearch && matchesPrice && matchesProductCategory
   })
 
   const sortedPool = [...pool]
@@ -268,6 +312,7 @@ const featuredCount = computed(() => filteredMaterials.value.length)
 const activeTypeCount = computed(() => {
   return [
     selectedCategory.value !== 'All',
+    selectedItemCategory.value !== 'All',
     selectedConditions.value.length !== conditionOptions.length,
     selectedRating.value > 4,
     searchQuery.value.trim().length > 0,
@@ -340,6 +385,7 @@ onMounted(async () => {
   await nextTick()
   observeFilterTriggerVisibility()
   observePagingSentinel()
+  await nextTick()
 })
 
 watch(
@@ -359,6 +405,7 @@ onBeforeUnmount(() => {
     pagingObserver.disconnect()
     pagingObserver = null
   }
+  
 })
 
 watch(browseType, async () => {
@@ -392,6 +439,11 @@ watch(browseType, async () => {
           :browse-type="browseType"
           @update:browse-type="browseType = $event"
         />
+
+        <!-- Item Categories (visual) -->
+        <div v-if="browseType === 'items'" class="mt-4 mb-2">
+          <CategoryStrip v-model="selectedItemCategory" :options="itemCategoryOptions" />
+        </div>
 
         <!-- Filter Panel -->
         <FilterPanel
@@ -448,3 +500,21 @@ watch(browseType, async () => {
     <Footer />
   </div>
 </template>
+
+<style scoped>
+/* Hide native scrollbar but keep horizontal scrolling available */
+.category-scroll {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+  padding-bottom: 8px; /* leave space for custom track */
+}
+
+/* WebKit browsers: hide scrollbar */
+.category-scroll::-webkit-scrollbar {
+  display: none;
+  height: 0;
+}
+
+/* ensure arrow buttons sit above the content */
+.category-scroll ~ button, .category-scroll + button { z-index: 20 }
+</style>

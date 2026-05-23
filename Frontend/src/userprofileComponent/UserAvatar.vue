@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 
@@ -96,8 +96,28 @@ const onImageError = () => {
 /**
  * Back button
  */
+const route = useRoute()
+
 const goBack = () => {
-  router.push('/')
+  // If a `from` was provided in the query (e.g. ?from=/browse?q=...), prefer that
+  const from = typeof route.query.from === 'string' ? route.query.from : ''
+  if (from) {
+    router.push(from)
+    return
+  }
+
+  // Prefer history navigation when possible
+  try {
+    if (window.history.length > 1) {
+      router.back()
+      return
+    }
+  } catch (e) {
+    // ignore errors and fall back
+  }
+
+  // Fallback to Browse
+  router.push({ name: 'browse' })
 }
 
 /**
