@@ -12,7 +12,7 @@ import MaterialMap from '@/components/materialDetail/MaterialMap.vue'
 
 const route = useRoute()
 const router = useRouter()
-const activeTab = ref<'description' | 'specifications' | 'reviews'>('description')
+const activeTab = ref<'description' | 'specifications'>('description')
 
 // Scroll to top when route ID changes
 watch(
@@ -27,11 +27,6 @@ const currentPost = computed<MaterialItem>(() => {
   return (Number.isFinite(id) ? getMaterialById(id) : undefined) ?? defaultMaterials[0]!
 })
 
-const reviews = [
-  { name: 'Erica Rodriguez', rating: 5, text: 'The listing matched the photos and pickup was smooth.' },
-  { name: 'Julian Chen', rating: 4.8, text: 'Clear communication and a fast response from the seller.' },
-  { name: 'Mina Patel', rating: 5, text: 'Good quality item with a clean handoff experience.' },
-]
 
 function titleCase(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
@@ -188,14 +183,7 @@ const detailStats = computed(() => [
             >
               Specifications
             </button>
-            <button
-              type="button"
-              class="pb-3 transition"
-              :class="activeTab === 'reviews' ? 'border-b-2 border-[#1b1748] text-[#1b1748]' : 'text-[#999] hover:text-[#666]'"
-              @click="activeTab = 'reviews'"
-            >
-              Reviews ({{ reviews.length }})
-            </button>
+            
           </div>
         </div>
 
@@ -235,18 +223,7 @@ const detailStats = computed(() => [
               </ul>
             </template>
 
-            <template v-else>
-              <h2 class="text-2xl font-black text-[#1b1748]">Customer Reviews</h2>
-              <div class="mt-6 space-y-4">
-                <article v-for="review in reviews" :key="review.name" class="rounded-lg border border-[#f0f0f0] p-4">
-                  <div class="flex items-center justify-between">
-                    <h3 class="font-bold text-[#1b1748]">{{ review.name }}</h3>
-                    <span class="text-sm font-semibold text-[#ff8c00]">{{ review.rating.toFixed(1) }} ★</span>
-                  </div>
-                  <p class="mt-2 text-sm leading-6 text-[#666]">{{ review.text }}</p>
-                </article>
-              </div>
-            </template>
+            
           </div>
 
           <!-- Location Map -->
