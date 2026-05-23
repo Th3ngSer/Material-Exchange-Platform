@@ -39,6 +39,16 @@ function getTimeAgo(dateString: string | undefined): string {
 
   return date.toLocaleDateString()
 }
+
+function formatCardPrice(item: {
+  type: 'Sell' | 'Exchange' | 'Borrow'
+  price?: string
+}): string {
+  if (item.type === 'Exchange') return ''
+  if (item.type === 'Borrow') return item.price ? `$${Number(item.price || 0).toFixed(2)}/wk` : ''
+  // Sell
+  return item.price ? (item.price.startsWith('$') ? item.price : '$' + item.price) : ''
+}
 </script>
 
 <template>
@@ -77,9 +87,9 @@ function getTimeAgo(dateString: string | undefined): string {
         <h3 class="text-lg font-bold leading-tight flex-1">{{ item.title }}</h3>
         <span
           class="ml-2 min-w-[72px] text-2xl font-bold text-right"
-          :class="item.type === 'Sell' ? 'visible' : 'invisible'"
+          :class="item.type === 'Sell' || item.type === 'Borrow' ? 'visible' : 'invisible'"
         >
-          {{ item.price ? (item.price.startsWith('$') ? item.price : '$' + item.price) : '' }}
+          {{ formatCardPrice(item) }}
         </span>
       </div>
 

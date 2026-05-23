@@ -87,7 +87,7 @@ export const defaultMaterials: MaterialItem[] = [
   {
     id: 3,
     title: 'Desk Lamp',
-    price: '',
+    price: '1',
     location: 'Phnom Penh, Cambodia',
     lat: 11.5564,
     lng: 104.9282,
