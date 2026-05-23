@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import NoResults from './NoResults.vue'
 
 interface User {
@@ -11,6 +12,13 @@ interface User {
 interface Props {
   users: User[]
   isLoading?: boolean
+}
+
+const router = useRouter()
+
+function goToProfile(userName: string) {
+  // Navigate to the profile view and include the user name in the query
+  router.push({ name: 'profile', query: { user: userName } })
 }
 
 withDefaults(defineProps<Props>(), {
@@ -45,7 +53,9 @@ withDefaults(defineProps<Props>(), {
         </div>
         <button
           type="button"
-          class="rounded-full bg-[#1b1748] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[#242163]"
+          class="rounded-full bg-[#1b1748] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[#242163] cursor-pointer"
+          @click="goToProfile(user.name)"
+          :aria-label="`View profile of ${user.name}`"
         >
           View Profile
         </button>
