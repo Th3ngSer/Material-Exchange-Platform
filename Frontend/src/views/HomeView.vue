@@ -42,7 +42,7 @@ const filteredMaterials = computed(() => {
   const pool =
     selectedCategory.value === 'All'
       ? props.materials
-      : props.materials.filter((item) => item.category === selectedCategory.value)
+      : props.materials.filter((item) => item.type === selectedCategory.value)
 
   const sortedPool = [...pool]
 
