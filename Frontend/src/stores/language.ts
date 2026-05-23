@@ -128,6 +128,7 @@ type TranslationKey =
   | 'alreadyHaveAccount'
   | 'loginHere'
   | 'letsReleaseProduct'
+  | 'search'
   | 'fillDetailsBelow'
   | 'listingType'
   | 'listingInformation'
@@ -336,6 +337,7 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     alreadyHaveAccount: 'Already have an account?',
     loginHere: 'Login here',
     letsReleaseProduct: "Let's release your new product",
+    search: 'Search',
     fillDetailsBelow: 'Fill in the details below to list your item',
     listingType: 'Listing type',
     listingInformation: 'Listing Information of Product',
@@ -543,6 +545,7 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     alreadyHaveAccount: 'មានគណនីរួចហើយ?',
     loginHere: 'ចូលនៅទីនេះ',
     letsReleaseProduct: 'តោះចេញផលិតផលថ្មីរបស់អ្នក',
+    search: 'ស្វែងរក',
     fillDetailsBelow: 'បំពេញព័ត៌មានខាងក្រោមដើម្បីចុះបញ្ជីទំនិញរបស់អ្នក',
     listingType: 'ប្រភេទបញ្ជី',
     listingInformation: 'ព័ត៌មានបញ្ជីនៃផលិតផល',
