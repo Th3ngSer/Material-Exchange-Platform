@@ -34,6 +34,10 @@ import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  // Always scroll to top on route navigation so pages start at the top
+  scrollBehavior() {
+    return { left: 0, top: 0 }
+  },
   routes: [
     { path: '/', redirect: '/home' },
     { path: '/home', name: 'home', component: HomeView },
