@@ -169,6 +169,16 @@ type TranslationKey =
   | 'addAtLeastOnePhoto'
   | 'listingDetails'
   | 'reviewPost'
+  | 'reviewYourListing'
+  | 'postedSuccessfully'
+  | 'contactMe'
+  | 'verifiedStudioAddress'
+  | 'postedJustNow'
+  | 'uploadPhotos'
+  | 'uploadPhotosHint'
+  | 'cover'
+  | 'nextStepReview'
+  | 'confirmPost'
   | 'titleRequired'
   | 'titleMin3Chars'
   | 'descriptionRequired'
@@ -188,6 +198,7 @@ type TranslationKey =
   | 'createFirstListing'
   | 'errorLoadingSavedPosts'
   | 'failedToDeletePost'
+  | 'perDay'
   | 'edit'
   | 'delete'
   | 'confirmDelete'
@@ -394,6 +405,16 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     addAtLeastOnePhoto: 'Please add at least one photo',
     listingDetails: 'Listing details',
     reviewPost: 'Review & post',
+    reviewYourListing: 'Review your listing',
+    postedSuccessfully: 'Posted successfully! Your listing is now live.',
+    contactMe: 'Contact Me',
+    verifiedStudioAddress: 'Verified studio address',
+    postedJustNow: 'Posted just now',
+    uploadPhotos: 'Upload photos',
+    uploadPhotosHint: 'Show your product quality with up to 10 photos',
+    cover: 'Cover',
+    nextStepReview: 'Next Step: Review →',
+    confirmPost: 'Confirm & Post →',
     titleRequired: 'Product title is required',
     titleMin3Chars: 'Title must be at least 3 characters',
     descriptionRequired: 'Description is required',
@@ -413,6 +434,7 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     createFirstListing: 'Create the first listing and it will show up here.',
     errorLoadingSavedPosts: 'Error loading saved posts.',
     failedToDeletePost: 'Failed to delete post.',
+    perDay: '/day',
     edit: 'Edit',
     delete: 'Delete',
     confirmDelete: 'Are you sure you want to delete',
@@ -617,6 +639,16 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     addAtLeastOnePhoto: 'សូមបន្ថែមយ៉ាងហោចណាស់រូបថតមួយ',
     listingDetails: 'ព័ត៌មានបញ្ជី',
     reviewPost: 'ពិនិត្យ និងចុះផ្សាយ',
+    reviewYourListing: 'ពិនិត្យបញ្ជីរបស់អ្នក',
+    postedSuccessfully: 'បានបង្កើតបានជោគជ័យ! បញ្ជីរបស់អ្នកបានផ្សាយហើយ។',
+    contactMe: 'ទំនាក់ទំនងខ្ញុំ',
+    verifiedStudioAddress: 'អាសយដ្ឋានស្ទូឌីយ៉ូលេខត្រឹមត្រូវ',
+    postedJustNow: 'បានចុះផ្សាយថ្មីៗនេះ',
+    uploadPhotos: 'ផ្ទុករូបភាព',
+    uploadPhotosHint: 'បង្ហាញគុណភាពផលិតផលរបស់អ្នកជាមួយរូបភាពដល់ 10 គ្រាប់',
+    cover: 'គម្រប',
+    nextStepReview: 'ជំហានបន្ទាប់៖ ពិនិត្យ →',
+    confirmPost: 'បញ្ជាក់ និង ចុះផ្សាយ →',
     titleRequired: 'ចំណងជើងផលិតផលត្រូវបានទាមទារ',
     titleMin3Chars: 'ចំណងជើងត្រូវមានយ៉ាងហោចណាស់ 3 តួអក្សរ',
     descriptionRequired: 'ការពិពណ៌នាត្រូវបានទាមទារ',
@@ -636,6 +668,7 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     createFirstListing: 'បង្កើតបញ្ជីដំបូង ហើយវានឹងបង្ហាញនៅទីនេះ។',
     errorLoadingSavedPosts: 'មានបញ្ហាក្នុងការផ្ទុកប្រកាសដែលបានរក្សាទុក។',
     failedToDeletePost: 'បរាជ័យក្នុងការលុបទំព័រ។',
+    perDay: '/ថ្ងៃ',
     edit: 'កែប្រែ',
     delete: 'លុប',
     confirmDelete: 'តើអ្នកប្រាកដថាចង់លុប',

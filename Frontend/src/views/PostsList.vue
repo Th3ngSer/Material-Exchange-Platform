@@ -33,16 +33,16 @@ const languageStore = useLanguageStore()
 const hasPosts = computed(() => posts.value.length > 0)
 
 function formatType(type: Post['type']) {
-  return type.charAt(0).toUpperCase() + type.slice(1)
+  return languageStore.t(type)
 }
 
 function formatCondition(condition: Post['condition']) {
-  return condition.charAt(0).toUpperCase() + condition.slice(1)
+  return languageStore.t(condition)
 }
 
 function formatPrice(post: Post) {
   if (post.type === 'exchange') return languageStore.t('openToTrade')
-  const suffix = post.type === 'lend' ? '/day' : ''
+  const suffix = post.type === 'lend' ? languageStore.t('perDay') : ''
   return `$${Number(post.price || 0).toFixed(2)}${suffix}`
 }
 
