@@ -9,7 +9,7 @@ const props = withDefaults(defineProps<{
   modelValue: 'All',
 })
 
-const emit = defineEmits(['update:modelValue'])
+// const emit = defineEmits(['update:modelValue'])
 
 const wrapperRef = ref<HTMLElement | null>(null)
 const showLeft = ref(false)
