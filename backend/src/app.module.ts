@@ -49,4 +49,3 @@ import { AdminDashboardModule } from './admin/admin-dashboard.module';
   providers: [AppService],
 })
 export class AppModule {}
-

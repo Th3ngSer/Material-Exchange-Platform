@@ -32,14 +32,14 @@ export class ChatService {
 
     // emit to receiver if connected via websocket
     try {
-      this.chatGateway.sendToUser(String(receiverId), 'message', msg)
+      this.chatGateway.sendToUser(String(receiverId), 'message', msg);
       // also emit to sender's own room so sender sees the saved message
-      this.chatGateway.sendToUser(String(senderId), 'message', msg)
+      this.chatGateway.sendToUser(String(senderId), 'message', msg);
     } catch (err) {
       // ignore emission errors
     }
 
-    return msg
+    return msg;
   }
 
   // GET CONVERSATION BETWEEN TWO USERS

@@ -8,30 +8,33 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
-    imports: [
-        ConfigModule,
-        UsersModule,
+  imports: [
+    ConfigModule,
+    UsersModule,
 
-        // 🔥 IMPORTANT
-        PassportModule.register({ defaultStrategy: 'jwt' }),
-        
-        JwtModule.registerAsync({
-            imports: [ConfigModule],
-            inject: [ConfigService],
-            useFactory: (configService: ConfigService) => {
-                const expiresIn = configService.get<string>('JWT_EXPIRES_IN', '1d');
+    // 🔥 IMPORTANT
+    PassportModule.register({ defaultStrategy: 'jwt' }),
 
-                return {
-                    secret: configService.get<string>('JWT_SECRET', 'dev_secret_change_me'),
-                    signOptions: {
-                        expiresIn: expiresIn as JwtSignOptions['expiresIn'],
-                    },
-                };
-            },
-        }),
-    ],
-    controllers: [AuthController],
-    providers: [AuthService, JwtStrategy],
-    exports: [AuthService, JwtModule],
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const expiresIn = configService.get<string>('JWT_EXPIRES_IN', '1d');
+
+        return {
+          secret: configService.get<string>(
+            'JWT_SECRET',
+            'dev_secret_change_me',
+          ),
+          signOptions: {
+            expiresIn: expiresIn as JwtSignOptions['expiresIn'],
+          },
+        };
+      },
+    }),
+  ],
+  controllers: [AuthController],
+  providers: [AuthService, JwtStrategy],
+  exports: [AuthService, JwtModule],
 })
-export class AuthModule { }
+export class AuthModule {}

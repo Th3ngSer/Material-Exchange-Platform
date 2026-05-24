@@ -18,10 +18,7 @@ export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Post('send')
-  async sendMessage(
-    @Body() body: SendMessageDto,
-    @Req() req: any,
-  ) {
+  async sendMessage(@Body() body: SendMessageDto, @Req() req: any) {
     const senderId = req.user.id;
 
     return this.chatService.sendMessage(
@@ -33,15 +30,9 @@ export class ChatController {
   }
 
   @Get('history')
-  async getHistory(
-    @Query() query: GetConversationDto,
-    @Req() req: any,
-  ) {
+  async getHistory(@Query() query: GetConversationDto, @Req() req: any) {
     const currentUserId = req.user.id;
 
-    return this.chatService.getHistory(
-      currentUserId,
-      query.userId,
-    );
+    return this.chatService.getHistory(currentUserId, query.userId);
   }
 }
