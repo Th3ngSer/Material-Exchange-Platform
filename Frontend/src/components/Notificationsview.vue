@@ -11,14 +11,27 @@
       <h1 class="page-title">Notifications</h1>
       <p class="page-desc">Manage your exchanges, incoming messages, and borrow requests</p>
 
+      <!-- Loading state -->
+      <div v-if="isLoading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading notifications...</p>
+      </div>
+
+      <!-- Error state -->
+      <div v-else-if="error" class="error-state">
+        <span class="error-icon">⚠️</span>
+        <p>{{ error }}</p>
+        <p class="error-subtext">Using cached data. Please check your connection.</p>
+      </div>
+
       <!-- Empty state -->
-      <div v-if="filteredGroups.length === 0" class="empty-state">
+      <div v-else-if="filteredGroups.length === 0" class="empty-state">
         <span class="empty-icon">🔔</span>
         <p>No notifications in this category</p>
       </div>
 
       <!-- Date groups -->
-      <TransitionGroup name="group-fade" tag="div">
+      <TransitionGroup v-else name="group-fade" tag="div">
         <div
           v-for="group in filteredGroups"
           :key="group.label"
@@ -72,6 +85,8 @@ const {
   filteredGroups,
   markRead,
   dismiss,
+  isLoading,
+  error,
 } = useNotifications()
 
 const selectedNotification = ref<Notification | null>(null)
@@ -169,6 +184,53 @@ function handleModalAction(label: string): void {
   font-size: 14px;
 }
 .empty-icon { font-size: 40px; }
+
+/* Loading state */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 80px 0;
+  color: #8b90a7;
+  font-size: 14px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f0f1ff;
+  border-top: 3px solid #6366f1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error state */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 80px 0;
+  color: #ef4444;
+  font-size: 14px;
+}
+
+.error-icon { 
+  font-size: 40px; 
+}
+
+.error-subtext {
+  color: #8b90a7;
+  font-size: 12px;
+}
 
 /* Notification wrapper */
 .notif-wrapper {

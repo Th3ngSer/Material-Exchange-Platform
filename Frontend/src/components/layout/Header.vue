@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
+
+const goToNotifications = () => {
+  router.push('/notification')
+}
 </script>
 
 <template>
@@ -78,6 +84,7 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
           class="grid h-[34px] w-[34px] place-items-center rounded-full border-0 bg-transparent text-[#201f62] cursor-pointer hover:bg-[#f0f1ff] transition-colors duration-200"
           type="button"
           aria-label="Notifications"
+          @click="goToNotifications"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" class="h-[25px] w-[25px] fill-current">
             <path
