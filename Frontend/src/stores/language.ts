@@ -43,7 +43,21 @@ type TranslationKey =
   | 'itemNotAvailable'
   | 'changedMyMind'
   | 'wrongItemSelected'
+  | 'clothing'
+  | 'electronics'
+  | 'books'
+  | 'furniture'
+  | 'sports'
+  | 'toys'
+  | 'vehicles'
+  | 'homeAndGarden'
+  | 'foodAndDrink'
   | 'other'
+  | 'cityOrNeighbourhood'
+  | 'coverPhoto'
+  | 'posting'
+  | 'editListingAfterPosting'
+  | 'fillRequirementsToContinue'
   | 'troubleshoot'
   | 'troubleshootDescription'
   | 'workWithSupport'
@@ -91,10 +105,25 @@ type TranslationKey =
   | 'contact'
   | 'services'
   | 'buy'
+  | 'buyNow'
   | 'sell'
   | 'exchange'
   | 'lend'
   | 'support'
+  | 'available'
+  | 'contactToExchange'
+  | 'contactToBorrow'
+  | 'photo'
+  | 'photos'
+  | 'specifications'
+  | 'exchangeTarget'
+  | 'relatedListings'
+  | 'moreMaterialsYouMayLike'
+  | 'viewCategory'
+  | 'fastPickupAndExchangeReady'
+  | 'mapUnavailable'
+  | 'usuallyRepliesIn1Hour'
+  | 'marketplaceSeller'
   | 'helpCenter'
   | 'faq'
   | 'guides'
@@ -116,6 +145,7 @@ type TranslationKey =
   | 'password'
   | 'confirmPassword'
   | 'enterYourEmail'
+  | 'emailPlaceholder'
   | 'enterYourPassword'
   | 'confirmYourPassword'
   | 'passwordRequired'
@@ -143,6 +173,18 @@ type TranslationKey =
   | 'noUsersDescription'
   | 'item'
   | 'fillDetailsBelow'
+  | 'updateYourPost'
+  | 'makeChangesBelow'
+  | 'loadingPost'
+  | 'dailyRate'
+  | 'clickToUploadPhotos'
+  | 'replaceOrKeepPhotosHint'
+  | 'reviewYourChanges'
+  | 'reviewUpdatedPost'
+  | 'postUpdatedSuccessfully'
+  | 'lookingFor'
+  | 'updating'
+  | 'updatePost'
   | 'listingType'
   | 'listingInformation'
   | 'productTitle'
@@ -162,6 +204,7 @@ type TranslationKey =
   | 'tellWhatWantExchange'
   | 'phone'
   | 'location'
+  | 'locationPlaceholder'
   | 'addAtLeastContact'
   | 'phoneLooksInvalid'
   | 'emailLooksInvalid'
@@ -204,6 +247,7 @@ type TranslationKey =
   | 'confirmDelete'
   | 'cannotBeUndone'
   | 'openToTrade'
+  | 'openToBorrow'
   | 'wants'
   | 'items'
   | 'users'
@@ -286,6 +330,8 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     contactUs: 'Contact Us',
     successSubmit: 'Thank you for your submit!! We will check as soon as possible.',
     emailAddress: 'Email Address',
+    emailPlaceholder: 'you@gmail.com',
+    locationPlaceholder: 'e.g. Phnom Penh, BKK1',
     howCanWeHelp: 'How can we help you?',
     whatCanWeProvide: 'What can we provide to you?',
     submit: 'Submit',
@@ -379,6 +425,18 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     item: 'item',
     items: 'items',
     fillDetailsBelow: 'Fill in the details below to list your item',
+    updateYourPost: 'Update your post',
+    makeChangesBelow: 'Make changes below',
+    loadingPost: 'Loading post...',
+    dailyRate: 'Daily rate',
+    clickToUploadPhotos: 'Click to upload photos',
+    replaceOrKeepPhotosHint: 'Add new photos to replace or keep existing ones',
+    reviewYourChanges: 'Review your changes',
+    reviewUpdatedPost: 'This is how your updated post will appear',
+    postUpdatedSuccessfully: 'Post updated successfully! Redirecting...',
+    lookingFor: 'Looking for:',
+    updating: 'Updating...',
+    updatePost: 'Update Post',
     listingType: 'Listing type',
     listingInformation: 'Listing Information of Product',
     productTitle: 'Product title',
@@ -396,6 +454,20 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     price: 'Price',
     exchangeFor: 'Exchange for',
     tellWhatWantExchange: 'Tell people what item you want in exchange',
+    clothing: 'Clothing',
+    electronics: 'Electronics',
+    books: 'Books',
+    furniture: 'Furniture',
+    sports: 'Sports',
+    toys: 'Toys',
+    vehicles: 'Vehicles',
+    homeAndGarden: 'Home & Garden',
+    foodAndDrink: 'Food & Drink',
+    cityOrNeighbourhood: 'City or neighbourhood',
+    coverPhoto: 'Cover photo',
+    posting: 'Posting…',
+    editListingAfterPosting: 'You can always edit your listing after posting',
+    fillRequirementsToContinue: 'Fill {count} required fields above to continue',
     phone: 'Phone',
     location: 'Location',
     addAtLeastContact: 'Please add at least a phone number or email',
@@ -439,7 +511,23 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     delete: 'Delete',
     confirmDelete: 'Are you sure you want to delete',
     cannotBeUndone: 'This cannot be undone.',
-    openToTrade: 'Open to trade',
+    openToTrade: 'បើកចំហដើម្បីផ្លាស់ប្តូរ',
+    openToBorrow: 'បើកចំហដើម្បីខ្ចី',
+    available: 'មានស្រាប់',
+    buyNow: 'ទិញឥឡូវនេះ',
+    contactToExchange: 'ទំនាក់ទំនងដើម្បីផ្លាស់ប្តូរ',
+    contactToBorrow: 'ទំនាក់ទំនងដើម្បីខ្ចី',
+    photo: 'រូបថត',
+    photos: 'រូបថត',
+    specifications: 'លក្ខណៈពិសេស',
+    exchangeTarget: 'គោលដៅផ្លាស់ប្តូរ',
+    relatedListings: 'បញ្ជីទំនិញទាក់ទង',
+    moreMaterialsYouMayLike: 'ទំនិញបន្ថែមដែលអ្នកអាចចូលចិត្ត',
+    viewCategory: 'មើលប្រភេទ',
+    fastPickupAndExchangeReady: 'ទទួលបានយ៉ាងឆាប់រហ័ស និងរួចរាល់សម្រាប់ការផ្លាស់ប្តូរ',
+    mapUnavailable: 'ផែនទីមិនអាចប្រើបានសម្រាប់បញ្ជីនេះ',
+    usuallyRepliesIn1Hour: 'ធម្មតាឆ្លើយតបក្នុង 1 ម៉ោង',
+    marketplaceSeller: 'អ្នកលក់ទីផ្សារ',
     wants: 'Wants:',
     users: 'Users',
     openFilters: 'Open filters',
@@ -520,6 +608,8 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     contactUs: 'ទំនាក់ទំនងយើងខ្ញុំ',
     successSubmit: 'សូមអរគុណសម្រាប់ការដាក់ស្នើ! យើងនឹងពិនិត្យឆាប់ៗនេះ។',
     emailAddress: 'អាសយដ្ឋានអ៊ីមែល',
+    emailPlaceholder: 'ឧ. user@example.com',
+    locationPlaceholder: 'ឧ. ភ្នំពេញ, BKK1',
     howCanWeHelp: 'តើយើងអាចជួយអ្នកដូចម្តេច?',
     whatCanWeProvide: 'តើយើងអាចផ្តល់អ្វីឲ្យអ្នកបាន?',
     submit: 'ដាក់ស្នើ',
@@ -613,6 +703,18 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     item: 'ទំនិញ',
     items: 'ទំនិញ',
     fillDetailsBelow: 'បំពេញព័ត៌មានខាងក្រោមដើម្បីចុះបញ្ជីទំនិញរបស់អ្នក',
+    updateYourPost: 'ធ្វើបច្ចុប្បន្នភាពផ្សាយពាណិជ្ជកម្មរបស់អ្នក',
+    makeChangesBelow: 'ធ្វើការផ្លាស់ប្តូរខាងក្រោម',
+    loadingPost: 'កំពុងផ្ទុកប្រកាស...',
+    dailyRate: 'អត្រាថ្ងៃ',
+    clickToUploadPhotos: 'ចុចដើម្បីផ្ទុករូបថត',
+    replaceOrKeepPhotosHint: 'បន្ថែមរូបភាពថ្មីដើម្បីប្ដូរឬរក្សារូបភាពមានស្រាប់',
+    reviewYourChanges: 'ពិនិត្យការផ្លាស់ប្តូររបស់អ្នក',
+    reviewUpdatedPost: 'នេះគឺជារបៀបដែលប្រកាសរបស់អ្នកនឹងបង្ហាញ',
+    postUpdatedSuccessfully: 'បានធ្វើបច្ចុប្បន្នភាពប្រកាសដោយជោគជ័យ! កំពុងផ្ដល់ការបញ្ជូន...',
+    lookingFor: 'កំពុងស្វែងរក:',
+    updating: 'កំពុងធ្វើបច្ចុប្បន្នភាព...',
+    updatePost: 'ធ្វើបច្ចុប្បន្នភាពប្រកាស',
     listingType: 'ប្រភេទបញ្ជី',
     listingInformation: 'ព័ត៌មានបញ្ជីនៃផលិតផល',
     productTitle: 'ចំណងជើងផលិតផល',
@@ -630,6 +732,20 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     price: 'តម្លៃ',
     exchangeFor: 'ផ្លាស់ប្តូរសម្រាប់',
     tellWhatWantExchange: 'ប្រាប់មនុស្សអំពីទំនិញដែលអ្នកចង់ផ្លាស់ប្តូរ',
+    clothing: 'សម្លៀកបំពាក់',
+    electronics: 'ឧបករណ៍អេឡិចត្រូនិច',
+    books: 'សៀវភៅ',
+    furniture: 'គ្រឿងសង្ហារឹម',
+    sports: 'កីឡា',
+    toys: 'ប្រដាប់ក្មេងប្រុស',
+    vehicles: 'យានយន្ត',
+    homeAndGarden: 'ផ្ទះ និងសួនច្បារ',
+    foodAndDrink: 'អាហារ និងភេសជ្ជៈ',
+    cityOrNeighbourhood: 'ទីក្រុង ឬ សង្កាត់',
+    coverPhoto: 'រូបភាពគម្រប',
+    posting: 'កំពុងផ្ទុក...',
+    editListingAfterPosting: 'អ្នកអាចកែប្រែបញ្ជីរបស់អ្នកបន្ទាប់ពីចុះផ្សាយបានណាត់',
+    fillRequirementsToContinue: 'បំពេញ {count} ទាមទារដើម្បីបន្ត',
     phone: 'ទូរស័ព្ទ',
     location: 'ទីតាំង',
     addAtLeastContact: 'សូមបន្ថែមយ៉ាងហោចណាស់លេខទូរស័ព្ទ ឬអ៊ីមែល',

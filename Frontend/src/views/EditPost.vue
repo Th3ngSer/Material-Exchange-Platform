@@ -2,6 +2,7 @@
 import { reactive, ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 import { useRouter, useRoute } from 'vue-router'
+import { useLanguageStore } from '@/stores/language'
 
 type ListingType = 'Sell' | 'Exchange' | 'Lend'
 type Condition = 'New' | 'Used'
@@ -35,6 +36,7 @@ interface FormErrors {
 const router = useRouter()
 const route = useRoute()
 const postId = route.params.id as string
+const languageStore = useLanguageStore()
 
 const step = ref<1 | 2>(1)
 const isLoading = ref(false)
@@ -63,6 +65,31 @@ const form = reactive<FormState>({
 const errors = reactive<FormErrors>({})
 const previewUrls = ref<string[]>([])
 
+const categoryOptions = [
+  { value: 'Clothing', labelKey: 'clothing' },
+  { value: 'Electronics', labelKey: 'electronics' },
+  { value: 'Books', labelKey: 'books' },
+  { value: 'Furniture', labelKey: 'furniture' },
+  { value: 'Sports', labelKey: 'sports' },
+  { value: 'Toys', labelKey: 'toys' },
+  { value: 'Vehicles', labelKey: 'vehicles' },
+  { value: 'Home & Garden', labelKey: 'homeAndGarden' },
+  { value: 'Food & Drink', labelKey: 'foodAndDrink' },
+  { value: 'Other', labelKey: 'other' },
+]
+
+const translateKey = (key: string) => languageStore.t(key as any)
+const listingTypeLabel = (type: string) => translateKey(type.toLowerCase())
+const conditionLabel = (condition: string) => translateKey(condition.toLowerCase())
+
+function setListingType(value: string) {
+  form.type = value as ListingType
+}
+
+function setCondition(value: string) {
+  form.condition = value as Condition
+}
+
 // ─── Computed ─────────────────────────────────────────────────────────────────
 const activeImage = computed(() => {
   if (activeThumb.value < existingImages.value.length) {
@@ -70,6 +97,11 @@ const activeImage = computed(() => {
   }
   const offset = activeThumb.value - existingImages.value.length
   return previewUrls.value[offset] ?? ''
+})
+
+const displayCategory = computed(() => {
+  const match = categoryOptions.find((option) => option.value === form.category)
+  return match ? translateKey(match.labelKey) : form.category
 })
 
 const allImages = computed(() => [
@@ -82,8 +114,10 @@ const errorCount = computed(() => Object.keys(errors).length)
 const displayPrice = computed(() => {
   if (form.type === 'Sell') return form.price ? `$${parseFloat(form.price).toFixed(2)}` : '$0.00'
   if (form.type === 'Lend')
-    return form.price ? `$${parseFloat(form.price).toFixed(2)}/day` : '$0.00/day'
-  if (form.type === 'Exchange') return 'Open to trade'
+    return form.price
+      ? `$${parseFloat(form.price).toFixed(2)}${languageStore.t('perDay')}`
+      : `$0.00${languageStore.t('perDay')}`
+  if (form.type === 'Exchange') return languageStore.t('openToTrade')
   return ''
 })
 
@@ -108,38 +142,39 @@ function clearError(field: keyof FormErrors) {
 function validate(): boolean {
   ;(Object.keys(errors) as (keyof FormErrors)[]).forEach((k) => delete errors[k])
 
-  if (!form.title.trim()) errors.title = 'Product title is required'
-  else if (form.title.trim().length < 3) errors.title = 'Title must be at least 3 characters'
+  if (!form.title.trim()) errors.title = languageStore.t('titleRequired')
+  else if (form.title.trim().length < 3) errors.title = languageStore.t('titleMin3Chars')
 
-  if (!form.description.trim()) errors.description = 'Description is required'
+  if (!form.description.trim()) errors.description = languageStore.t('descriptionRequired')
   else if (form.description.trim().length < 10)
-    errors.description = 'Description must be at least 10 characters'
+    errors.description = languageStore.t('descriptionMin10Chars')
 
-  if (!form.category.trim()) errors.category = 'Category is required'
+  if (!form.category.trim()) errors.category = languageStore.t('categoryRequired')
 
   if (form.type !== 'Exchange') {
-    if (!form.price) errors.price = `Price is required for ${form.type}`
+    if (!form.price)
+      errors.price = `${languageStore.t('priceRequiredFor')} ${listingTypeLabel(form.type)}`
     else if (isNaN(Number(form.price)) || Number(form.price) < 0)
-      errors.price = 'Please enter a valid price'
+      errors.price = languageStore.t('enterValidPrice')
   } else if (!form.exchangeFor.trim()) {
-    errors.exchangeFor = 'Tell people what item you want in exchange'
+    errors.exchangeFor = languageStore.t('exchangeForRequired')
   }
 
   const hasPhone = form.phone.trim().length > 0
   const hasEmail = form.email.trim().length > 0
   if (!hasPhone && !hasEmail) {
-    errors.contact = 'Please add at least a phone number or email'
+    errors.contact = languageStore.t('addAtLeastContact')
   } else {
     if (hasPhone && !/^\+?[\d\s\-()\s]{7,}$/.test(form.phone.trim()))
-      errors.contact = 'Phone number looks invalid'
+      errors.contact = languageStore.t('phoneLooksInvalid')
     if (hasEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
-      errors.contact = 'Email address looks invalid'
+      errors.contact = languageStore.t('emailLooksInvalid')
   }
 
-  if (!form.location.trim()) errors.location = 'Location is required'
+  if (!form.location.trim()) errors.location = languageStore.t('locationRequired')
 
   const totalImages = existingImages.value.length + form.images.length
-  if (totalImages === 0) errors.images = 'Please keep at least one photo or add new ones'
+  if (totalImages === 0) errors.images = languageStore.t('addAtLeastOnePhoto')
 
   return Object.keys(errors).length === 0
 }
@@ -277,7 +312,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="min-h-screen bg-[#F7FDFE] px-4 py-10">
     <div v-if="isLoadingPost" class="max-w-2xl mx-auto text-center">
-      <p class="text-slate-600">Loading post...</p>
+      <p class="text-slate-600">{{ languageStore.t('loadingPost') }}</p>
     </div>
 
     <div v-else-if="submitError && !submitted" class="max-w-2xl mx-auto mb-8">
@@ -291,20 +326,20 @@ onBeforeUnmount(() => {
     <!-- ══════════════════════════════════════════════════ -->
     <div v-if="step === 1 && !isLoadingPost" class="max-w-2xl mx-auto space-y-5">
       <div class="mb-8">
-        <h1 class="text-2xl font-bold text-black-900">Update your post</h1>
-        <p class="text-black-800 text-sm mt-1">Make changes below</p>
+        <h1 class="text-2xl font-bold text-black-900">{{ languageStore.t('updateYourPost') }}</h1>
+        <p class="text-black-800 text-sm mt-1">{{ languageStore.t('makeChangesBelow') }}</p>
       </div>
 
       <!-- Listing type -->
       <div
         class="bg-white rounded-2xl shadow-lg shadow-black/30 border border-gray-100 p-6 space-y-5"
       >
-        <p class="text-xl font-bold text-Black-900 mb-3">Listing type</p>
+        <p class="text-xl font-bold text-Black-900 mb-3">{{ languageStore.t('listingType') }}</p>
         <div class="grid grid-cols-3 gap-3">
           <button
-            v-for="t in ['Sell', 'Exchange', 'Lend'] as const"
+            v-for="t in ['Sell', 'Exchange', 'Lend']"
             :key="t"
-            @click="form.type = t"
+            @click="setListingType(t)"
             class="flex flex-col items-center gap-1 py-3 rounded-xl border text-sm font-medium transition-all space"
             :class="
               form.type === t
@@ -312,19 +347,19 @@ onBeforeUnmount(() => {
                 : 'bg-gray-50 text-gray-600 border-[#666565] hover:bg-gray-100'
             "
           >
-            <span>{{ t }}</span>
+            <span>{{ listingTypeLabel(t) }}</span>
           </button>
         </div>
 
-        <p class="text-xl font-bold text-Black-900">Listing Information of Product</p>
+        <p class="text-xl font-bold text-Black-900">{{ languageStore.t('listingInformation') }}</p>
 
         <div id="field-title">
           <label class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5">
-            Product title <span class="text-red-400">*</span>
+            {{ languageStore.t('productTitle') }} <span class="text-red-400">*</span>
           </label>
           <input
             v-model="form.title"
-            placeholder="What is your product title?"
+            :placeholder="languageStore.t('whatIsProductTitle')"
             class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition"
             :class="
               errors.title
@@ -338,11 +373,11 @@ onBeforeUnmount(() => {
 
         <div id="field-description">
           <label class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5">
-            Description <span class="text-red-400">*</span>
+            {{ languageStore.t('description') }} <span class="text-red-400">*</span>
           </label>
           <textarea
             v-model="form.description"
-            placeholder="Add details to your product…"
+            :placeholder="languageStore.t('addDetailsToProduct')"
             rows="4"
             class="w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition resize-none"
             :class="
@@ -362,7 +397,7 @@ onBeforeUnmount(() => {
             <label
               class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5"
             >
-              Category <span class="text-red-400">*</span>
+              {{ languageStore.t('category') }} <span class="text-red-400">*</span>
             </label>
             <div class="relative">
               <select
@@ -375,23 +410,13 @@ onBeforeUnmount(() => {
                 "
                 @change="clearError('category')"
               >
-                <option value="">Select…</option>
+                <option value="">{{ languageStore.t('select') }}</option>
                 <option
-                  v-for="c in [
-                    'Clothing',
-                    'Electronics',
-                    'Books',
-                    'Furniture',
-                    'Sports',
-                    'Toys',
-                    'Vehicles',
-                    'Home & Garden',
-                    'Food & Drink',
-                    'Other',
-                  ]"
-                  :key="c"
+                  v-for="option in categoryOptions"
+                  :key="option.value"
+                  :value="option.value"
                 >
-                  {{ c }}
+                  {{ translateKey(option.labelKey) }}
                 </option>
               </select>
               <span
@@ -406,13 +431,13 @@ onBeforeUnmount(() => {
 
           <div>
             <label class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5"
-              >Condition</label
+              >{{ languageStore.t('condition') }}</label
             >
             <div class="flex border border-[#666565] rounded-xl overflow-hidden">
               <button
-                v-for="c in ['New', 'Used'] as const"
+                v-for="c in ['New', 'Used']"
                 :key="c"
-                @click="form.condition = c"
+                @click="setCondition(c)"
                 class="flex-1 py-2.5 text-sm font-medium transition"
                 :class="
                   form.condition === c
@@ -428,7 +453,7 @@ onBeforeUnmount(() => {
 
         <div v-if="form.type !== 'Exchange'" id="field-price">
           <label class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5">
-            {{ form.type === 'Lend' ? 'Daily rate' : 'Price' }} <span class="text-red-400">*</span>
+            {{ form.type === 'Lend' ? languageStore.t('dailyRate') : languageStore.t('price') }} <span class="text-red-400">*</span>
           </label>
           <div class="relative">
             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm"
@@ -454,11 +479,11 @@ onBeforeUnmount(() => {
 
         <div v-if="form.type === 'Exchange'">
           <label class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5"
-            >What do you want in return? <span class="text-red-400">*</span></label
+            >{{ languageStore.t('exchangeFor') }} <span class="text-red-400">*</span></label
           >
           <input
             v-model="form.exchangeFor"
-            placeholder="e.g. iPhone 13, road bike…"
+            :placeholder="languageStore.t('tellWhatWantExchange')"
             class="w-full border border-[#666565] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50 transition"
             :class="
               errors.exchangeFor
@@ -475,13 +500,13 @@ onBeforeUnmount(() => {
 
       <!-- Contact -->
       <p class="tblock text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5">
-        Contact info
+        {{ languageStore.t('contact') }}
       </p>
-      <p class="text-xs text-gray-400 mb-4">At least one contact method is required</p>
+      <p class="text-xs text-gray-400 mb-4">{{ languageStore.t('addAtLeastContact') }}</p>
       <div id="field-contact" class="grid grid-cols-2 gap-4">
         <div>
           <label class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5"
-            >Phone</label
+            >{{ languageStore.t('phone') }}</label
           >
           <div class="relative">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm">📞</span>
@@ -501,14 +526,14 @@ onBeforeUnmount(() => {
         </div>
         <div>
           <label class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5"
-            >Email</label
+            >{{ languageStore.t('email') }}</label
           >
           <div class="relative">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm">✉</span>
             <input
               v-model="form.email"
               type="email"
-              placeholder="you@gmail.com"
+              :placeholder="languageStore.t('emailPlaceholder')"
               class="w-full border rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none transition"
               :class="
                 errors.contact
@@ -524,10 +549,10 @@ onBeforeUnmount(() => {
 
       <!-- Photos -->
       <p class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5">
-        Photos
+        {{ languageStore.t('uploadPhotos') }}
       </p>
       <p class="text-xs text-gray-400 mb-4" id="field-images">
-        Up to 10 photos. First photo is the cover. JPG/PNG/WEBP, max 5MB each.
+        {{ languageStore.t('uploadPhotosHint') }}
       </p>
 
       <div
@@ -540,8 +565,8 @@ onBeforeUnmount(() => {
         @click="fileInputRef?.click()"
       >
         <div class="text-4xl mb-2">📷</div>
-        <p class="text-sm text-gray-500 font-medium">Click to upload photos</p>
-        <p class="text-xs text-gray-400 mt-1">Add new photos to replace or keep existing ones</p>
+        <p class="text-sm text-gray-500 font-medium">{{ languageStore.t('clickToUploadPhotos') }}</p>
+        <p class="text-xs text-gray-400 mt-1">{{ languageStore.t('replaceOrKeepPhotosHint') }}</p>
       </div>
       <input
         ref="fileInputRef"
@@ -559,7 +584,7 @@ onBeforeUnmount(() => {
             v-if="i === 0"
             class="absolute top-1 left-1 bg-indigo-600 text-white text-xs px-1.5 py-0.5 rounded-lg font-medium"
           >
-            Cover
+            {{ languageStore.t('coverPhoto') }}
           </div>
           <button
             v-if="i >= existingImages.length"
@@ -581,17 +606,17 @@ onBeforeUnmount(() => {
 
       <!-- Location -->
       <p class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5">
-        Location
+        {{ languageStore.t('location') }}
       </p>
       <div id="field-location">
         <label class="block text-xs text-gray-400 tracking-wide mb-1.5">
-          City or neighbourhood <span class="text-red-400">*</span>
+          {{ languageStore.t('cityOrNeighbourhood') }} <span class="text-red-400">*</span>
         </label>
         <div class="relative">
           <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm">📍</span>
           <input
             v-model="form.location"
-            placeholder="e.g. Phnom Penh, BKK1"
+            :placeholder="languageStore.t('locationPlaceholder')"
             class="w-full border rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none transition"
             :class="
               errors.location
@@ -610,10 +635,10 @@ onBeforeUnmount(() => {
           @click="goToPreview"
           class="w-full py-4 bg-[#FF8C00] hover:bg-orange-600 active:scale-[.99] text-white font-semibold rounded-2xl text-sm transition-all shadow-sm"
         >
-          Next Step: Review →
+          {{ languageStore.t('nextStepReview') }}
         </button>
         <p v-if="errorCount > 0" class="text-center text-red-500 text-xs mt-2">
-          Fill {{ errorCount }} requirement{{ errorCount > 1 ? 's' : '' }} above to continue
+          {{ languageStore.t('fillRequirementsToContinue').replace('{count}', String(errorCount)) }}
         </p>
       </div>
     </div>
@@ -624,11 +649,11 @@ onBeforeUnmount(() => {
     <div v-if="step === 2 && !isLoadingPost" class="max-w-sm mx-auto">
       <div class="mb-5 flex items-center justify-between">
         <div>
-          <h2 class="text-lg font-bold text-black-900">Review your changes</h2>
-          <p class="text-xs text-gray-400 mt-0.5">This is how your updated post will appear</p>
+          <h2 class="text-lg font-bold text-black-900">{{ languageStore.t('reviewYourChanges') }}</h2>
+          <p class="text-xs text-gray-400 mt-0.5">{{ languageStore.t('reviewUpdatedPost') }}</p>
         </div>
         <button @click="goBack" class="text-sm text-indigo-600 font-medium hover:underline">
-          ← Edit
+          ← {{ languageStore.t('edit') }}
         </button>
       </div>
 
@@ -636,7 +661,7 @@ onBeforeUnmount(() => {
         v-if="submitted"
         class="mb-4 bg-green-50 border border-green-200 text-green-700 rounded-2xl px-5 py-4 text-sm font-medium text-center"
       >
-        🎉 Post updated successfully! Redirecting...
+        🎉 {{ languageStore.t('postUpdatedSuccessfully') }}
       </div>
       <div
         v-if="submitError"
@@ -684,7 +709,7 @@ onBeforeUnmount(() => {
           <span
             class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-gray-700 text-xs font-semibold px-3 py-1 rounded-full shadow-sm"
           >
-            {{ form.category }}
+            {{ displayCategory }}
           </span>
         </div>
 
@@ -697,10 +722,10 @@ onBeforeUnmount(() => {
 
           <div class="flex gap-2 flex-wrap">
             <span :class="typeBadgeClass" class="px-3 py-1 rounded-full text-xs font-semibold">
-              {{ form.type }}
+              {{ listingTypeLabel(form.type) }}
             </span>
             <span :class="conditionBadgeClass" class="px-3 py-1 rounded-full text-xs font-semibold">
-              {{ form.condition }}
+              {{ conditionLabel(form.condition) }}
             </span>
           </div>
 
@@ -709,7 +734,7 @@ onBeforeUnmount(() => {
           <div class="border-t pt-4">
             <p class="text-2xl font-bold text-emerald-600">{{ displayPrice }}</p>
             <p v-if="form.exchangeFor" class="text-sm text-indigo-600 mt-1">
-              Looking for: {{ form.exchangeFor }}
+              {{ languageStore.t('lookingFor') }} {{ form.exchangeFor }}
             </p>
           </div>
 
@@ -720,14 +745,14 @@ onBeforeUnmount(() => {
               @click="submit"
               class="flex-1 py-3 bg-[#FF8C00] hover:bg-orange-600 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition"
             >
-              {{ isLoading ? 'Updating...' : 'Update Post' }}
+              {{ isLoading ? languageStore.t('updating') : languageStore.t('updatePost') }}
             </button>
             <button
               type="button"
               @click="goBack"
               class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition"
             >
-              Back
+              {{ languageStore.t('back') }}
             </button>
           </div>
         </div>
