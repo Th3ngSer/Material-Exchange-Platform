@@ -55,7 +55,8 @@ export class PostsService {
       }
 
       const owner = await this.usersService.findById(ownerId);
-      const listerName = owner?.username || owner?.name || owner?.email || 'Unknown';
+      const listerName =
+        owner?.username || owner?.name || owner?.email || 'Unknown';
       const listerAvatar = owner?.avatar || undefined;
 
       const images = files.map((f) => f.filename);
@@ -197,8 +198,13 @@ export class PostsService {
       }
 
       const newImages = files.map((f) => f.filename);
-      const keepImages = this.parseRetainedImages(dto.retainImages, post.images);
-      const removedImages = post.images.filter((image) => !keepImages.includes(image));
+      const keepImages = this.parseRetainedImages(
+        dto.retainImages,
+        post.images,
+      );
+      const removedImages = post.images.filter(
+        (image) => !keepImages.includes(image),
+      );
 
       if (removedImages.length > 0) {
         this.logger.log(
@@ -235,20 +241,26 @@ export class PostsService {
     }
   }
 
-  private parseRetainedImages(retainImages: string | undefined, fallback: string[]): string[] {
+  private parseRetainedImages(
+    retainImages: string | undefined,
+    fallback: string[],
+  ): string[] {
     if (retainImages === undefined) {
-      return fallback
+      return fallback;
     }
 
     try {
-      const parsed = JSON.parse(retainImages)
+      const parsed = JSON.parse(retainImages);
       if (!Array.isArray(parsed)) {
-        return []
+        return [];
       }
 
-      return parsed.filter((image): image is string => typeof image === 'string' && image.trim().length > 0)
+      return parsed.filter(
+        (image): image is string =>
+          typeof image === 'string' && image.trim().length > 0,
+      );
     } catch {
-      return []
+      return [];
     }
   }
 
@@ -281,7 +293,10 @@ export class PostsService {
     }
   }
 
-  async removeOwned(id: string, ownerId?: string): Promise<{ message: string }> {
+  async removeOwned(
+    id: string,
+    ownerId?: string,
+  ): Promise<{ message: string }> {
     try {
       this.assertValidId(id);
       if (ownerId) {
