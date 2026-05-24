@@ -8,9 +8,9 @@ import Logo from '@/assets/images/Logo.png'
 
 const languageStore = useLanguageStore()
 
+const router = useRouter()
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-const router = useRouter()
 
 type HeaderSearchType = 'All' | 'Sell' | 'Exchange' | 'Borrow'
 
@@ -154,6 +154,7 @@ async function submitHeaderSearch() {
               : 'bg-transparent text-[#201f62] hover:bg-[#f0f1ff]'
           ]"
           aria-label="Notifications"
+          @click="goToNotifications"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" class="h-[25px] w-[25px] fill-current">
             <path

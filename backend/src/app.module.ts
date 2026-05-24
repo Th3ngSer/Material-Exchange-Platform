@@ -19,6 +19,9 @@ import { ReportsModule } from './reports/reports.module';
       isGlobal: true,
     }),
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 2f8f04c44fa119f9ff2edba5efad48e9b12ffdaa
 
     // MongoDB connection
     MongooseModule.forRootAsync({
@@ -51,9 +54,12 @@ import { ReportsModule } from './reports/reports.module';
     AdminDashboardModule,
     TransactionsModule,
     ReportsModule,
+<<<<<<< HEAD
 =======
     ...databaseImports,
 >>>>>>> SRENG_Panha
+=======
+>>>>>>> 2f8f04c44fa119f9ff2edba5efad48e9b12ffdaa
   ],
   controllers: [AppController],
   providers: [AppService],

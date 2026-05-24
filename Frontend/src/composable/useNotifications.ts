@@ -1,8 +1,11 @@
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import type { DateGroup, SidebarItem, SidebarKey, Notification } from '../types/notification'
+import { notificationService } from '../services/notification'
 
 export function useNotifications() {
   const activeTab = ref<SidebarKey>('all')
+  const isLoading = ref(false)
+  const error = ref<string | null>(null)
 
   const sidebarItems: SidebarItem[] = [
     { key: 'all',       label: 'All Notification', icon: '🔔', count: 4 },
@@ -13,7 +16,8 @@ export function useNotifications() {
     { key: 'following', label: 'Following',         icon: '👥' },
   ]
 
-  const allGroups: DateGroup[] = [
+  // Mock data as fallback
+  const mockNotifications: DateGroup[] = [
     {
       label: 'Today',
       items: [
@@ -72,6 +76,8 @@ export function useNotifications() {
     },
   ]
 
+  const allGroups = ref<DateGroup[]>(mockNotifications)
+
   const typeMap: Record<SidebarKey, string> = {
     all:       '',
     borrow:    'borrow',
@@ -83,29 +89,63 @@ export function useNotifications() {
 
   const filteredGroups = computed<DateGroup[]>(() => {
     const filter = typeMap[activeTab.value]
-    if (!filter) return allGroups
-    return allGroups
+    if (!filter) return allGroups.value
+    return allGroups.value
       .map(g => ({ ...g, items: g.items.filter(n => n.type === filter) }))
       .filter(g => g.items.length > 0)
   })
 
   const unreadCount = computed<number>(() =>
-    allGroups.flatMap(g => g.items).filter(n => n.unread).length
+    allGroups.value.flatMap(g => g.items).filter(n => n.unread).length
   )
 
+  // Fetch notifications from API
+  const fetchNotifications = async () => {
+    isLoading.value = true
+    error.value = null
+    try {
+      const response = await notificationService.getAll()
+      // Transform API response to the expected format
+      if (Array.isArray(response)) {
+        allGroups.value = response as DateGroup[]
+      } else if (response.data) {
+        allGroups.value = response.data
+      }
+    } catch (err) {
+      console.warn('Failed to fetch notifications from API, using mock data:', err)
+      // Fall back to mock data if API fails
+      allGroups.value = mockNotifications
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   function markRead(id: number): void {
-    allGroups.forEach(g => {
+    allGroups.value.forEach(g => {
       const item = g.items.find(n => n.id === id)
       if (item) item.unread = false
     })
+    // Also mark as read in backend
+    notificationService.markAsRead(id).catch(err => 
+      console.warn('Failed to mark notification as read:', err)
+    )
   }
 
   function dismiss(id: number): void {
-    allGroups.forEach(g => {
+    allGroups.value.forEach(g => {
       const idx = g.items.findIndex(n => n.id === id)
       if (idx !== -1) g.items.splice(idx, 1)
     })
+    // Also delete from backend
+    notificationService.delete(id).catch(err => 
+      console.warn('Failed to delete notification:', err)
+    )
   }
 
-  return { activeTab, sidebarItems, filteredGroups, unreadCount, markRead, dismiss }
+  // Load notifications on mount
+  onMounted(() => {
+    fetchNotifications()
+  })
+
+  return { activeTab, sidebarItems, filteredGroups, unreadCount, markRead, dismiss, isLoading, error, fetchNotifications }
 }

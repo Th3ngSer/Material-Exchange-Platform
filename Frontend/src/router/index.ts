@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 2f8f04c44fa119f9ff2edba5efad48e9b12ffdaa
 import { createRouter, createWebHistory } from 'vue-router'
 //  Admin Dashboard
 import AdminActivity from '../views/AdminActivity.vue'
@@ -29,8 +32,10 @@ import HelpProfile from '../user/HelpProfile.vue'
 import LangaugeInformation from '../user/LangaugeInformation.vue'
 import LogoutInformation from '@/user/LogoutInformation.vue'
 import PaymentInformation from '@/user/PaymentInformation.vue'
+import Notification from '@/components/Notificationsview.vue'
 import TrackingInformation from '@/user/TrackingInformation.vue'
 import { useAuthStore } from '@/stores/auth'
+<<<<<<< HEAD
 =======
 import { createRouter, createWebHistory } from "vue-router"
 import Chat from "../views/Chat.vue"
@@ -45,6 +50,8 @@ import Tracker from '@/userprofileVue/TrackingInformation.vue'
 import Notification from '@/components/Notificationsview.vue'
 import Report from '@/views/ReportView.vue'
 >>>>>>> SRENG_Panha
+=======
+>>>>>>> 2f8f04c44fa119f9ff2edba5efad48e9b12ffdaa
 
 
 const router = createRouter({
@@ -54,10 +61,14 @@ const router = createRouter({
     return { left: 0, top: 0 }
   },
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 2f8f04c44fa119f9ff2edba5efad48e9b12ffdaa
   routes: [
     { path: '/', redirect: '/home' },
     { path: '/home', name: 'home', component: HomeView },
     { path: '/browse', name: 'browse', component: BrowseView },
+    { path: '/notifications', name: 'Notification', component: Notification },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/signup', name: 'signup', component: SignUpView },
 
@@ -111,6 +122,7 @@ router.beforeEach((to) => {
   if (!to.matched.some((record) => record.meta?.requiresAdmin)) {
     return true
   }
+<<<<<<< HEAD
 =======
   {
     path: '/language',
@@ -138,6 +150,8 @@ router.beforeEach((to) => {
     name : 'Report',
     component: Report  }
 >>>>>>> SRENG_Panha
+=======
+>>>>>>> 2f8f04c44fa119f9ff2edba5efad48e9b12ffdaa
 
   const authStore = useAuthStore()
   const token = sessionStorage.getItem('authToken')
