@@ -34,7 +34,7 @@ defineEmits<{
 
 <template>
   <div
-    class="mb-6 flex items-end justify-between gap-4 max-[720px]:flex-col max-[720px]:items-start"
+    class="home-categories mb-6 flex items-end justify-between gap-4 max-[720px]:flex-col max-[720px]:items-start"
   >
     <div class="flex-1">
       <p
@@ -78,3 +78,9 @@ defineEmits<{
     </button>
   </div>
 </template>
+
+<style scoped>
+.home-categories {
+  font-family: "Khmer OS Siemreap", "Khmer", serif;
+}
+</style>

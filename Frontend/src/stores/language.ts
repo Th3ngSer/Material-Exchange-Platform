@@ -131,6 +131,10 @@ type TranslationKey =
   | 'loginHere'
   | 'loginRequired'
   | 'loginPromptMessage'
+  | 'back'
+  | 'loginInto'
+  | 'brandTagline'
+  | 'brandPill'
   | 'letsReleaseProduct'
   | 'search'
   | 'viewProfile'
@@ -182,6 +186,8 @@ type TranslationKey =
   | 'loadingPosts'
   | 'noSavedPostsYet'
   | 'createFirstListing'
+  | 'errorLoadingSavedPosts'
+  | 'failedToDeletePost'
   | 'edit'
   | 'delete'
   | 'confirmDelete'
@@ -349,6 +355,10 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     loginHere: 'Login here',
     loginRequired: 'Login required',
     loginPromptMessage: 'You need to be logged in to use chat. Would you like to login now?',
+    back: 'Back',
+    loginInto: 'Login into',
+    brandTagline: 'An exchange online platform for sharing, selling, and borrowing everything.',
+    brandPill: 'Trade. Exchange. Borrow.',
     letsReleaseProduct: "Let's release your new product",
     search: 'Search',
     viewProfile: 'View Profile',
@@ -401,6 +411,8 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     loadingPosts: 'Loading posts...',
     noSavedPostsYet: 'No saved posts yet',
     createFirstListing: 'Create the first listing and it will show up here.',
+    errorLoadingSavedPosts: 'Error loading saved posts.',
+    failedToDeletePost: 'Failed to delete post.',
     edit: 'Edit',
     delete: 'Delete',
     confirmDelete: 'Are you sure you want to delete',
@@ -566,6 +578,10 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     loginHere: 'ចូលនៅទីនេះ',
     loginRequired: 'តម្រូវការចូលគណនី',
     loginPromptMessage: 'អ្នកត្រូវតែចូលគណនីដើម្បីប្រើការជជែក។ តើអ្នកចង់ចូលឥឡូវនេះទេ?',
+    back: 'ត្រឡប់ក្រោយ',
+    loginInto: 'ចូលទៅក្នុង',
+    brandTagline: 'វេទិកាអនឡាញសម្រាប់ការផ្លាស់ប្តូរ ចែករំលែក និង ខ្ចីទំនិញគ្រប់ប្រភេទ។',
+    brandPill: 'ពាណិជ្ជកម្ម, ផ្លាស់ប្តូរ, ខ្ចី',
     letsReleaseProduct: 'តោះចេញផលិតផលថ្មីរបស់អ្នក',
     search: 'ស្វែងរក',
     viewProfile: 'មើលប្រវត្តិរូប',
@@ -618,6 +634,8 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     loadingPosts: 'កំពុងផ្ទុកប្រកាស...',
     noSavedPostsYet: 'មិនទាន់មានប្រកាសដែលបានរក្សាទុកនៅឡើយទេ',
     createFirstListing: 'បង្កើតបញ្ជីដំបូង ហើយវានឹងបង្ហាញនៅទីនេះ។',
+    errorLoadingSavedPosts: 'មានបញ្ហាក្នុងការផ្ទុកប្រកាសដែលបានរក្សាទុក។',
+    failedToDeletePost: 'បរាជ័យក្នុងការលុបទំព័រ។',
     edit: 'កែប្រែ',
     delete: 'លុប',
     confirmDelete: 'តើអ្នកប្រាកដថាចង់លុប',
