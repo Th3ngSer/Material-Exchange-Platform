@@ -31,6 +31,10 @@ async function submitHeaderSearch() {
 
   await router.push({ name: 'browse', query })
 }
+
+const goToNotifications = () => {
+  void router.push('/notifications')
+}
 </script>
 
 <template>
