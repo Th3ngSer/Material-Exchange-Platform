@@ -7,12 +7,13 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 
 @WebSocketGateway({ cors: { origin: 'http://localhost:5173' } })
 @Injectable()
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   private readonly logger = new Logger(ChatGateway.name);
 
@@ -21,17 +22,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(private readonly jwtService: JwtService) {}
 
-  async handleConnection(socket: Socket) {
+  handleConnection(socket: Socket) {
     try {
-      const token =
-        (socket.handshake.auth && socket.handshake.auth.token) ||
-        socket.handshake.query?.token;
+      const tokenFromAuth = socket.handshake.auth?.token as string | undefined;
+      const tokenFromQuery = socket.handshake.query?.token as
+        | string
+        | undefined;
+      const token = tokenFromAuth ?? tokenFromQuery;
       if (!token) {
         socket.disconnect();
         return;
       }
 
-      const payload: any = this.jwtService.verify(String(token));
+      const payload = this.jwtService.verify<JwtPayload>(String(token));
       const userId = payload?.sub;
       if (!userId) {
         socket.disconnect();
@@ -44,11 +47,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.clients.set(String(userId), set);
 
       // join room for user
-      socket.join(this.roomFor(userId));
+      void socket.join(this.roomFor(userId));
 
       this.logger.log(`User ${userId} connected (socket ${socket.id})`);
     } catch (err) {
-      this.logger.warn('Socket auth failed', err?.message);
+      if (err instanceof Error) {
+        this.logger.warn(`Socket auth failed: ${err.message}`);
+      } else {
+        this.logger.warn('Socket auth failed');
+      }
       socket.disconnect();
     }
   }
@@ -71,11 +78,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   // send message object to a specific user
-  sendToUser(userId: string, event: string, payload: any) {
+  sendToUser(userId: string, event: string, payload: unknown) {
     try {
       this.server.to(this.roomFor(userId)).emit(event, payload);
     } catch (err) {
-      this.logger.error('Failed to emit to user', err?.message);
+      if (err instanceof Error) {
+        this.logger.error(`Failed to emit to user: ${err.message}`);
+      } else {
+        this.logger.error('Failed to emit to user');
+      }
     }
   }
 }

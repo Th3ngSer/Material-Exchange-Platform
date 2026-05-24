@@ -8,20 +8,20 @@ export type MessageType = 'text' | 'image' | 'voice';
 @Schema({ timestamps: true })
 export class Message {
   @Prop({ required: true })
-  senderId: string;
+  senderId!: string;
 
   @Prop({ required: true })
-  receiverId: string;
+  receiverId!: string;
 
   @Prop({
     required: true,
     enum: ['text', 'image', 'voice'],
     default: 'text',
   })
-  type: MessageType;
+  type!: MessageType;
 
   @Prop({ required: true })
-  content: string;
+  content!: string;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);

@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import axios from 'axios'
 import { useRoute } from 'vue-router'
 
 import Footer from '@/components/layout/Footer.vue'
 import Header from '@/components/layout/Header.vue'
+import CategoryStrip from '@/components/Browse/CategoryStrip.vue'
 import BrowseTypeSwitcher from '@/components/Browse/BrowseTypeSwitcher.vue'
 import SearchBar from '@/components/Browse/SearchBar.vue'
 import FilterButton from '@/components/Browse/FilterButton.vue'
@@ -11,6 +13,22 @@ import FilterPanel from '@/components/Browse/FilterPanel.vue'
 import MaterialsList from '@/components/Browse/MaterialsList.vue'
 import UsersList from '@/components/Browse/UsersList.vue'
 import { defaultMaterials, type MaterialCategory, type MaterialItem } from '@/data/materials'
+
+interface PostRecord {
+  _id: string
+  type: 'sell' | 'exchange' | 'lend'
+  title: string
+  description: string
+  category: string
+  condition: 'new' | 'used'
+  price: number
+  exchangeFor?: string
+  location: string
+  images: string[]
+  createdAt?: string
+  listerName?: string
+  listerAvatar?: string
+}
 
 type Category = 'All' | MaterialCategory
 type SortOption = 'Newest' | 'A-Z' | 'Z-A' | 'Price: Low to High' | 'Price: High to Low'
@@ -25,15 +43,31 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const route = useRoute()
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 const categoryOptions: Category[] = ['All', 'Sell', 'Exchange', 'Borrow']
-const sortOptions: SortOption[] = ['Newest', 'A-Z', 'Z-A', 'Price: Low to High', 'Price: High to Low']
 const conditionOptions: Condition[] = ['New', 'Like new', 'Good', 'Fair']
+
+// Visual item categories (product categories) shown under Items view
+const itemCategoryOptions = [
+  'All',
+  'Clothing',
+  'Electronics',
+  'Books',
+  'Furniture',
+  'Sports',
+  'Toys',
+  'Vehicles',
+  'Home & Garden',
+  'Food & Drink',
+  'Others',
+]
+const selectedItemCategory = ref<string>('All')
 
 const selectedCategory = ref<Category>('All')
 const selectedSort = ref<SortOption>('Newest')
-const selectedConditions = ref<Condition[]>(['New', 'Like new'])
-const selectedRating = ref(4)
+const selectedConditions = ref<Condition[]>([...conditionOptions])
+const selectedRating = ref(0)
 const minPrice = ref(0)
 const maxPrice = ref(100)
 const searchQuery = ref('')
@@ -44,9 +78,52 @@ const pageSize = 20
 const filterTriggerRef = ref<HTMLButtonElement | null>(null)
 const pagingSentinelRef = ref<HTMLDivElement | null>(null)
 const isFilterTriggerVisible = ref(true)
+const liveMaterials = ref<MaterialItem[]>(props.materials)
 
 let filterVisibilityObserver: IntersectionObserver | null = null
 let pagingObserver: IntersectionObserver | null = null
+
+function imageUrl(image: string) {
+  if (/^https?:\/\//i.test(image)) return image
+  const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '')
+  return `${uploadBaseUrl}/uploads/${image.replace(/^\/+/, '')}`
+}
+
+function mapPostToMaterial(post: PostRecord): MaterialItem {
+  const type = post.type === 'sell' ? 'Sell' : post.type === 'exchange' ? 'Exchange' : 'Borrow'
+
+  return {
+    id: post._id,
+    title: post.title,
+    price:
+      type === 'Exchange'
+        ? ''
+        : type === 'Borrow'
+          ? `${Number(post.price || 0).toFixed(2)}/wk`
+          : `${Number(post.price || 0).toFixed(2)}`,
+    location: post.location,
+    type,
+    tone: type === 'Sell' ? 'orange' : type === 'Exchange' ? 'gold' : 'rose',
+    category: post.category as MaterialItem['category'],
+    images: post.images.map(imageUrl),
+    postedTime: post.createdAt,
+    description: post.description,
+    condition: post.condition === 'new' ? 'New' : 'Used',
+    exchangeFor: post.exchangeFor,
+    seller: post.listerName || 'Unknown',
+    avatar: post.listerAvatar ? imageUrl(post.listerAvatar) : undefined,
+  }
+}
+
+async function loadPosts() {
+  try {
+    const { data } = await axios.get<{ posts: PostRecord[] }>(`${apiBaseUrl}/posts`)
+    const mappedPosts = (data.posts ?? []).map(mapPostToMaterial)
+    liveMaterials.value = [...mappedPosts, ...defaultMaterials]
+  } catch {
+    liveMaterials.value = defaultMaterials
+  }
+}
 
 function observeFilterTriggerVisibility() {
   if (filterVisibilityObserver) {
@@ -114,7 +191,7 @@ function observePagingSentinel() {
 }
 
 const priceUpperBound = computed(() => {
-  const highestPrice = props.materials.reduce((highest, item) => {
+  const highestPrice = liveMaterials.value.reduce((highest, item) => {
     const price = Number(item.price || 0)
     return Number.isFinite(price) ? Math.max(highest, price) : highest
   }, 0)
@@ -188,29 +265,53 @@ function toggleCondition(condition: Condition) {
 function clearFilters() {
   selectedCategory.value = 'All'
   selectedSort.value = 'Newest'
-  selectedConditions.value = ['New', 'Like new']
-  selectedRating.value = 4
+  selectedConditions.value = [...conditionOptions]
+  selectedRating.value = 0
   minPrice.value = 0
   maxPrice.value = priceUpperBound.value
   searchQuery.value = ''
   browseType.value = 'items'
+  selectedItemCategory.value = 'All'
 }
 
 function applyHeaderSearchFromRoute() {
   const routeQuery = typeof route.query.q === 'string' ? route.query.q : ''
   const routeType = typeof route.query.type === 'string' ? route.query.type : 'All'
   const normalizedType = categoryOptions.includes(routeType as Category) ? (routeType as Category) : 'All'
+  const routeCategory = typeof route.query.category === 'string' ? route.query.category : 'All'
+  const normalizedCategory = (itemCategoryOptions as string[]).includes(routeCategory) ? routeCategory : 'All'
 
   searchQuery.value = routeQuery
   selectedCategory.value = normalizedType
+  selectedItemCategory.value = normalizedCategory
   browseType.value = 'items'
+}
+
+// Lightweight product category detector for existing sample data
+function getProductCategory(item: MaterialItem) {
+  // prefer explicit product `category` if present in data
+  if ((item as any).category) return (item as any).category
+
+  const text = ((item.title || '') + ' ' + (item.description || '')).toLowerCase()
+
+  if (/cloth|shirt|jacket|hoodie|pants|dress|clothing|t-shirt/.test(text)) return 'Clothing'
+  if (/phone|laptop|monitor|keyboard|electronic|electrics|electronics|charger|speaker|lamp/.test(text)) return 'Electronics'
+  if (/book|novel|magazine|textbook|comic/.test(text)) return 'Books'
+  if (/sofa|chair|table|desk|furniture|shelf|cabinet|rack|storage/.test(text)) return 'Furniture'
+  if (/sport|ball|racket|bike|bicycle|fitness|gym|sports/.test(text)) return 'Sports'
+  if (/toy|lego|game|doll|play/.test(text)) return 'Toys'
+  if (/car|vehicle|van|truck|motorcycle|bike|bicycle/.test(text)) return 'Vehicles'
+  if (/home|garden|plant|sofa|cushion|bed|kitchen|decor/.test(text)) return 'Home & Garden'
+  if (/food|drink|grocery|snack|beverage|coffee/.test(text)) return 'Food & Drink'
+
+  return 'Others'
 }
 
 const filteredMaterials = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
 
-  const pool = props.materials.filter((item) => {
-    const matchesCategory = selectedCategory.value === 'All' || item.category === selectedCategory.value
+  const pool = liveMaterials.value.filter((item) => {
+    const matchesCategory = selectedCategory.value === 'All' || item.type === selectedCategory.value
     const isUsedConditionSelected = selectedConditions.value.some((condition) => condition !== 'New')
     const matchesCondition =
       selectedConditions.value.length === 0 ||
@@ -231,16 +332,23 @@ const filteredMaterials = computed(() => {
 
     const priceValue = Number(item.price || 0)
     const matchesPrice =
-      item.category !== 'Sell' ||
+      item.type !== 'Sell' ||
       (priceValue >= minPrice.value && priceValue <= maxPrice.value)
 
-    return matchesCategory && matchesCondition && matchesRating && matchesSearch && matchesPrice
+    const productCategory = getProductCategory(item)
+    const matchesProductCategory = selectedItemCategory.value === 'All' || productCategory === selectedItemCategory.value
+
+    return matchesCategory && matchesCondition && matchesRating && matchesSearch && matchesPrice && matchesProductCategory
   })
 
   const sortedPool = [...pool]
 
   if (selectedSort.value === 'Newest') {
-    return sortedPool.sort((left, right) => right.id - left.id)
+    return sortedPool.sort((left, right) => {
+      const leftTime = left.postedTime ? new Date(left.postedTime).getTime() : 0
+      const rightTime = right.postedTime ? new Date(right.postedTime).getTime() : 0
+      return rightTime - leftTime
+    })
   }
 
   if (selectedSort.value === 'A-Z') {
@@ -269,16 +377,17 @@ const featuredCount = computed(() => filteredMaterials.value.length)
 const activeTypeCount = computed(() => {
   return [
     selectedCategory.value !== 'All',
+    selectedItemCategory.value !== 'All',
     selectedConditions.value.length !== conditionOptions.length,
-    selectedRating.value > 4,
+    selectedRating.value > 0,
     searchQuery.value.trim().length > 0,
   ].filter(Boolean).length
 })
 
 const uniqueUsers = computed(() => {
   const userMap = new Map<string, { name: string; avatar: string; rating: number; itemsCount: number }>()
-  
-  props.materials.forEach((item) => {
+
+  liveMaterials.value.forEach((item) => {
     if (item.seller && !userMap.has(item.seller)) {
       userMap.set(item.seller, {
         name: item.seller,
@@ -291,20 +400,47 @@ const uniqueUsers = computed(() => {
       user.itemsCount += 1
     }
   })
-  
+
   return Array.from(userMap.values())
 })
 
 const filteredUsers = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
-  
-  if (query.length === 0) {
-    return uniqueUsers.value
-  }
-  
-  return uniqueUsers.value.filter((user) => {
-    return user.name.toLowerCase().includes(query)
+
+  const filteredUserMap = new Map<string, { name: string; avatar: string; rating: number; itemsCount: number }>()
+
+  filteredMaterials.value.forEach((item) => {
+    if (!item.seller) {
+      return
+    }
+
+    const key = item.seller
+    const existing = filteredUserMap.get(key)
+
+    if (!existing) {
+      filteredUserMap.set(key, {
+        name: item.seller,
+        avatar: item.avatar || '',
+        rating: item.rating || 0,
+        itemsCount: 1,
+      })
+      return
+    }
+
+    existing.itemsCount += 1
+    existing.rating = Math.max(existing.rating, item.rating || 0)
+    if (!existing.avatar && item.avatar) {
+      existing.avatar = item.avatar
+    }
   })
+
+  const users = Array.from(filteredUserMap.values())
+
+  if (query.length === 0) {
+    return users
+  }
+
+  return users.filter((user) => user.name.toLowerCase().includes(query))
 })
 
 const pagedUsers = computed(() => filteredUsers.value.slice(0, currentPage.value * pageSize))
@@ -337,10 +473,12 @@ watch(
 )
 
 onMounted(async () => {
+  await loadPosts()
   applyHeaderSearchFromRoute()
   await nextTick()
   observeFilterTriggerVisibility()
   observePagingSentinel()
+  await nextTick()
 })
 
 watch(
@@ -360,6 +498,7 @@ onBeforeUnmount(() => {
     pagingObserver.disconnect()
     pagingObserver = null
   }
+  
 })
 
 watch(browseType, async () => {
@@ -393,6 +532,11 @@ watch(browseType, async () => {
           :browse-type="browseType"
           @update:browse-type="browseType = $event"
         />
+
+        <!-- Item Categories (visual) -->
+        <div v-if="browseType === 'items'" class="mt-4 mb-2">
+          <CategoryStrip v-model="selectedItemCategory" :options="itemCategoryOptions" />
+        </div>
 
         <!-- Filter Panel -->
         <FilterPanel
@@ -449,3 +593,21 @@ watch(browseType, async () => {
     <Footer />
   </div>
 </template>
+
+<style scoped>
+/* Hide native scrollbar but keep horizontal scrolling available */
+.category-scroll {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+  padding-bottom: 8px; /* leave space for custom track */
+}
+
+/* WebKit browsers: hide scrollbar */
+.category-scroll::-webkit-scrollbar {
+  display: none;
+  height: 0;
+}
+
+/* ensure arrow buttons sit above the content */
+.category-scroll ~ button, .category-scroll + button { z-index: 20 }
+</style>

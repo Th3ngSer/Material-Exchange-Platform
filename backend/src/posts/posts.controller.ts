@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   Controller,
   Get,
@@ -9,40 +10,19 @@ import {
   Query,
   UseInterceptors,
   UploadedFiles,
-  ParseFilePipe,
-  MaxFileSizeValidator,
   HttpCode,
   HttpStatus,
   Logger,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
-import { v4 as uuidv4 } from 'uuid';
-import * as fs from 'fs';
+import { createPostUploadOptions } from './posts-upload.config';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-
-// ── Multer storage config (reused for both create & update) ──────────────────
-function multerStorage() {
-  const dir = process.env.UPLOAD_DIR ?? 'uploads';
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
-  return diskStorage({
-    destination: (_req, _file, cb) => cb(null, dir),
-    filename: (_req, file, cb) =>
-      cb(null, `${uuidv4()}${extname(file.originalname).toLowerCase()}`),
-  });
-}
-
-// ── Shared file validation pipe ──────────────────────────────────────────────
-const imageFilePipe = new ParseFilePipe({
-  validators: [
-    new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5 MB
-  ],
-  fileIsRequired: false, // allow zero files on PATCH
-});
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from '../auth/guards/admin.guard';
 
 @Controller('posts')
 export class PostsController {
@@ -50,13 +30,19 @@ export class PostsController {
 
   constructor(private readonly postsService: PostsService) {}
 
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Get('admin/all')
+  async findAllForAdmin() {
+    return this.postsService.findAllForAdmin();
+  }
+
   // ─── HEALTH CHECK ──────────────────────────────────────────────────────────
   @Get('health/db')
   @HttpCode(HttpStatus.OK)
   async checkDatabase() {
     try {
       this.logger.log('Checking database connection...');
-      const count = await this.postsService['postModel'].countDocuments();
+      const count = (await this.postsService.countDocuments()) as number;
       this.logger.log('✅ Database connection successful');
       return {
         status: 'connected',
@@ -79,19 +65,15 @@ export class PostsController {
   }
 
   // ─── POST /posts ───────────────────────────────────────────────────────────
+  @UseGuards(JwtAuthGuard)
   @Post()
-  @UseInterceptors(FilesInterceptor('images', 10, { storage: multerStorage() }))
+  @UseInterceptors(FilesInterceptor('images', 10, createPostUploadOptions() as any))
   create(
-    @UploadedFiles(imageFilePipe) files: Express.Multer.File[],
+    @Request() req: { user: { id: string } },
+    @UploadedFiles() files: Express.Multer.File[] = [],
     @Body() dto: CreatePostDto,
   ) {
-    const normalizedFiles = files ?? [];
-    normalizedFiles.forEach((file) => {
-      if (!file.mimetype.startsWith('image/')) {
-        throw new Error('Invalid file type');
-      }
-    });
-    return this.postsService.create(dto, normalizedFiles);
+    return this.postsService.create(dto, files ?? [], req.user.id);
   }
 
   // ─── GET /posts ────────────────────────────────────────────────────────────
@@ -116,26 +98,31 @@ export class PostsController {
   }
 
   // ─── PATCH /posts/:id ──────────────────────────────────────────────────────
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  @UseInterceptors(FilesInterceptor('images', 10, { storage: multerStorage() }))
+  @UseInterceptors(FilesInterceptor('images', 10, createPostUploadOptions() as any))
   update(
     @Param('id') id: string,
+    @Request() req: { user: { id: string } },
     @Body() dto: UpdatePostDto,
-    @UploadedFiles(imageFilePipe) files: Express.Multer.File[],
+    @UploadedFiles() files: Express.Multer.File[] = [],
   ) {
-    const normalizedFiles = files ?? [];
-    normalizedFiles.forEach((file) => {
-      if (!file.mimetype.startsWith('image/')) {
-        throw new Error('Invalid file type');
-      }
-    });
-    return this.postsService.update(id, dto, normalizedFiles);
+    return this.postsService.update(id, dto, files ?? [], req.user.id);
   }
 
   // ─── DELETE /posts/:id ─────────────────────────────────────────────────────
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  remove(@Param('id') id: string) {
-    return this.postsService.remove(id);
+  remove(@Param('id') id: string, @Request() req: { user: { id: string } }) {
+    return this.postsService.removeOwned(id, req.user.id) as Promise<{ message: string }>;
+  }
+
+  // ─── DELETE /posts/admin/:id ─────────────────────────────────────────────
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Delete('admin/:id')
+  @HttpCode(HttpStatus.OK)
+  removeForAdmin(@Param('id') id: string) {
+    return this.postsService.removeAny(id) as Promise<{ message: string }>;
   }
 }

@@ -72,6 +72,7 @@ import { useAuthStore } from '@/stores/auth'
 
 const languageStore = useLanguageStore()
 const authStore = useAuthStore()
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 /* form */
 const form = reactive({
@@ -85,6 +86,8 @@ const form = reactive({
 
 /* submit state */
 const submitted = ref(false)
+const isSubmitting = ref(false)
+const submitError = ref('')
 
 const isFormValid = computed(() => {
   return form.firstName && form.lastName && form.email && form.phone && form.message && form.request
@@ -93,7 +96,7 @@ const isFormValid = computed(() => {
 /* load user info */
 onMounted(async () => {
   if (!authStore.user) {
-    await authStore.refreshUser()
+    await authStore.initializeAuth()
   }
 
   if (authStore.user) {
@@ -109,10 +112,40 @@ onMounted(async () => {
 })
 
 /* submit */
-const submitForm = () => {
-  console.log('Thank you. We will check it')
+const submitForm = async () => {
+  submitError.value = ''
+  isSubmitting.value = true
 
-  submitted.value = true
+  try {
+    const token = sessionStorage.getItem('authToken')
+    const response = await fetch(`${API_BASE_URL}/reports`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        message: form.message.trim(),
+        request: form.request.trim(),
+        userId: authStore.user?.id,
+      }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.message || 'Failed to submit report')
+    }
+
+    submitted.value = true
+  } catch (error) {
+    submitError.value = error instanceof Error ? error.message : 'Failed to submit report'
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>
 
@@ -146,6 +179,13 @@ const submitForm = () => {
 /* success message */
 .success-msg {
   color: green;
+  font-size: 14px;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.error-msg {
+  color: #dc2626;
   font-size: 14px;
   margin-bottom: 12px;
   font-weight: 500;

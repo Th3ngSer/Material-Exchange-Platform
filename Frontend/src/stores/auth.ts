@@ -9,6 +9,8 @@ import { authApi } from '@/services/auth'
 import type { AuthState, User, LoginCredentials, RegisterCredentials } from '@/types/auth'
 
 export const useAuthStore = defineStore('auth', () => {
+  const USER_STORAGE_KEY = 'authUser'
+
   // State
   const user = ref<User | null>(null)
   const isLoading = ref(false)
@@ -30,28 +32,25 @@ export const useAuthStore = defineStore('auth', () => {
 
   const getAvatarStorageKey = (userId: string) => `avatar_${userId}`
 
-  function setAvatar(avatar: string) {
-    if (!user.value) return
-    user.value.avatar = avatar
-    localStorage.setItem(getAvatarStorageKey(user.value.id), avatar)
+  function readStoredUser(): User | null {
+    try {
+      const raw = sessionStorage.getItem(USER_STORAGE_KEY)
+      if (!raw) return null
+      return JSON.parse(raw) as User
+    } catch {
+      return null
+    }
   }
 
-  async function updateProfile(data: Partial<User>) {
-    if (!user.value) {
-      throw new Error('Not authenticated')
+  function writeStoredUser(value: User | null) {
+    if (!value) {
+      sessionStorage.removeItem(USER_STORAGE_KEY)
+      return
     }
 
-    user.value = {
-      ...user.value,
-      ...data,
-    }
-
-    if (user.value.avatar) {
-      localStorage.setItem(getAvatarStorageKey(user.value.id), user.value.avatar)
-    }
-
-    return user.value
+    sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(value))
   }
+
 
   /**
    * Login user with email and password
@@ -65,7 +64,7 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await authApi.login(credentials)
 
       if (response.user && !response.user.avatar) {
-        const savedAvatar = localStorage.getItem(getAvatarStorageKey(response.user.id))
+        const savedAvatar = sessionStorage.getItem(getAvatarStorageKey(response.user.id))
         if (savedAvatar) {
           response.user.avatar = savedAvatar
         }
@@ -73,8 +72,9 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Store user data
       user.value = response.user
+      writeStoredUser(response.user)
 
-      // Store token per-tab
+      // Store token persistently
       sessionStorage.setItem('authToken', response.accessToken)
 
       return response
@@ -99,7 +99,7 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await authApi.register(credentials)
 
       if (response.user && !response.user.avatar) {
-        const savedAvatar = localStorage.getItem(getAvatarStorageKey(response.user.id))
+        const savedAvatar = sessionStorage.getItem(getAvatarStorageKey(response.user.id))
         if (savedAvatar) {
           response.user.avatar = savedAvatar
         }
@@ -107,8 +107,9 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Store user data
       user.value = response.user
+      writeStoredUser(response.user)
 
-      // Store token per-tab
+      // Store token persistently
       sessionStorage.setItem('authToken', response.accessToken)
 
       return response
@@ -130,6 +131,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     error.value = null
     sessionStorage.removeItem('authToken')
+    writeStoredUser(null)
   }
 
   /**
@@ -142,68 +144,75 @@ export const useAuthStore = defineStore('auth', () => {
   /**
  * Initialize auth state
  */
-async function initializeAuth() {
-  const token = sessionStorage.getItem('authToken')
-
-  if (!token) {
-    logout()
-    return
-  }
-
-  try {
-    const profile = await authApi.getProfile(token)
-    user.value = profile
-  } catch {
-    logout()
-  }
-}
-
-/**
- * Update user profile
- */
-async function updateProfile(profileData: Partial<User>) {
-  isLoading.value = true
-  error.value = null
-
-  try {
+  async function initializeAuth() {
     const token = sessionStorage.getItem('authToken')
 
     if (!token) {
-      throw new Error('No authentication token found')
+      logout()
+      return
     }
 
-    const updatedUser = await authApi.updateProfile(token, profileData)
+    const storedUser = readStoredUser()
+    if (storedUser) {
+      user.value = storedUser
+    }
 
-    user.value = updatedUser
-
-    return updatedUser
-  } catch (err) {
-    const errorMessage =
-      err instanceof Error ? err.message : 'Failed to update profile'
-
-    error.value = errorMessage
-    throw err
-  } finally {
-    isLoading.value = false
+    try {
+      const profile = await authApi.getProfile(token)
+      user.value = profile
+      writeStoredUser(profile)
+    } catch {
+      // Keep the stored user and token so refresh does not log out on transient errors.
+    }
   }
-}
 
-return {
-  // State
-  user,
-  isLoading,
-  error,
-  isAuthenticated,
-  state,
-  token,
+  /**
+   * Update user profile
+   */
+  async function updateProfile(profileData: Partial<User>) {
+    isLoading.value = true
+    error.value = null
 
-  // Methods
-  login,
-  register,
-  logout,
-  clearError,
-  initializeAuth,
-  updateProfile,
-}
+    try {
+      const token = sessionStorage.getItem('authToken')
+
+      if (!token) {
+        throw new Error('No authentication token found')
+      }
+
+      const updatedUser = await authApi.updateProfile(token, profileData)
+
+      user.value = updatedUser
+      writeStoredUser(updatedUser)
+
+      return updatedUser
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to update profile'
+
+      error.value = errorMessage
+      throw err
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  return {
+    // State
+    user,
+    isLoading,
+    error,
+    isAuthenticated,
+    state,
+    token,
+
+    // Methods
+    login,
+    register,
+    logout,
+    clearError,
+    initializeAuth,
+    updateProfile,
+  }
 
 })

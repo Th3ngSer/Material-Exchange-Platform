@@ -28,16 +28,22 @@ import HelpProfile from '../user/HelpProfile.vue'
 import LangaugeInformation from '../user/LangaugeInformation.vue'
 import LogoutInformation from '@/user/LogoutInformation.vue'
 import PaymentInformation from '@/user/PaymentInformation.vue'
+import Notification from '@/components/Notificationsview.vue'
 import TrackingInformation from '@/user/TrackingInformation.vue'
 import { useAuthStore } from '@/stores/auth'
 
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  // Always scroll to top on route navigation so pages start at the top
+  scrollBehavior() {
+    return { left: 0, top: 0 }
+  },
   routes: [
     { path: '/', redirect: '/home' },
     { path: '/home', name: 'home', component: HomeView },
     { path: '/browse', name: 'browse', component: BrowseView },
+    { path: '/notifications', name: 'Notification', component: Notification },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/signup', name: 'signup', component: SignUpView },
 
@@ -110,7 +116,13 @@ router.beforeEach((to) => {
 // Guard to check for authenticated access before post
 router.beforeEach((to) => {
   const authStore = useAuthStore()
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+  const token = sessionStorage.getItem('authToken')
+
+  if ((to.name === 'login' || to.name === 'signup') && authStore.isAuthenticated) {
+    return { name: 'home' }
+  }
+
+  if (to.meta.requiresAuth && !token) {
     return '/login'
   }
 

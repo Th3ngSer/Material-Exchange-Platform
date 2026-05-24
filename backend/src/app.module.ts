@@ -8,6 +8,9 @@ import { ChatModule } from './chat/chat.module';
 import { TrackitemuserModule } from './trackitemuser/trackitemuser.module';
 import { UsersModule } from './users/users.module';
 import { AdminDashboardModule } from './admin/admin-dashboard.module';
+import { TransactionsModule } from './transactions/transactions.module';
+import { PostsModule } from './posts/posts.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -41,9 +44,12 @@ import { AdminDashboardModule } from './admin/admin-dashboard.module';
 
     AuthModule,
     ChatModule,
+    PostsModule,
     TrackitemuserModule,
     UsersModule,
     AdminDashboardModule,
+    TransactionsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

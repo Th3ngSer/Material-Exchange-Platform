@@ -1,12 +1,31 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import axios from 'axios'
+import { useRouter } from 'vue-router'
 
 import HomeCategories from '../components/HomeView/HomeCategories.vue'
 import HomeHero from '../components/HomeView/HomeHero.vue'
+import CategoryMarquee from '../components/HomeView/CategoryMarquee.vue'
 import MaterialCard from '@/components/materialDetail/MaterialCard.vue'
 import Footer from '@/components/layout/Footer.vue'
 import Header from '@/components/layout/Header.vue'
 import { defaultMaterials, type MaterialItem, type MaterialCategory } from '@/data/materials'
+
+interface PostRecord {
+  _id: string
+  type: 'sell' | 'exchange' | 'lend'
+  title: string
+  description: string
+  category: string
+  condition: 'new' | 'used'
+  price: number
+  exchangeFor?: string
+  location: string
+  images: string[]
+  createdAt?: string
+  listerName?: string
+  listerAvatar?: string
+}
 
 type Category = 'All' | MaterialCategory
 
@@ -24,13 +43,63 @@ const props = withDefaults(defineProps<Props>(), {
   sortOptions: () => ['All', 'Newest', 'A-Z', 'Z-A'],
 })
 
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const router = useRouter()
 const selectedCategory = ref<Category>(props.categories?.[0] ?? 'All')
 const selectedSort = ref<SortOption>(props.sortOptions?.[0] ?? 'All')
+const liveMaterials = ref<MaterialItem[]>(props.materials)
+
+function imageUrl(image: string) {
+  if (/^https?:\/\//i.test(image)) return image
+  const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '')
+  return `${uploadBaseUrl}/uploads/${image.replace(/^\/+/, '')}`
+}
+
+function mapPostToMaterial(post: PostRecord): MaterialItem {
+  const type = post.type === 'sell' ? 'Sell' : post.type === 'exchange' ? 'Exchange' : 'Borrow'
+
+  return {
+    id: post._id,
+    title: post.title,
+    price:
+      type === 'Exchange'
+        ? ''
+        : type === 'Borrow'
+          ? `${Number(post.price || 0).toFixed(2)}/wk`
+          : `${Number(post.price || 0).toFixed(2)}`,
+    location: post.location,
+    type,
+    tone: type === 'Sell' ? 'orange' : type === 'Exchange' ? 'gold' : 'rose',
+    category: post.category as MaterialItem['category'],
+    images: post.images.map(imageUrl),
+    postedTime: post.createdAt,
+    description: post.description,
+    condition: post.condition === 'new' ? 'New' : 'Used',
+    exchangeFor: post.exchangeFor,
+    seller: post.listerName || 'Unknown',
+    avatar: post.listerAvatar ? imageUrl(post.listerAvatar) : undefined,
+  }
+}
+
+async function loadPosts() {
+  try {
+    const { data } = await axios.get<{ posts: PostRecord[] }>(`${apiBaseUrl}/posts`)
+    const mappedPosts = (data.posts ?? []).map(mapPostToMaterial)
+    liveMaterials.value = [...mappedPosts, ...defaultMaterials]
+  } catch {
+    liveMaterials.value = defaultMaterials
+  }
+}
 
 function handleCategoryUpdate(value: string) {
+  // If the clicked value matches a transaction category, update locally.
   if ((props.categories ?? []).includes(value as Category)) {
     selectedCategory.value = value as Category
+    return
   }
+
+  // Otherwise treat as a product category from the marquee and navigate to Browse.
+  router.push({ name: 'browse', query: { category: value } })
 }
 
 function handleSortUpdate(value: string) {
@@ -40,8 +109,8 @@ function handleSortUpdate(value: string) {
 const filteredMaterials = computed(() => {
   const pool =
     selectedCategory.value === 'All'
-      ? props.materials
-      : props.materials.filter((item) => item.category === selectedCategory.value)
+      ? liveMaterials.value
+      : liveMaterials.value.filter((item) => item.type === selectedCategory.value)
 
   const sortedPool = [...pool]
 
@@ -50,7 +119,11 @@ const filteredMaterials = computed(() => {
   }
 
   if (selectedSort.value === 'Newest') {
-    return sortedPool.sort((left, right) => right.id - left.id)
+    return sortedPool.sort((left, right) => {
+      const leftTime = left.postedTime ? new Date(left.postedTime).getTime() : 0
+      const rightTime = right.postedTime ? new Date(right.postedTime).getTime() : 0
+      return rightTime - leftTime
+    })
   }
 
   if (selectedSort.value === 'A-Z') {
@@ -68,12 +141,19 @@ const featuredCount = computed(() => filteredMaterials.value.length)
 
 // Limit displayed materials to 20 items for any category/filter
 const displayedMaterials = computed(() => filteredMaterials.value.slice(0, 20))
+
+onMounted(() => {
+  void loadPosts()
+})
+
 </script>
 
 <template>
   <div class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.9),_rgba(245,245,250,0.95)_30%,_#f5f5f7_65%),linear-gradient(180deg,_#f4f4f8_0%,_#ffffff_20%,_#ffffff_100%)] text-[#15152d]">
     <Header />
     <HomeHero class="pl-20"/>
+
+    <CategoryMarquee :selected-category="selectedCategory" @update:category="handleCategoryUpdate" />
     <main class="mx-auto w-[min(1500px,calc(100%-32px))] max-[768px]:w-[min(100%-20px,100%)]">
       
 
@@ -97,3 +177,5 @@ const displayedMaterials = computed(() => filteredMaterials.value.slice(0, 20))
     <Footer />
   </div>
 </template>
+
+

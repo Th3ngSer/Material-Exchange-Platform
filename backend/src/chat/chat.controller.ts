@@ -11,6 +11,11 @@ import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SendMessageDto } from './dto/send-message.dto';
 import { GetConversationDto } from './dto/get-conversation.dto';
+import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
+
+interface AuthenticatedRequest {
+  user: { id: string } & JwtPayload;
+}
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard) // Protect all routes in this controller
@@ -18,7 +23,10 @@ export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Post('send')
-  async sendMessage(@Body() body: SendMessageDto, @Req() req: any) {
+  async sendMessage(
+    @Body() body: SendMessageDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
     const senderId = req.user.id;
 
     return this.chatService.sendMessage(
@@ -30,7 +38,10 @@ export class ChatController {
   }
 
   @Get('history')
-  async getHistory(@Query() query: GetConversationDto, @Req() req: any) {
+  async getHistory(
+    @Query() query: GetConversationDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
     const currentUserId = req.user.id;
 
     return this.chatService.getHistory(currentUserId, query.userId);

@@ -3,20 +3,25 @@ import {
   NotFoundException,
   BadRequestException,
   Logger,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, isValidObjectId } from 'mongoose';
 import { Post, PostDocument } from './entities/post.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class PostsService {
   private readonly logger = new Logger(PostsService.name);
 
-  constructor(@InjectModel(Post.name) private postModel: Model<PostDocument>) {
+  constructor(
+    @InjectModel(Post.name) private postModel: Model<PostDocument>,
+    private readonly usersService: UsersService,
+  ) {
     this.logger.log('PostsService initialized');
     void this.checkDatabaseConnection();
   }
@@ -40,17 +45,64 @@ export class PostsService {
   async create(
     dto: CreatePostDto,
     files: Express.Multer.File[],
+    ownerId: string,
   ): Promise<Post> {
     try {
+      this.assertValidId(ownerId, 'owner');
       this.logger.log(`Creating post: ${dto.title}`);
+      if (files.length === 0) {
+        throw new BadRequestException('At least one image is required.');
+      }
+
+      const owner = await this.usersService.findById(ownerId);
+      const listerName = owner?.username || owner?.name || owner?.email || 'Unknown';
+      const listerAvatar = owner?.avatar || undefined;
+
       const images = files.map((f) => f.filename);
-      const post = await this.postModel.create({ ...dto, images });
+      const post = await this.postModel.create({
+        ...dto,
+        ownerId,
+        listerName,
+        listerAvatar,
+        price: dto.type === 'exchange' ? 0 : dto.price,
+        images,
+      });
       this.logger.log(`✅ Post created with ID: ${String(post._id)}`);
       return post;
     } catch (error: unknown) {
       const err = error as { message?: string; name?: string };
       this.logger.error(
         `❌ Failed to create post: ${err?.message || String(error)}`,
+      );
+      if (err?.name === 'MongoServerSelectionError') {
+        throw new BadRequestException(
+          'Database is not connected. Please ensure MongoDB is running on localhost:27017',
+        );
+      }
+      throw error;
+    }
+  }
+
+  async countDocuments(): Promise<number> {
+    return this.postModel.countDocuments();
+  }
+  async findAllForAdmin() {
+    try {
+      this.logger.log('Fetching all posts for admin');
+      const posts = await this.postModel
+        .find()
+        .select(
+          'type title category condition price createdAt listerName status',
+        )
+        .sort({ createdAt: -1 })
+        .lean()
+        .exec();
+      this.logger.log(`✅ Found ${posts.length} posts for admin`);
+      return posts;
+    } catch (error: unknown) {
+      const err = error as { message?: string; name?: string };
+      this.logger.error(
+        `❌ Failed to fetch posts for admin: ${err?.message || String(error)}`,
       );
       if (err?.name === 'MongoServerSelectionError') {
         throw new BadRequestException(
@@ -105,6 +157,7 @@ export class PostsService {
   // ─── READ ONE ─────────────────────────────────────────────────────────────
   async findOne(id: string): Promise<Post> {
     try {
+      this.assertValidId(id);
       this.logger.log(`Fetching post: ${id}`);
       const post = await this.postModel.findById(id);
       if (!post) {
@@ -127,8 +180,11 @@ export class PostsService {
     id: string,
     dto: UpdatePostDto,
     files: Express.Multer.File[],
+    ownerId: string,
   ): Promise<Post> {
     try {
+      this.assertValidId(id);
+      this.assertValidId(ownerId, 'owner');
       this.logger.log(`Updating post: ${id}`);
       const post = await this.postModel.findById(id);
       if (!post) {
@@ -136,19 +192,30 @@ export class PostsService {
         throw new NotFoundException(`Post #${id} not found`);
       }
 
-      const newImages = files.map((f) => f.filename);
-
-      // If new images uploaded, delete the old files from disk
-      if (newImages.length > 0) {
-        this.logger.log(
-          `Replacing ${post.images.length} old images with ${newImages.length} new ones`,
-        );
-        this.deleteImageFiles(post.images);
+      if (post.ownerId && String(post.ownerId) !== ownerId) {
+        throw new ForbiddenException('You can only update your own post.');
       }
+
+      const newImages = files.map((f) => f.filename);
+      const keepImages = this.parseRetainedImages(dto.retainImages, post.images);
+      const removedImages = post.images.filter((image) => !keepImages.includes(image));
+
+      if (removedImages.length > 0) {
+        this.logger.log(
+          `Removing ${removedImages.length} old images from disk`,
+        );
+        this.deleteImageFiles(removedImages);
+      }
+
+      const images = [...keepImages, ...newImages];
 
       const updated = await this.postModel.findByIdAndUpdate(
         id,
-        { ...dto, ...(newImages.length > 0 && { images: newImages }) },
+        {
+          ...dto,
+          price: dto.type === 'exchange' ? 0 : dto.price,
+          images,
+        },
         { new: true, runValidators: true },
       );
 
@@ -168,15 +235,71 @@ export class PostsService {
     }
   }
 
+  private parseRetainedImages(retainImages: string | undefined, fallback: string[]): string[] {
+    if (retainImages === undefined) {
+      return fallback
+    }
+
+    try {
+      const parsed = JSON.parse(retainImages)
+      if (!Array.isArray(parsed)) {
+        return []
+      }
+
+      return parsed.filter((image): image is string => typeof image === 'string' && image.trim().length > 0)
+    } catch {
+      return []
+    }
+  }
+
   // ─── DELETE ───────────────────────────────────────────────────────────────
   async remove(id: string): Promise<{ message: string }> {
+    return this.removeOwned(id, undefined);
+  }
+
+  async removeAny(id: string): Promise<{ message: string }> {
     try {
+      this.assertValidId(id);
+
+      this.logger.log(`Admin deleting post: ${id}`);
+      const post = await this.postModel.findById(id);
+      if (!post) {
+        this.logger.warn(`Post not found for admin deletion: ${id}`);
+        throw new NotFoundException(`Post #${id} not found`);
+      }
+
+      await this.postModel.findByIdAndDelete(id);
+      this.deleteImageFiles(post.images);
+      this.logger.log(`✅ Post deleted by admin: ${id}`);
+      return { message: 'Post deleted successfully' };
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      this.logger.error(
+        `❌ Failed to admin-delete post ${id}: ${err?.message || String(error)}`,
+      );
+      throw error;
+    }
+  }
+
+  async removeOwned(id: string, ownerId?: string): Promise<{ message: string }> {
+    try {
+      this.assertValidId(id);
+      if (ownerId) {
+        this.assertValidId(ownerId, 'owner');
+      }
+
       this.logger.log(`Deleting post: ${id}`);
-      const post = await this.postModel.findByIdAndDelete(id);
+      const post = await this.postModel.findById(id);
       if (!post) {
         this.logger.warn(`Post not found for deletion: ${id}`);
         throw new NotFoundException(`Post #${id} not found`);
       }
+
+      if (ownerId && String(post.ownerId) !== ownerId) {
+        throw new ForbiddenException('You can only delete your own post.');
+      }
+
+      await this.postModel.findByIdAndDelete(id);
 
       this.deleteImageFiles(post.images);
       this.logger.log(`✅ Post deleted: ${id}`);
@@ -194,7 +317,17 @@ export class PostsService {
   private deleteImageFiles(images: string[]) {
     const dir = process.env.UPLOAD_DIR ?? 'uploads';
     images.forEach((img) => {
-      return fs.unlink(path.join(process.cwd(), dir, img), () => {});
+      const filePath = path.join(process.cwd(), dir, img);
+      if (fs.existsSync(filePath)) {
+        return fs.unlink(filePath, () => {});
+      }
+      return undefined;
     });
+  }
+
+  private assertValidId(id: string, label = 'post') {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException(`Invalid ${label} id: ${id}`);
+    }
   }
 }

@@ -1,6 +1,30 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+
+type Transaction = {
+  id: string
+  buyer: string
+  seller: string
+  item: string
+  amount: string
+  type: string
+  status: string
+  date: string
+}
+
+type TransactionApi = {
+  _id: string
+  buyerName: string
+  sellerName: string
+  itemTitle: string
+  amount?: number
+  type: string
+  status: string
+  createdAt?: string
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 const navItems = [
   { label: 'Dashboard', to: '/admin' },
@@ -15,58 +39,55 @@ const navItems = [
   { label: 'Settings', to: '/admin/settings' },
 ]
 
-const transactions = [
-  {
-    id: '#1',
-    buyer: 'Yagami',
-    seller: 'Yagami',
-    item: 'Steel Beam Bundle',
-    amount: '$168',
-    type: 'Sell',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-  {
-    id: '#2',
-    buyer: 'Yagami',
-    seller: 'Yagami',
-    item: 'Steel Beam Bundle',
-    amount: 'Exchange',
-    type: 'Exchange',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-  {
-    id: '#3',
-    buyer: 'Yagami',
-    seller: 'Yagami',
-    item: 'Steel Beam Bundle',
-    amount: 'Borrow',
-    type: 'Borrow',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-  {
-    id: '#4',
-    buyer: 'Yagami',
-    seller: 'Yagami',
-    item: 'Steel Beam Bundle',
-    amount: '$168',
-    type: 'Sell',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-  {
-    id: '#5',
-    buyer: 'Yagami',
-    seller: 'Yagami',
-    item: 'Steel Beam Bundle',
-    amount: '$168',
-    type: 'Sell',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-]
+
+const transactions = ref<Transaction[]>([])
+const isLoading = ref(false)
+const errorMessage = ref('')
+
+const formatDate = (value?: string): string => {
+  if (!value) return '---'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value ?? '---'
+  return date.toISOString().split('T')[0] ?? '---'
+}
+
+const fetchTransactions = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    const token = sessionStorage.getItem('authToken')
+    const response = await fetch(`${API_BASE_URL}/transactions/admin/all`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.message || 'Failed to load transactions')
+    }
+
+    const data = (await response.json()) as TransactionApi[]
+    transactions.value = (data ?? []).map((item) => ({
+      id: `#${item._id.slice(-6)}`,
+      buyer: item.buyerName,
+      seller: item.sellerName,
+      item: item.itemTitle,
+      amount: item.amount !== undefined ? `$${Number(item.amount).toFixed(2)}` : '---',
+      type: item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : '---',
+      status: item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Active',
+      date: formatDate(item.createdAt),
+    }))
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Failed to load transactions'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchTransactions)
 
 const route = useRoute()
 const currentPath = computed(() => route.path)
@@ -145,6 +166,8 @@ const isActive = (path: string) => {
         </div>
 
         <div class="table">
+          <p v-if="isLoading" class="table-note">Loading transactions...</p>
+          <p v-else-if="errorMessage" class="table-note error">{{ errorMessage }}</p>
           <div class="table-row header">
             <span>ID</span>
             <span>Buyer</span>
@@ -185,6 +208,7 @@ const isActive = (path: string) => {
 
 .admin-shell {
   min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: 260px 1fr;
   background: radial-gradient(circle at top left, #fff5e1 0%, #f7f0ff 32%, #edf3ff 70%);
@@ -200,6 +224,11 @@ const isActive = (path: string) => {
   display: flex;
   flex-direction: column;
   gap: 32px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  align-self: start;
+  overflow-y: auto;
   z-index: 1;
 }
 
@@ -249,6 +278,7 @@ const isActive = (path: string) => {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  overflow-y: auto;
   z-index: 1;
 }
 
@@ -420,6 +450,16 @@ select {
   gap: 10px;
 }
 
+.table-note {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.table-note.error {
+  color: #ef4444;
+}
+
 .table-row {
   display: grid;
   grid-template-columns: 0.7fr 1fr 1fr 1.6fr 1fr 1fr 1fr 1fr;
@@ -502,6 +542,8 @@ select {
 @media (max-width: 1024px) {
   .admin-shell {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
   }
 
   .admin-sidebar {
@@ -520,6 +562,10 @@ select {
 
   .logout {
     margin-top: 0;
+  }
+
+  .admin-main {
+    overflow: visible;
   }
 }
 

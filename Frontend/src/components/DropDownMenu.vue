@@ -191,7 +191,11 @@ const filteredItems = computed<DropdownItem[]>(() => {
 // ── Methods ──────────────────────────────────────────────────────────────────
 
 function toggle(): void {
-  isOpen.value ? close() : open()
+  if (isOpen.value) {
+    close()
+    return
+  }
+  open()
 }
 
 function open(): void {

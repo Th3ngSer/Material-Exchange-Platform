@@ -1,6 +1,30 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+
+type AdminListing = {
+  id: string
+  title: string
+  lister: string
+  category: string
+  price: string
+  type: string
+  status: string
+  date: string
+}
+
+type AdminListingApi = {
+  _id: string
+  title: string
+  listerName?: string
+  category: string
+  price?: number
+  type?: string
+  status?: string
+  createdAt?: string
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 const navItems = [
   { label: 'Dashboard', to: '/admin' },
@@ -15,80 +39,87 @@ const navItems = [
   { label: 'Settings', to: '/admin/settings' },
 ]
 
-const listings = [
-  {
-    title: 'Steel Beam Bundle',
-    lister: 'Yagami',
-    category: 'Materials',
-    price: '$168',
-    type: 'Sell',
-    status: 'Sold',
-    date: '2025-03-20',
-  },
-  {
-    title: 'Steel Beam Bundle',
-    lister: 'Yagami',
-    category: 'Materials',
-    price: '$168',
-    type: 'Exchange',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-  {
-    title: 'Steel Beam Bundle',
-    lister: 'Yagami',
-    category: 'Materials',
-    price: '$168',
-    type: 'Borrow',
-    status: 'Suspended',
-    date: '2025-03-20',
-  },
-  {
-    title: 'Steel Beam Bundle',
-    lister: 'Yagami',
-    category: 'Materials',
-    price: '$168',
-    type: 'Sell',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-  {
-    title: 'Steel Beam Bundle',
-    lister: 'Yagami',
-    category: 'Materials',
-    price: '$168',
-    type: 'Sell',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-  {
-    title: 'Steel Beam Bundle',
-    lister: 'Yagami',
-    category: 'Materials',
-    price: '$168',
-    type: 'Sell',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-  {
-    title: 'Steel Beam Bundle',
-    lister: 'Yagami',
-    category: 'Materials',
-    price: '$168',
-    type: 'Sell',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-  {
-    title: 'Steel Beam Bundle',
-    lister: 'Yagami',
-    category: 'Materials',
-    price: '$168',
-    type: 'Sell',
-    status: 'Active',
-    date: '2025-03-20',
-  },
-]
+const listings = ref<AdminListing[]>([])
+const isLoading = ref(false)
+const errorMessage = ref('')
+const isDeleting = ref(false)
+
+const formatDate = (value?: string): string => {
+  if (!value) return '---'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value ?? '---'
+  return date.toISOString().split('T')[0] ?? '---'
+}
+
+const formatPrice = (price?: number) => `$${Number(price ?? 0).toFixed(2)}`
+
+const fetchListings = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    const token = sessionStorage.getItem('authToken')
+    const response = await fetch(`${API_BASE_URL}/posts/admin/all`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.message || 'Failed to load listings')
+    }
+
+    const data = (await response.json()) as AdminListingApi[]
+    listings.value = (data ?? []).map((item) => ({
+      id: item._id,
+      title: item.title,
+      lister: item.listerName ?? '---',
+      category: item.category,
+      price: formatPrice(item.price),
+      type: item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : '---',
+      status: item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Active',
+      date: formatDate(item.createdAt),
+    }))
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Failed to load listings'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const deleteListing = async (listingId: string, title: string) => {
+  if (!confirm(`Delete listing "${title}"? This cannot be undone.`)) {
+    return
+  }
+
+  isDeleting.value = true
+  try {
+    const token = sessionStorage.getItem('authToken')
+    const response = await fetch(`${API_BASE_URL}/posts/admin/${listingId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.message || 'Failed to delete listing')
+    }
+
+    listings.value = listings.value.filter((item) => item.id !== listingId)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to delete listing'
+    alert(message)
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+onMounted(fetchListings)
 
 const route = useRoute()
 const currentPath = computed(() => route.path)
@@ -173,6 +204,8 @@ const isActive = (path: string) => {
         </div>
 
         <div class="table">
+          <p v-if="isLoading" class="table-note">Loading listings...</p>
+          <p v-else-if="errorMessage" class="table-note error">{{ errorMessage }}</p>
           <div class="table-row header">
             <span>Title</span>
             <span>Lister</span>
@@ -183,7 +216,7 @@ const isActive = (path: string) => {
             <span>Date</span>
             <span>Actions</span>
           </div>
-          <div v-for="listing in listings" :key="listing.title + listing.type + listing.status" class="table-row body">
+          <div v-for="listing in listings" :key="listing.id" class="table-row body">
             <span>{{ listing.title }}</span>
             <span>{{ listing.lister }}</span>
             <span>{{ listing.category }}</span>
@@ -191,10 +224,13 @@ const isActive = (path: string) => {
             <span>{{ listing.type }}</span>
             <span class="status" :class="listing.status.toLowerCase()">{{ listing.status }}</span>
             <span>{{ listing.date }}</span>
-            <button class="dots" aria-label="More actions">
-              <span></span>
-              <span></span>
-              <span></span>
+            <button
+              class="delete"
+              type="button"
+              :disabled="isDeleting"
+              @click="deleteListing(listing.id, listing.title)"
+            >
+              Delete
             </button>
           </div>
         </div>
@@ -217,6 +253,7 @@ const isActive = (path: string) => {
 
 .admin-shell {
   min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: 260px 1fr;
   background: radial-gradient(circle at top left, #fff5e1 0%, #f7f0ff 32%, #edf3ff 70%);
@@ -232,6 +269,11 @@ const isActive = (path: string) => {
   display: flex;
   flex-direction: column;
   gap: 32px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  align-self: start;
+  overflow-y: auto;
   z-index: 1;
 }
 
@@ -281,6 +323,7 @@ const isActive = (path: string) => {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  overflow-y: auto;
   z-index: 1;
 }
 
@@ -452,6 +495,16 @@ select {
   gap: 10px;
 }
 
+.table-note {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.table-note.error {
+  color: #ef4444;
+}
+
 .table-row {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr 0.5fr;
@@ -511,6 +564,26 @@ select {
   display: block;
 }
 
+.delete {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delete:hover:not(:disabled) {
+  background: #dc2626;
+}
+
 .ambient {
   position: absolute;
   inset: 0;
@@ -553,6 +626,8 @@ select {
 @media (max-width: 1024px) {
   .admin-shell {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
   }
 
   .admin-sidebar {
@@ -571,6 +646,10 @@ select {
 
   .logout {
     margin-top: 0;
+  }
+
+  .admin-main {
+    overflow: visible;
   }
 }
 

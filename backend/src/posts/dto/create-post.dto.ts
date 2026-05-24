@@ -45,4 +45,16 @@ export class CreatePostDto {
   @IsString()
   @IsNotEmpty()
   location!: string;
+
+  @IsOptional()
+  @IsString()
+  listerName?: string;
+
+  @IsOptional()
+  @IsString()
+  retainImages?: string;
+
+  @IsOptional()
+  @IsIn(['active', 'suspended', 'sold'])
+  status?: string;
 }

@@ -3,12 +3,14 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLanguageStore } from '@/stores/language'
+// use the provided logo variant for consistent branding
+import Logo from '@/assets/images/Logo.png'
 
 const languageStore = useLanguageStore()
 
+const router = useRouter()
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-const router = useRouter()
 
 type HeaderSearchType = 'All' | 'Sell' | 'Exchange' | 'Borrow'
 
@@ -29,6 +31,10 @@ async function submitHeaderSearch() {
 
   await router.push({ name: 'browse', query })
 }
+
+const goToNotifications = () => {
+  void router.push('/notifications')
+}
 </script>
 
 <template>
@@ -37,11 +43,12 @@ async function submitHeaderSearch() {
       class="mx-auto grid min-h-[66px] w-full max-w-[1500px] grid-cols-[auto_auto_1fr_auto] items-center gap-3 px-3 py-1 max-[1100px]:grid-cols-1 max-[1100px]:gap-2"
     >
       <RouterLink
-        class="inline-flex items-baseline text-[32px] font-extrabold tracking-[-0.04em] no-underline cursor-pointer hover:opacity-80 transition-opacity duration-200"
+        class="inline-flex items-center gap-3 text-[32px] font-extrabold tracking-[-0.04em] no-underline cursor-pointer hover:opacity-80 transition-opacity duration-200"
         to="/"
         aria-label="Material Exchange Platform home"
       >
-        <span class="text-[#2b2f92]">Do</span><span class="text-[#ff4b42]">Ort</span>
+        <img :src="Logo" alt="Material Exchange logo" class="h-6 w-auto" />
+        <span class="sr-only">Material Exchange Platform</span>
       </RouterLink>
 
       <nav class="inline-flex gap-5 max-[1100px]:hidden text-center" aria-label="Primary">
@@ -60,13 +67,26 @@ async function submitHeaderSearch() {
         <RouterLink
           :class="[
             'ml-20 text-[16px] font-bold no-underline text-center cursor-pointer transition-colors duration-200',
-            router.currentRoute.value.path.startsWith('/posts/create')
+            router.currentRoute.value.name === 'create-post'
               ? 'text-[#ff4b42]'
               : 'text-[#201f62] hover:text-[#ff4b42]'
           ]"
           to="/posts/create"
         >
           {{ languageStore.t('createPost') }}
+
+        </RouterLink>
+
+        <RouterLink
+          :class="[
+            'ml-20 text-[16px] font-bold no-underline text-center cursor-pointer transition-colors duration-200',
+            router.currentRoute.value.name === 'posts'
+              ? 'text-[#ff4b42]'
+              : 'text-[#201f62] hover:text-[#ff4b42]'
+          ]"
+          to="/posts"
+        >
+          {{ languageStore.t('mypost') }}
 
         </RouterLink>
       </nav>
@@ -138,6 +158,7 @@ async function submitHeaderSearch() {
               : 'bg-transparent text-[#201f62] hover:bg-[#f0f1ff]'
           ]"
           aria-label="Notifications"
+          @click="goToNotifications"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" class="h-[25px] w-[25px] fill-current">
             <path

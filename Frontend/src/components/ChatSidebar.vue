@@ -1,26 +1,16 @@
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue'
-
-type User = {
-  id: string | number
-  name: string
-  role: string
-  message: string
-  time: string
-  avatar?: string
-  online?: boolean
-}
+import type { ChatUser } from '@/types/chat'
 
 const { users, selectedUser } = defineProps<{
-  users: User[]
-  selectedUser: User | null
+  users: ChatUser[]
+  selectedUser: ChatUser | null
 }>()
 
 const emit = defineEmits<{
-  (e: 'select-user', user: User): void
+  (e: 'select-user', user: ChatUser): void
 }>()
 
-const getAvatarUrl = (user: User) => {
+const getAvatarUrl = (user: ChatUser) => {
   const avatarValue = user.avatar?.trim()
   if (avatarValue) {
     return avatarValue

@@ -6,38 +6,19 @@ import { useAuthStore } from '@/stores/auth'
 import LoginPromptModal from '@/components/LoginPromptModal.vue'
 import { connectSocket, getSocket, disconnectSocket } from '@/services/socket'
 import api from '@/services/api'
+import type { ChatUser } from '@/types/chat'
 
 import ChatSidebar from "../components/ChatSidebar.vue"
 import ChatWindow from "../components/ChatWindow.vue"
 import Header from "../components/layout/Header.vue"
 
-type Message = {
-  text: string
-  sender: "me" | "them"
-  time: string
-  type?: "text" | "image" | "voice"
-  imageUrl?: string
-  audioUrl?: string
-}
-
-type User = {
-  id: string | number
-  name: string
-  role: string
-  message: string
-  time: string
-  avatar: string
-  online?: boolean
-  chat: Message[]
-}
-
 const route = useRoute()
 
 // ✅ USERS (frontend temporary until backend)
-const users = ref<User[]>([])
+const users = ref<ChatUser[]>([])
 
 // ✅ CURRENT CHAT USER
-const selectedUser = ref<User | null>(null)
+const selectedUser = ref<ChatUser | null>(null)
 
 // ✅ MESSAGE INPUT
 const newMessage = ref("")
@@ -79,6 +60,28 @@ const saveUsers = () => {
   localStorage.setItem(storageKey.value, JSON.stringify(users.value))
 }
 
+const blobToDataUrl = (blob: Blob) => {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : null
+      if (result) {
+        resolve(result)
+        return
+      }
+
+      reject(new Error('Unable to convert voice recording to a data URL.'))
+    }
+
+    reader.onerror = () => {
+      reject(reader.error || new Error('Unable to read voice recording.'))
+    }
+
+    reader.readAsDataURL(blob)
+  })
+}
+
 const selectSellerFromRoute = () => {
   const sellerId = String(route.query.sellerId || route.query.sellerName || "").trim()
   const sellerName = String(route.query.sellerName || "").trim()
@@ -102,7 +105,7 @@ const selectSellerFromRoute = () => {
   }
 
   const sellerAvatar = normalizeAvatarUrl(String(route.query.sellerAvatar || ""))
-  const sellerUser: User = {
+  const sellerUser: ChatUser = {
     id: sellerId,
     name: sellerName,
     role: "Seller",
@@ -141,7 +144,7 @@ const initChat = () => {
   }
 
   if (users.value.length > 0) {
-    selectedUser.value = users.value[0]
+    selectedUser.value = users.value[0] || null
   }
 }
 
@@ -198,7 +201,7 @@ watch(
 // =========================
 // SELECT USER FROM SIDEBAR
 // =========================
-const selectUser = (user: User) => {
+const selectUser = (user: ChatUser) => {
   selectedUser.value = user
 }
 
@@ -252,30 +255,38 @@ const sendMessage = async () => {
 const sendImage = async (file: File) => {
   if (!selectedUser.value) return
 
-  const imageUrl = URL.createObjectURL(file)
+  let imageUrl = ''
 
-  // ✅ 1. instant UI update
+  try {
+    imageUrl = await blobToDataUrl(file)
+  } catch (err) {
+    console.error('Image conversion failed', err)
+    return
+  }
+
+  const time = new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+
   selectedUser.value.chat.push({
     text: "",
     sender: "me",
-    time: new Date().toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
+    time,
     type: "image",
     imageUrl,
   })
 
+  selectedUser.value.message = "Sent an image"
+  selectedUser.value.time = time
   saveUsers()
 
-  // ✅ 2. send to backend (optional file upload later)
   try {
-    const form = new FormData()
-    form.append("receiverId", String(selectedUser.value.id))
-    form.append("file", file)
-    form.append("type", "image")
-
-    await api.post("/chat/send-image", form)
+    await api.post("/chat/send", {
+      receiverId: String(selectedUser.value.id),
+      content: imageUrl,
+      type: "image",
+    })
   } catch (err) {
     console.error("Image send failed", err)
   }
@@ -284,7 +295,15 @@ const sendImage = async (file: File) => {
 const sendVoice = async (audioBlob: Blob) => {
   if (!selectedUser.value) return
 
-  const audioUrl = URL.createObjectURL(audioBlob)
+  let audioUrl = ''
+
+  try {
+    audioUrl = await blobToDataUrl(audioBlob)
+  } catch (err) {
+    console.error('Voice conversion failed', err)
+    return
+  }
+
   const time = new Date().toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
@@ -303,12 +322,11 @@ const sendVoice = async (audioBlob: Blob) => {
   saveUsers()
 
   try {
-    const form = new FormData()
-    form.append("receiverId", String(selectedUser.value.id))
-    form.append("file", audioBlob)
-    form.append("type", "voice")
-
-    await api.post("/chat/send-voice", form)
+    await api.post("/chat/send", {
+      receiverId: String(selectedUser.value.id),
+      content: audioUrl,
+      type: "voice",
+    })
   } catch (err) {
     console.error("Voice send failed", err)
   }

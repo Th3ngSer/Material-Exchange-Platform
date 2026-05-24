@@ -16,7 +16,9 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
 const images = computed(() =>
   (props.data.images ?? []).map((image) => {
     if (typeof image === 'string') {
-      return image.startsWith('http') ? image : `${apiBaseUrl}/uploads/${image}`
+      if (image.startsWith('http')) return image
+      const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '')
+      return `${uploadBaseUrl}/uploads/${image}`
     }
 
     return URL.createObjectURL(image)
