@@ -238,10 +238,9 @@ const sendImage = async (file: File) => {
   // ✅ 1. instant UI update
   selectedUser.value.chat.push({
     text: "",
-    sender: "me",
-    time: new Date().toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
+    sender: "me",    time: new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
     }),
     type: "image",
     imageUrl,
@@ -364,5 +363,10 @@ function handleIncomingMessage(msg: any) {
   display: flex;
   height: calc(100vh - 60px);
   font-family: 'Inter', system-ui, sans-serif;
+}
+.send-Image-button{
+  hover {
+    cursor: pointer;
+  }
 }
 </style>
