@@ -18,6 +18,7 @@ import { ReportsModule } from './reports/reports.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+<<<<<<< HEAD
 
     // MongoDB connection
     MongooseModule.forRootAsync({
@@ -50,6 +51,9 @@ import { ReportsModule } from './reports/reports.module';
     AdminDashboardModule,
     TransactionsModule,
     ReportsModule,
+=======
+    ...databaseImports,
+>>>>>>> SRENG_Panha
   ],
   controllers: [AppController],
   providers: [AppService],

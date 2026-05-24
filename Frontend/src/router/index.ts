@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { createRouter, createWebHistory } from 'vue-router'
 //  Admin Dashboard
 import AdminActivity from '../views/AdminActivity.vue'
@@ -30,6 +31,20 @@ import LogoutInformation from '@/user/LogoutInformation.vue'
 import PaymentInformation from '@/user/PaymentInformation.vue'
 import TrackingInformation from '@/user/TrackingInformation.vue'
 import { useAuthStore } from '@/stores/auth'
+=======
+import { createRouter, createWebHistory } from "vue-router"
+import Chat from "../views/Chat.vue"
+import TestSidebar from '@/userprofileVue/TestSidebar.vue'
+import PersonalInfo from '@/userprofileVue/PersonalInformation.vue'
+import EditInfo from '@/userprofileVue/EditInformation.vue'
+import HelpInfo from '@/userprofileVue/HelpInformation.vue'
+import LogoutInfo from '@/userprofileVue/LogoutInformation.vue'
+import Language from '@/userprofileVue/LangaugeInformation.vue'
+import Payment from '@/userprofileVue/PaymentInformation.vue'
+import Tracker from '@/userprofileVue/TrackingInformation.vue'
+import Notification from '@/components/Notificationsview.vue'
+import Report from '@/views/ReportView.vue'
+>>>>>>> SRENG_Panha
 
 
 const router = createRouter({
@@ -38,6 +53,7 @@ const router = createRouter({
   scrollBehavior() {
     return { left: 0, top: 0 }
   },
+<<<<<<< HEAD
   routes: [
     { path: '/', redirect: '/home' },
     { path: '/home', name: 'home', component: HomeView },
@@ -95,6 +111,33 @@ router.beforeEach((to) => {
   if (!to.matched.some((record) => record.meta?.requiresAdmin)) {
     return true
   }
+=======
+  {
+    path: '/language',
+    name: 'Language',
+    component: Language
+  },
+  {
+  path: '/tracker',
+  name: 'tracker',
+  component: Tracker
+  },
+  {
+    path: '/payments',
+    name: 'Payment',
+    component: Payment
+  },
+
+  {
+    path: '/notification',
+    name: 'Notification',
+    component: Notification
+  },
+
+  { path: '/report', 
+    name : 'Report',
+    component: Report  }
+>>>>>>> SRENG_Panha
 
   const authStore = useAuthStore()
   const token = sessionStorage.getItem('authToken')
