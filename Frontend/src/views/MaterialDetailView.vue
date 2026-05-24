@@ -135,6 +135,7 @@ const detailStats = computed(() => [
           <!-- Status Badge -->
           <div class="inline-block w-fit rounded-full bg-[#31d07f] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#0f3d25]">
             {{ statusLabel }}
+          </div>
 
           <!-- Title & Subtitle -->
           <div>
@@ -176,9 +177,9 @@ const detailStats = computed(() => [
 
           <!-- Seller Card -->
           <MaterialDetailSellerCard
-            :name="currentPost.seller ?? 'Marketplace seller'"
+            :name="currentPost.seller ?? languageStore.t('marketplaceSeller')"
             :rating="currentPost.rating ?? 4.9"
-            response-time="Usually replies in 1 hour"
+            :response-time="languageStore.t('usuallyRepliesIn1Hour')"
             :location="currentPost.location"
             :avatar="currentPost.avatar"
           />
@@ -195,7 +196,7 @@ const detailStats = computed(() => [
               :class="activeTab === 'description' ? 'border-b-2 border-[#1b1748] text-[#1b1748]' : 'text-[#999] hover:text-[#666]'"
               @click="activeTab = 'description'"
             >
-              Description
+              {{ languageStore.t('description') }}
             </button>
             <button
               type="button"
@@ -203,7 +204,11 @@ const detailStats = computed(() => [
               :class="activeTab === 'specifications' ? 'border-b-2 border-[#1b1748] text-[#1b1748]' : 'text-[#999] hover:text-[#666]'"
               @click="activeTab = 'specifications'"
             >
-                {{ languageStore.t('specifications') }}
+              {{ languageStore.t('specifications') }}
+            </button>
+          </div>
+        </div>
+
         <div class="mt-6 grid gap-8 lg:grid-cols-3">
           <div class="lg:col-span-2">
             <template v-if="activeTab === 'description'">
@@ -238,8 +243,6 @@ const detailStats = computed(() => [
                 </li>
               </ul>
             </template>
-
-            
           </div>
 
           <!-- Location Map -->
