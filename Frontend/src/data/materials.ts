@@ -2,7 +2,7 @@ export type MaterialCategory = 'Sell' | 'Exchange' | 'Borrow'
 export type MaterialTone = 'gold' | 'orange' | 'rose'
 
 export interface MaterialItem {
-  id: number
+  id: number | string
   title: string
   price: string
   location: string

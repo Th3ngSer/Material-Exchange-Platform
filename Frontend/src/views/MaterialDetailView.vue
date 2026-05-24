@@ -1,18 +1,23 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import axios from 'axios'
+import { useAuthStore } from '@/stores/auth'
 
 import Footer from '@/components/layout/Footer.vue'
 import Header from '@/components/layout/Header.vue'
 import MaterialDetailGallery from '@/components/materialDetail/MaterialDetailGallery.vue'
 import MaterialDetailSellerCard from '@/components/materialDetail/MaterialDetailSellerCard.vue'
 import RelatedMaterialCard from '@/components/materialDetail/MaterialCard.vue'
-import { defaultMaterials, getMaterialById, type MaterialItem, type MaterialTone } from '@/data/materials'
+import { defaultMaterials, type MaterialItem, type MaterialTone } from '@/data/materials'
 import MaterialMap from '@/components/materialDetail/MaterialMap.vue'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 const activeTab = ref<'description' | 'specifications'>('description')
+const errorMessage = ref('')
+const showDeleteModal = ref(false)
 
 // Scroll to top when route ID changes
 watch(
@@ -22,12 +27,103 @@ watch(
   },
 )
 
-const currentPost = computed<MaterialItem>(() => {
-  const id = Number(route.params.id)
-  return (Number.isFinite(id) ? getMaterialById(id) : undefined) ?? defaultMaterials[0]!
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+
+const post = ref<any>({
+  id: 0,
+  title: 'Loading...',
+  description: '',
+  images: [],
+  type: 'Sell',
+  price: '',
+  location: '',
+  condition: 'Used',
 })
 
+async function loadPostById(id: string | number | undefined) {
+  if (!id) return
+  try {
+    const { data } = await axios.get(`${apiBaseUrl}/posts/${id}`)
+    const p = data as any
+    const uploadBase = apiBaseUrl.replace(/\/api\/?$/, '')
+    const images = Array.isArray(p.images)
+      ? p.images.map((f: string) => (/^https?:\/\//i.test(f) ? f : `${uploadBase}/uploads/${String(f).replace(/^\/+/, '')}`))
+      : []
 
+    post.value = {
+      id: p._id,
+      _id: p._id,
+      title: p.title,
+      description: p.description,
+      images,
+      type: p.type === 'sell' ? 'Sell' : p.type === 'exchange' ? 'Exchange' : 'Borrow',
+      price: p.price,
+      location: p.location,
+      category: p.category,
+      condition: p.condition === 'new' ? 'New' : 'Used',
+      seller: p.listerName ?? 'Marketplace seller',
+      avatar: p.listerAvatar,
+      postedTime: p.createdAt ?? p.updatedAt,
+      exchangeFor: p.exchangeFor,
+      lat: p.lat,
+      lng: p.lng,
+      rating: p.rating,
+      ownerId: p.ownerId,
+    }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (err) {
+    // fallback to default
+    post.value = defaultMaterials[0]
+  }
+}
+
+onMounted(() => loadPostById(String(route.params.id)))
+
+watch(() => route.params.id, (id) => loadPostById(String(id)))
+
+const currentPost = computed(() => post.value as MaterialItem & { _id?: string; ownerId?: string })
+
+// ── Auth / ownership ────────────────────────────────────────────────────────
+const isAdmin = computed(() => authStore.user?.role === 'admin')
+const isOwner = computed(() => Boolean(currentPost.value?.ownerId && authStore.user?.id === currentPost.value.ownerId))
+// Only the original lister (owner) may edit/delete their post.
+const canDelete = computed(() => Boolean(currentPost.value && authStore.isAuthenticated && isOwner.value))
+
+// ── Actions ─────────────────────────────────────────────────────────────────
+function openDeleteModal() {
+  showDeleteModal.value = true
+}
+
+function closeDeleteModal() {
+  showDeleteModal.value = false
+}
+
+async function confirmDeletePost() {
+  if (!currentPost.value?._id) return
+
+  try {
+    const endpoint = isAdmin.value
+      ? `${apiBaseUrl}/posts/admin/${currentPost.value._id}`
+      : `${apiBaseUrl}/posts/${currentPost.value._id}`
+
+    await axios.delete(endpoint, {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem('authToken') ?? ''}`,
+      },
+    })
+    showDeleteModal.value = false
+    await router.push('/posts')
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const message = error.response?.data?.message
+      errorMessage.value = Array.isArray(message) ? message.join(', ') : (message ?? 'Failed to delete post.')
+    } else {
+      errorMessage.value = 'Failed to delete post.'
+    }
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 function titleCase(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
@@ -52,7 +148,17 @@ function formatRelativeTime(dateString?: string) {
   return `${days} day${days === 1 ? '' : 's'} ago`
 }
 
-const galleryImages = computed(() => currentPost.value.images ?? [])
+const galleryImages = computed(() => (currentPost.value.images as string[]) ?? [])
+
+const hasMapCoordinates = computed(
+  () => typeof currentPost.value.lat === 'number' && typeof currentPost.value.lng === 'number',
+)
+
+const locationMapSrc = computed(() => {
+  const location = String(currentPost.value.location ?? '').trim()
+  if (!location) return ''
+  return `https://www.google.com/maps?q=${encodeURIComponent(location)}&output=embed`
+})
 
 const relatedCardItems = computed(() =>
   defaultMaterials
@@ -80,7 +186,6 @@ const detailStats = computed(() => [
   { label: 'Location', value: currentPost.value.location },
   { label: 'Listed', value: formatRelativeTime(currentPost.value.postedTime) },
 ])
-
 </script>
 
 <template>
@@ -97,6 +202,11 @@ const detailStats = computed(() => [
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-left"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg>
         Back
       </button>
+
+      <!-- Error banner -->
+      <div v-if="errorMessage" class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        {{ errorMessage }}
+      </div>
 
       <section class="grid gap-8 lg:grid-cols-[1fr_1.1fr]">
         <!-- Left: Image Gallery -->
@@ -123,7 +233,7 @@ const detailStats = computed(() => [
           <!-- Price -->
           <div class="text-4xl font-black text-[#1b1748]">{{ formatPrice(currentPost) }}</div>
 
-          <!-- Action Button (shows only the relevant action per category) -->
+          <!-- Action Button (shows only the relevant action per type) -->
           <div>
             <template v-if="currentPost.type === 'Sell'">
               <button type="button" class="rounded-lg bg-[#1b1748] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#29255f]">
@@ -160,11 +270,28 @@ const detailStats = computed(() => [
             :location="currentPost.location"
             :avatar="currentPost.avatar"
           />
+
+          <!-- Owner / Admin actions -->
+          <div v-if="canDelete" class="flex flex-wrap gap-3 border-t border-[#e5e5e5] pt-5">
+            <router-link
+              :to="`/posts/${currentPost._id}/edit`"
+              class="rounded-lg bg-[#1b1748] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#29255f]"
+            >
+              Edit post
+            </router-link>
+            <button
+              type="button"
+              class="rounded-lg border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+              @click="openDeleteModal"
+            >
+              Delete post
+            </button>
+          </div>
         </div>
       </section>
 
       <section class="mt-12">
-        <!-- Tabs Section -->
+        <!-- Tabs -->
         <div class="border-b border-[#e5e5e5] pb-4">
           <div class="flex gap-6 text-sm font-semibold">
             <button
@@ -183,7 +310,6 @@ const detailStats = computed(() => [
             >
               Specifications
             </button>
-            
           </div>
         </div>
 
@@ -192,9 +318,7 @@ const detailStats = computed(() => [
           <div class="lg:col-span-2">
             <template v-if="activeTab === 'description'">
               <h2 class="text-2xl font-black text-[#1b1748]">{{ currentPost.title }}</h2>
-              <p class="mt-4 text-base leading-relaxed text-[#666]">
-                {{ currentPost.description }}
-              </p>
+              <p class="mt-4 text-base leading-relaxed text-[#666]">{{ currentPost.description }}</p>
             </template>
 
             <template v-else-if="activeTab === 'specifications'">
@@ -222,8 +346,6 @@ const detailStats = computed(() => [
                 </li>
               </ul>
             </template>
-
-            
           </div>
 
           <!-- Location Map -->
@@ -234,18 +356,55 @@ const detailStats = computed(() => [
             </div>
 
             <div class="relative min-h-[300px] overflow-hidden rounded-lg bg-[#eef6f8]">
-              <div v-if="typeof currentPost.lat === 'number' && typeof currentPost.lng === 'number'">
+              <div v-if="hasMapCoordinates">
                 <MaterialMap :lat="currentPost.lat" :lng="currentPost.lng" :location="currentPost.location" />
               </div>
+              <div v-else-if="locationMapSrc" class="h-[300px]">
+                <iframe
+                  :src="locationMapSrc"
+                  :title="`Map for ${currentPost.location}`"
+                  class="h-full w-full rounded-lg border-0"
+                  loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade"
+                />
+              </div>
               <div v-else class="flex h-[300px] items-center justify-center">
-                <div class="text-[#6b7280] text-lg font-semibold">Map unavailable for this listing</div>
+                <div class="text-lg font-semibold text-[#6b7280]">Map unavailable for this listing</div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Related Listings Section -->
+      <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
+        <div class="w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-[0_25px_70px_rgba(15,23,42,0.25)]">
+          <h3 class="text-2xl font-bold text-[#1e1b4b]">Confirm Delete</h3>
+
+          <p class="mt-3 text-sm leading-6 text-slate-600">
+            Are you sure you want to delete "{{ currentPost.title }}"? This action cannot be undone.
+          </p>
+
+          <div class="mt-6 flex justify-center gap-3">
+            <button
+              type="button"
+              class="rounded-lg bg-slate-200 px-5 py-2.5 font-semibold text-slate-700 transition hover:bg-slate-300"
+              @click="closeDeleteModal"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              class="rounded-lg bg-[#1e1b4b] px-5 py-2.5 font-semibold text-white transition hover:bg-[#2a2566]"
+              @click="confirmDeletePost"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Related Listings -->
       <section class="mt-16">
         <div class="mb-8 flex items-center justify-between">
           <div>

@@ -29,11 +29,17 @@ export class Post {
   @Prop({ required: true })
   contact!: string;
 
+  @Prop({ required: true, index: true })
+  ownerId!: string;
+
   @Prop({ required: true })
   location!: string;
 
   @Prop({ trim: true })
   listerName?: string;
+
+  @Prop({ trim: true })
+  listerAvatar?: string;
 
   @Prop({
     type: String,

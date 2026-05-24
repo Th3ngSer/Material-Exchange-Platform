@@ -7,7 +7,7 @@ import BaseMaterialCard from '@/components/HomeView/MaterialCard.vue'
 type Tone = 'gold' | 'orange' | 'rose'
 
 type MaterialCardItem = {
-  id: number
+  id: number | string
   title: string
   price: string
   location: string
