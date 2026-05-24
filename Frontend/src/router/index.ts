@@ -28,6 +28,7 @@ import HelpProfile from '../user/HelpProfile.vue'
 import LangaugeInformation from '../user/LangaugeInformation.vue'
 import LogoutInformation from '@/user/LogoutInformation.vue'
 import PaymentInformation from '@/user/PaymentInformation.vue'
+import Notification from '@/components/Notificationsview.vue'
 import TrackingInformation from '@/user/TrackingInformation.vue'
 import { useAuthStore } from '@/stores/auth'
 
@@ -42,6 +43,7 @@ const router = createRouter({
     { path: '/', redirect: '/home' },
     { path: '/home', name: 'home', component: HomeView },
     { path: '/browse', name: 'browse', component: BrowseView },
+    { path: '/notification', name: 'Notification', component: Notification },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/signup', name: 'signup', component: SignUpView },
 
