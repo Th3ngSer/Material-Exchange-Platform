@@ -5,3 +5,24 @@ export interface Message {
   content: string
   createdAt: string
 }
+
+export interface ChatMessage {
+  text: string
+  sender: 'me' | 'them'
+  time: string
+  type?: 'text' | 'image' | 'voice'
+  imageUrl?: string
+  audioUrl?: string
+  duration?: number
+}
+
+export interface ChatUser {
+  id: string | number
+  name: string
+  role: string
+  message: string
+  time: string
+  avatar?: string
+  online?: boolean
+  chat: ChatMessage[]
+}

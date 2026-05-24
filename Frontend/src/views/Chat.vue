@@ -6,38 +6,19 @@ import { useAuthStore } from '@/stores/auth'
 import LoginPromptModal from '@/components/LoginPromptModal.vue'
 import { connectSocket, getSocket, disconnectSocket } from '@/services/socket'
 import api from '@/services/api'
+import type { ChatMessage, ChatUser } from '@/types/chat'
 
 import ChatSidebar from "../components/ChatSidebar.vue"
 import ChatWindow from "../components/ChatWindow.vue"
 import Header from "../components/layout/Header.vue"
 
-type Message = {
-  text: string
-  sender: "me" | "them"
-  time: string
-  type?: "text" | "image" | "voice"
-  imageUrl?: string
-  audioUrl?: string
-}
-
-type User = {
-  id: string | number
-  name: string
-  role: string
-  message: string
-  time: string
-  avatar: string
-  online?: boolean
-  chat: Message[]
-}
-
 const route = useRoute()
 
 // ✅ USERS (frontend temporary until backend)
-const users = ref<User[]>([])
+const users = ref<ChatUser[]>([])
 
 // ✅ CURRENT CHAT USER
-const selectedUser = ref<User | null>(null)
+const selectedUser = ref<ChatUser | null>(null)
 
 // ✅ MESSAGE INPUT
 const newMessage = ref("")
@@ -102,7 +83,7 @@ const selectSellerFromRoute = () => {
   }
 
   const sellerAvatar = normalizeAvatarUrl(String(route.query.sellerAvatar || ""))
-  const sellerUser: User = {
+  const sellerUser: ChatUser = {
     id: sellerId,
     name: sellerName,
     role: "Seller",
@@ -141,7 +122,7 @@ const initChat = () => {
   }
 
   if (users.value.length > 0) {
-    selectedUser.value = users.value[0]
+    selectedUser.value = users.value[0] || null
   }
 }
 
@@ -198,7 +179,7 @@ watch(
 // =========================
 // SELECT USER FROM SIDEBAR
 // =========================
-const selectUser = (user: User) => {
+const selectUser = (user: ChatUser) => {
   selectedUser.value = user
 }
 

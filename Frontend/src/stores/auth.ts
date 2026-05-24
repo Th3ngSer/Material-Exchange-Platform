@@ -156,13 +156,40 @@ export const useAuthStore = defineStore('auth', () => {
 
       return updatedUser
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to update profile'
+      const statusCode = (err as any)?.statusCode
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update profile'
 
       error.value = errorMessage
+      if (statusCode === 401) {
+        logout()
+      }
       throw err
     } finally {
       isLoading.value = false
+    }
+  }
+
+  /**
+   * Refresh user profile from server
+   */
+  async function refreshUser() {
+    try {
+      const token = localStorage.getItem('authToken')
+
+      if (!token) {
+        logout()
+        return
+      }
+
+      const profile = await authApi.getProfile(token)
+      user.value = profile
+      return profile
+    } catch (err) {
+      const statusCode = (err as any)?.statusCode
+      if (statusCode === 401) {
+        logout()
+      }
+      throw err
     }
   }
 
@@ -182,6 +209,7 @@ export const useAuthStore = defineStore('auth', () => {
     clearError,
     initializeAuth,
     updateProfile,
+    refreshUser,
   }
 
 })

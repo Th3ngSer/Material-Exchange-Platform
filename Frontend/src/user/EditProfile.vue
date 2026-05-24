@@ -66,14 +66,17 @@
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn" @click="saveProfile"><!-- {{ languageStore.t('saveChanges') }} -->Save Changes</button>
+        <div v-if="saveError" class="error-message">{{ saveError }}</div>
+        <button type="button" class="btn" @click="saveProfile" :disabled="isSaving">
+          {{ isSaving ? 'Saving...' : 'Save Changes' }}
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
 import { useLanguageStore } from '../stores/language'
@@ -82,6 +85,9 @@ import { useAuthStore } from '@/stores/auth'
 const router = useRouter()
 const languageStore = useLanguageStore()
 const authStore = useAuthStore()
+
+const saveError = ref(null)
+const isSaving = ref(false)
 
 const form = reactive({
   firstName: '',
@@ -115,6 +121,9 @@ onMounted(() => {
 })
 
 const saveProfile = async () => {
+  saveError.value = null
+  isSaving.value = true
+  
   try {
     await authStore.updateProfile({
       name: `${form.firstName} ${form.lastName}`.trim(),
@@ -128,7 +137,20 @@ const saveProfile = async () => {
 
     router.push('/profile')
   } catch (err) {
+    const statusCode = err?.statusCode
+    const message = err instanceof Error ? err.message : 'Failed to update profile'
+    
     console.error('Profile update failed:', err)
+    saveError.value = message
+    
+    // Redirect to login if authentication was lost
+    if (statusCode === 401) {
+      setTimeout(() => {
+        router.push('/login')
+      }, 2000)
+    }
+  } finally {
+    isSaving.value = false
   }
 }
 </script>
@@ -203,14 +225,29 @@ const saveProfile = async () => {
   pointer-events: auto;
 }
 
-.btn:hover {
+.btn:hover:not(:disabled) {
   background: #2d2a5f;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.btn:active {
+.btn:active:not(:disabled) {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #dc2626;
+  background-color: #fee2e2;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  border-left: 4px solid #dc2626;
 }
 </style>

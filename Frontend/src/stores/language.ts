@@ -26,6 +26,8 @@ type TranslationKey =
   | 'email'
   | 'editProfile'
   | 'saveChanges'
+  | 'profileSaved'
+  | 'saveFailed'
   | 'paymentMethod'
   | 'bankTransfer'
   | 'cardPayment'
@@ -242,6 +244,8 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     email: 'Email',
     editProfile: 'Edit Profile',
     saveChanges: 'Save Changes',
+    profileSaved: 'Profile saved successfully!',
+    saveFailed: 'Failed to save profile. Please try again.',
     paymentMethod: 'Payment Method',
     bankTransfer: 'Bank Transfer',
     cardPayment: 'Card Payment',
@@ -457,6 +461,8 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     email: 'អ៊ីមែល',
     editProfile: 'កែប្រែព័ត៍មាន',
     saveChanges: 'រក្សាទុកការផ្លាស់ប្តូរ',
+    profileSaved: 'កំណត់ព័ត៍មានបានរក្សាទុក្ខសម្រួច!',
+    saveFailed: 'រក្សាទុកព័ត៍មានបរាជ័យ។ សូមព្យាយាមម្ដងទៀត។',
     paymentMethod: 'វិធីសាស្ត្រទូទាត់',
     bankTransfer: 'ផ្ទេរទៅធនាគារ',
     cardPayment: 'បង់ប្រាក់តាមកាត',
