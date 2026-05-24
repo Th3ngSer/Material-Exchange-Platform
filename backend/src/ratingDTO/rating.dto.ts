@@ -1,6 +1,7 @@
 import { IsInt, Min, Max, IsOptional, IsString } from 'class-validator';
 
 export class CreateRatingDto {
+
   @IsInt()
   transactionId!: number;
 
