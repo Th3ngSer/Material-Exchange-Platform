@@ -8,7 +8,7 @@ const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 
 const goToNotifications = () => {
-  router.push('/notification')
+  router.push('/notifications')
 }
 </script>
 
