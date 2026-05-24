@@ -145,7 +145,23 @@ export const useAuthStore = defineStore('auth', () => {
  * Initialize auth state
  */
   async function initializeAuth() {
-    const token = sessionStorage.getItem('authToken')
+    let token = sessionStorage.getItem('authToken')
+
+    if (!token) {
+      const legacyToken = localStorage.getItem('authToken')
+      const legacyUser = localStorage.getItem(USER_STORAGE_KEY)
+
+      if (legacyToken) {
+        sessionStorage.setItem('authToken', legacyToken)
+        localStorage.removeItem('authToken')
+        token = legacyToken
+      }
+
+      if (legacyUser) {
+        sessionStorage.setItem(USER_STORAGE_KEY, legacyUser)
+        localStorage.removeItem(USER_STORAGE_KEY)
+      }
+    }
 
     if (!token) {
       logout()

@@ -42,7 +42,7 @@ export class PostsController {
   async checkDatabase() {
     try {
       this.logger.log('Checking database connection...');
-      const count = (await this.postsService.countDocuments()) as number;
+      const count = (await this.postsService.countDocuments());
       this.logger.log('✅ Database connection successful');
       return {
         status: 'connected',

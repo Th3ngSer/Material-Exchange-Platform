@@ -28,7 +28,10 @@ export function createPostUploadOptions(): MulterOptions {
     storage: diskStorage({
       destination: (_req, _file, callback) => callback(null, uploadDir),
       filename: (_req, file, callback) => {
-        callback(null, `${uuidv4()}${extname(file.originalname).toLowerCase()}`);
+        callback(
+          null,
+          `${uuidv4()}${extname(file.originalname).toLowerCase()}`,
+        );
       },
     }),
     limits: {
