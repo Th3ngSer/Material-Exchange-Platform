@@ -11,7 +11,6 @@ const languageStore = useLanguageStore()
 const router = useRouter()
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-const router = useRouter()
 
 type HeaderSearchType = 'All' | 'Sell' | 'Exchange' | 'Borrow'
 
