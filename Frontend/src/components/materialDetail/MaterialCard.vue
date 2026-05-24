@@ -11,7 +11,10 @@ type MaterialCardItem = {
   title: string
   price: string
   location: string
-  category: 'Sell' | 'Exchange' | 'Borrow'
+  /** transaction type */
+  type: 'Sell' | 'Exchange' | 'Borrow'
+  /** product category (Clothing, Electronics, etc.) */
+  category?: string
   tone: Tone
   seller?: string
   rating?: number

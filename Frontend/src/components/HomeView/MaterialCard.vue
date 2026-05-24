@@ -7,7 +7,10 @@ defineProps<{
     title: string
     price: string
     location: string
-    category: string
+    /** transaction type */
+    type: 'Sell' | 'Exchange' | 'Borrow'
+    /** product category */
+    category?: string
     tone: Tone
     seller?: string
     rating?: number
@@ -47,6 +50,16 @@ function getTimeAgo(dateString: string | undefined): string {
 
   return date.toLocaleDateString()
 }
+
+function formatCardPrice(item: {
+  type: 'Sell' | 'Exchange' | 'Borrow'
+  price?: string
+}): string {
+  if (item.type === 'Exchange') return ''
+  if (item.type === 'Borrow') return item.price ? `$${Number(item.price || 0).toFixed(2)}/wk` : ''
+  // Sell
+  return item.price ? (item.price.startsWith('$') ? item.price : '$' + item.price) : ''
+}
 </script>
 
 <template>
@@ -58,16 +71,16 @@ function getTimeAgo(dateString: string | undefined): string {
       <!-- For Sale Badge -->
       <div
         class="absolute top-3 left-3 text-white px-3 py-1 rounded-lg text-sm font-bold"
-        :style="{
+          :style="{
           backgroundColor:
-            item.category === 'Sell'
+            item.type === 'Sell'
               ? '#FF5A5A'
-              : item.category === 'Exchange'
+              : item.type === 'Exchange'
                 ? '#FF8C00'
                 : '#0B6F61',
         }"
       >
-        {{ getBadgeLabel(item.category) }}
+        {{ item.type === 'Sell' ? 'For sale' : item.type === 'Exchange' ? 'Exchange' : 'Borrow' }}
       </div>
 
       <!-- Product Image -->
@@ -85,9 +98,9 @@ function getTimeAgo(dateString: string | undefined): string {
         <h3 class="text-lg font-bold leading-tight flex-1">{{ item.title }}</h3>
         <span
           class="ml-2 min-w-[72px] text-2xl font-bold text-right"
-          :class="item.category === 'Sell' ? 'visible' : 'invisible'"
+          :class="item.type === 'Sell' || item.type === 'Borrow' ? 'visible' : 'invisible'"
         >
-          {{ item.price ? (item.price.startsWith('$') ? item.price : '$' + item.price) : '' }}
+          {{ formatCardPrice(item) }}
         </span>
       </div>
 

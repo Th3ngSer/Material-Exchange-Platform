@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import HomeCategories from '../components/HomeView/HomeCategories.vue'
 import HomeHero from '../components/HomeView/HomeHero.vue'
+import CategoryMarquee from '../components/HomeView/CategoryMarquee.vue'
 import MaterialCard from '@/components/materialDetail/MaterialCard.vue'
 import Footer from '@/components/layout/Footer.vue'
 import Header from '@/components/layout/Header.vue'
@@ -24,13 +26,19 @@ const props = withDefaults(defineProps<Props>(), {
   sortOptions: () => ['All', 'Newest', 'A-Z', 'Z-A'],
 })
 
+const router = useRouter()
 const selectedCategory = ref<Category>(props.categories?.[0] ?? 'All')
 const selectedSort = ref<SortOption>(props.sortOptions?.[0] ?? 'All')
 
 function handleCategoryUpdate(value: string) {
+  // If the clicked value matches a transaction category, update locally.
   if ((props.categories ?? []).includes(value as Category)) {
     selectedCategory.value = value as Category
+    return
   }
+
+  // Otherwise treat as a product category from the marquee and navigate to Browse.
+  router.push({ name: 'browse', query: { category: value } })
 }
 
 function handleSortUpdate(value: string) {
@@ -41,7 +49,7 @@ const filteredMaterials = computed(() => {
   const pool =
     selectedCategory.value === 'All'
       ? props.materials
-      : props.materials.filter((item) => item.category === selectedCategory.value)
+      : props.materials.filter((item) => item.type === selectedCategory.value)
 
   const sortedPool = [...pool]
 
@@ -68,12 +76,15 @@ const featuredCount = computed(() => filteredMaterials.value.length)
 
 // Limit displayed materials to 20 items for any category/filter
 const displayedMaterials = computed(() => filteredMaterials.value.slice(0, 20))
+
 </script>
 
 <template>
   <div class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.9),_rgba(245,245,250,0.95)_30%,_#f5f5f7_65%),linear-gradient(180deg,_#f4f4f8_0%,_#ffffff_20%,_#ffffff_100%)] text-[#15152d]">
     <Header />
     <HomeHero class="pl-20"/>
+
+    <CategoryMarquee :selected-category="selectedCategory" @update:category="handleCategoryUpdate" />
     <main class="mx-auto w-[min(1500px,calc(100%-32px))] max-[768px]:w-[min(100%-20px,100%)]">
       
 
@@ -97,3 +108,5 @@ const displayedMaterials = computed(() => filteredMaterials.value.slice(0, 20))
     <Footer />
   </div>
 </template>
+
+

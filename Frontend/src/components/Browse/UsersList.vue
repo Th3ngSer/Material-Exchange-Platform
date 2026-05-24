@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import NoResults from './NoResults.vue'
 import { useLanguageStore } from '../../stores/language'
 
@@ -14,7 +15,12 @@ interface Props {
   isLoading?: boolean
 }
 
-const languageStore = useLanguageStore()
+const router = useRouter()
+
+function goToProfile(userName: string) {
+  // Navigate to the profile view and include the user name in the query
+  router.push({ name: 'profile', query: { user: userName } })
+}
 
 withDefaults(defineProps<Props>(), {
   isLoading: false
@@ -51,7 +57,9 @@ withDefaults(defineProps<Props>(), {
         </div>
         <button
           type="button"
-          class="rounded-full bg-[#1b1748] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[#242163]"
+          class="rounded-full bg-[#1b1748] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[#242163] cursor-pointer"
+          @click="goToProfile(user.name)"
+          :aria-label="`View profile of ${user.name}`"
         >
           {{ languageStore.t('viewProfile') }}
         </button>

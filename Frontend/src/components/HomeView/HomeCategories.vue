@@ -39,15 +39,10 @@ defineEmits<{
     <div class="flex-1">
       <p
         id="categories"
-        class="mb-2.5 text-[0.82rem] font-black uppercase tracking-[0.18em] text-[#f18b00]"
+        class="m-0 font-serif text-[clamp(2.4rem,5vw,4rem)] leading-[0.95] tracking-[-0.06em] text-[#15152d]"
       >
         {{ languageStore.t('marketplace') }} 
       </p>
-      <h2
-        class="m-0 font-serif text-[clamp(2.4rem,5vw,4rem)] leading-[0.95] tracking-[-0.06em] text-[#15152d]"
-      >
-        {{ languageStore.t('categories') }} 
-      </h2>
     </div>
 
     <div

@@ -5,7 +5,7 @@ let socket: Socket | null = null
 export function connectSocket() {
   if (socket) return socket
 
-  const token = localStorage.getItem('authToken')
+  const token = sessionStorage.getItem('authToken')
   const base = import.meta.env.VITE_API_URL ? String(import.meta.env.VITE_API_URL).replace(/\/api\/?$/, '') : 'http://localhost:3000'
 
   socket = io(base, {

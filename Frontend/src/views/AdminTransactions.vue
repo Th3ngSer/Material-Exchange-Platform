@@ -56,7 +56,7 @@ const fetchTransactions = async () => {
   errorMessage.value = ''
 
   try {
-    const token = localStorage.getItem('authToken')
+    const token = sessionStorage.getItem('authToken')
     const response = await fetch(`${API_BASE_URL}/transactions/admin/all`, {
       headers: {
         'Content-Type': 'application/json',
@@ -208,6 +208,7 @@ const isActive = (path: string) => {
 
 .admin-shell {
   min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: 260px 1fr;
   background: radial-gradient(circle at top left, #fff5e1 0%, #f7f0ff 32%, #edf3ff 70%);
@@ -223,6 +224,11 @@ const isActive = (path: string) => {
   display: flex;
   flex-direction: column;
   gap: 32px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  align-self: start;
+  overflow-y: auto;
   z-index: 1;
 }
 
@@ -272,6 +278,7 @@ const isActive = (path: string) => {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  overflow-y: auto;
   z-index: 1;
 }
 
@@ -535,6 +542,8 @@ select {
 @media (max-width: 1024px) {
   .admin-shell {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
   }
 
   .admin-sidebar {
@@ -553,6 +562,10 @@ select {
 
   .logout {
     margin-top: 0;
+  }
+
+  .admin-main {
+    overflow: visible;
   }
 }
 
