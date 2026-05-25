@@ -15,6 +15,8 @@ interface Post {
   contact: string
   location: string
   images: string[]
+  ownerId?: string
+  listerName?: string
   createdAt?: string
 }
 
@@ -26,7 +28,6 @@ type PostsResponse = {
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 const posts = ref<Post[]>([])
-const total = ref(0)
 const isLoading = ref(false)
 const errorMessage = ref('')
 const languageStore = useLanguageStore()
@@ -47,7 +48,26 @@ function formatPrice(post: Post) {
 }
 
 function imageUrl(filename: string) {
-  return `${apiBaseUrl}/uploads/${filename}`
+  if (/^https?:\/\//i.test(filename)) return filename
+  const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '')
+  return `${uploadBaseUrl}/uploads/${filename.replace(/^\/+/, '')}`
+}
+
+function detailPath(postId: string) {
+  return `/posts/${postId}`
+}
+
+function editPath(postId: string) {
+  return `/posts/${postId}/edit`
+}
+
+function canManagePost(post: Post) {
+  if (authStore.user?.role === 'admin') return true
+
+  if (post.ownerId && authStore.user?.id === post.ownerId) return true
+
+  const listerName = post.listerName?.toLowerCase().trim()
+  return Boolean(listerName && currentUserIdentifiers.value.includes(listerName))
 }
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -67,7 +87,6 @@ async function loadPosts() {
   try {
     const { data } = await axios.get<PostsResponse>(`${apiBaseUrl}/posts`)
     posts.value = data.posts ?? []
-    total.value = data.total ?? posts.value.length
   } catch (error: unknown) {
     errorMessage.value = getErrorMessage(error, languageStore.t('errorLoadingSavedPosts'))
   } finally {
@@ -80,10 +99,16 @@ async function deletePost(postId: string, title: string) {
     return
   }
 
+  const isAdmin = authStore.user?.role === 'admin'
+  const endpoint = isAdmin ? `${apiBaseUrl}/posts/admin/${postId}` : `${apiBaseUrl}/posts/${postId}`
+
   try {
-    await axios.delete(`${apiBaseUrl}/posts/${postId}`)
+    await axios.delete(endpoint, {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem('authToken') ?? ''}`,
+      },
+    })
     posts.value = posts.value.filter((p) => p._id !== postId)
-    total.value = Math.max(0, total.value - 1)
   } catch (error: unknown) {
     const msg = getErrorMessage(error, languageStore.t('failedToDeletePost'))
     alert(msg)
@@ -106,11 +131,13 @@ onMounted(loadPosts)
           </h1>
         </div>
 
+        <!--
         <router-link
           to="/posts/create"
           class="inline-flex items-center justify-center rounded-full bg-[#FF8C00] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600"
         >{{ languageStore.t('createPost') }}
         </router-link>
+        -->
       </div>
 
       <div
@@ -122,7 +149,8 @@ onMounted(loadPosts)
         </p>
         <button
           type="button"
-          class="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+          
+          class="inline-flex items-center justify-center rounded-full bg-[#FF8C00] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600"
           @click="loadPosts">
             {{ languageStore.t('refresh') }}
         </button>
@@ -154,11 +182,11 @@ onMounted(loadPosts)
 
       <div v-else class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         <article
-          v-for="post in posts"
+          v-for="post in visiblePosts"
           :key="post._id"
           class="overflow-hidden rounded-3xl border border-white/80 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)]"
         >
-          <div class="aspect-[4/3] bg-slate-100">
+          <router-link :to="detailPath(post._id)" class="block aspect-[4/3] bg-slate-100">
             <img
               v-if="post.images?.[0]"
               :src="imageUrl(post.images[0])"
@@ -168,12 +196,16 @@ onMounted(loadPosts)
             <div v-else class="flex h-full items-center justify-center text-5xl text-slate-300">
               📷
             </div>
-          </div>
+          </router-link>
 
           <div class="space-y-4 p-5">
             <div class="flex items-start justify-between gap-3">
               <div>
-                <h2 class="text-lg font-bold text-slate-900">{{ post.title }}</h2>
+                <h2 class="text-lg font-bold text-slate-900">
+                  <router-link :to="detailPath(post._id)" class="transition hover:text-[#0f5e66]">
+                    {{ post.title }}
+                  </router-link>
+                </h2>
                 <p class="mt-1 text-sm text-slate-500">{{ post.category }} · {{ post.location }}</p>
               </div>
               <span
@@ -204,12 +236,14 @@ onMounted(loadPosts)
 
             <div class="flex gap-2 border-t border-slate-100 pt-4">
               <router-link
-                :to="`/edit/${post._id}`"
+                v-if="canManagePost(post)"
+                :to="editPath(post._id)"
                 class="flex-1 rounded-lg bg-[#1A174A] px-3 py-2 text-center text-sm font-medium text-[#FF8C00] transition hover:bg-[#221f5a]"
               >
                 {{ languageStore.t('edit') }}
               </router-link>
               <button
+                v-if="canManagePost(post)"
                 type="button"
                 class="flex-1 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-700"
                 @click="deletePost(post._id, post.title)"
@@ -220,6 +254,8 @@ onMounted(loadPosts)
           </div>
         </article>
       </div>
-    </section>
-  </main>
+      </section>
+    </main>
+
+    <Footer />
 </template>

@@ -426,7 +426,7 @@ const playVoice = (msg: ChatMessage, index: number) => {
 
       <div class="input-bar">
         <div class="input-inner">
-          <button @click="handleAttachClick" title="Attach image" class="p-2 rounded-full hover:bg-gray-100">
+          <button @click="handleAttachClick" title="Attach image" class="p-2 rounded-ful hover:bg-grey-100 cursor-pointer ">
             
             <!-- Paperclip icon -->
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"

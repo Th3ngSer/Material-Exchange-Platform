@@ -181,6 +181,15 @@ function goBack() {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
+function handleTopBackClick() {
+  if (step.value === 2) {
+    goBack()
+    return
+  }
+
+  void router.push('/home')
+}
+
 // ─── File upload ──────────────────────────────────────────────────────────────
 function handleUpload(e: Event) {
   const files = (e.target as HTMLInputElement).files
@@ -234,9 +243,13 @@ async function submit() {
     fd.append('location', form.location)
     form.images.forEach((file) => fd.append('images', file))
 
-    await axios.post(`${apiBaseUrl}/posts`, fd)
+    await axios.post(`${apiBaseUrl}/posts`, fd, {
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem('authToken') ?? ''}`,
+      },
+    })
     submitted.value = true
-    await router.push('/posts')
+    await router.push('/browse')
   } catch (err: any) {
     const message = err?.response?.data?.message
     submitError.value = Array.isArray(message)
@@ -263,38 +276,17 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="min-h-screen bg-[#F7FDFE] px-4 py-10">
-    <!-- ── Stepper ────────────────────────────────────────
-    <div class="max-w-2xl mx-auto mb-8">
-      <div class="flex items-center">
-        <div class="flex items-center gap-2">
-          <div
-            class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all"
-            :class="step === 1 ? 'bg-indigo-600 text-white' : 'bg-green-500 text-white'"
-          >
-            <span v-if="step === 1">1</span>
-            <span v-else>✓</span>
-          </div>
-          <span class="text-sm font-medium" :class="step === 1 ? 'text-gray-900' : 'text-gray-400'">
-            Listing details
-          </span>
-        </div>
-
-        <div class="flex-1 mx-4 h-px" :class="step === 2 ? 'bg-indigo-400' : 'bg-gray-200'"/>
-
-        <div class="flex items-center gap-2">
-          <div
-            class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all"
-            :class="step === 2 ? (submitted ? 'bg-green-500 text-white' : 'bg-indigo-600 text-white') : 'bg-gray-200 text-gray-400'"
-          >
-            <span v-if="submitted">✓</span>
-            <span v-else>2</span>
-          </div>
-          <span class="text-sm font-medium" :class="step === 2 ? 'text-gray-900' : 'text-gray-400'">
-            Review & post
-          </span>
-        </div>
-      </div>
-    </div> -->
+    <div class="mx-auto mb-6 max-w-2xl">
+      
+      <button
+        type="button"
+        @click="handleTopBackClick"
+        class="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-[#999] transition hover:text-[#1b1748]"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-left"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg>
+        Back
+      </button>
+    </div>
 
     <!-- ══════════════════════════════════════════════════ -->
     <!-- STEP 1: FORM                                       -->

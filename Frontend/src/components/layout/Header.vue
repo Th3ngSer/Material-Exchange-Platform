@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLanguageStore } from '@/stores/language'
 // use the provided logo variant for consistent branding
 import Logo from '@/assets/images/Logo.png'
 
+const router = useRouter()
 const languageStore = useLanguageStore()
 
 const showLanguage = ref(false)
@@ -21,7 +22,7 @@ function selectLanguage(lang: 'English' | 'Khmer') {
 
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-const router = useRouter()
+const route = useRoute()
 
 type HeaderSearchType = 'All' | 'Sell' | 'Exchange' | 'Borrow'
 
@@ -41,6 +42,10 @@ async function submitHeaderSearch() {
   }
 
   await router.push({ name: 'browse', query })
+}
+
+const goToNotifications = () => {
+  void router.push('/notifications')
 }
 </script>
 
@@ -74,13 +79,26 @@ async function submitHeaderSearch() {
         <RouterLink
           :class="[
             'ml-20 text-[16px] font-bold no-underline text-center cursor-pointer transition-colors duration-200',
-            router.currentRoute.value.path.startsWith('/posts/create')
+            router.currentRoute.value.name === 'create-post'
               ? 'text-[#ff4b42]'
               : 'text-[#201f62] hover:text-[#ff4b42]'
           ]"
           to="/posts/create"
         >
           {{ languageStore.t('createPost') }}
+
+        </RouterLink>
+
+        <RouterLink
+          :class="[
+            'ml-20 text-[16px] font-bold no-underline text-center cursor-pointer transition-colors duration-200',
+            router.currentRoute.value.name === 'posts'
+              ? 'text-[#ff4b42]'
+              : 'text-[#201f62] hover:text-[#ff4b42]'
+          ]"
+          to="/posts"
+        >
+          {{ languageStore.t('mypost') }}
 
         </RouterLink>
       </nav>
@@ -183,6 +201,7 @@ async function submitHeaderSearch() {
               : 'bg-transparent text-[#201f62] hover:bg-[#f0f1ff]'
           ]"
           aria-label="Notifications"
+          @click="goToNotifications"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" class="h-[25px] w-[25px] fill-current">
             <path

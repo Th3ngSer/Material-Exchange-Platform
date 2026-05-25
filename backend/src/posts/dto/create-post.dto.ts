@@ -51,6 +51,10 @@ export class CreatePostDto {
   listerName?: string;
 
   @IsOptional()
+  @IsString()
+  retainImages?: string;
+
+  @IsOptional()
   @IsIn(['active', 'suspended', 'sold'])
   status?: string;
 }
