@@ -1,16 +1,28 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLanguageStore } from '@/stores/language'
 // use the provided logo variant for consistent branding
 import Logo from '@/assets/images/Logo.png'
 
+const router = useRouter()
 const languageStore = useLanguageStore()
 
-const router = useRouter()
+const showLanguage = ref(false)
+
+function toggleLanguage() {
+  showLanguage.value = !showLanguage.value
+}
+
+function selectLanguage(lang: 'English' | 'Khmer') {
+  languageStore.setLanguage(lang)
+  showLanguage.value = false
+}
+
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
+const route = useRoute()
 
 type HeaderSearchType = 'All' | 'Sell' | 'Exchange' | 'Borrow'
 
@@ -131,6 +143,39 @@ const goToNotifications = () => {
 
       <!-- chat -->
       <div class="inline-flex items-center justify-self-end gap-2">
+        <!-- Language selector -->
+        <div class="relative">
+          <button
+            @click.stop="toggleLanguage"
+            :title="languageStore.t('language')"
+            class="grid h-[34px] w-[34px] place-items-center rounded-full transition-colors duration-200 bg-transparent text-[#201f62] hover:bg-[#f0f1ff]"
+          >
+            <img
+              src="/userprofileImage/globe.png"
+              alt="Language"
+              class="h-[20px] w-[20px] object-contain"
+            />
+          </button>
+
+          <div
+            v-if="showLanguage"
+            class="absolute right-0 mt-2 w-40 rounded border bg-white shadow-md z-50 overflow-hidden"
+          >
+            <button
+              @click="selectLanguage('English')"
+              class="w-full text-left px-3 py-2 hover:bg-gray-100"
+            >
+              {{ languageStore.t('english') }}
+            </button>
+            <button
+              @click="selectLanguage('Khmer')"
+              class="w-full text-left px-3 py-2 hover:bg-gray-100"
+            >
+              {{ languageStore.t('khmer') }}
+            </button>
+          </div>
+        </div>
+
         <RouterLink
           to="/chat"
           :class="[
@@ -147,8 +192,6 @@ const goToNotifications = () => {
             />
           </svg>
         </RouterLink>
-
-        <!-- Notifications -->
         <RouterLink
           to="/notifications"
           :class="[

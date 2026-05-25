@@ -3,12 +3,16 @@ interface Props {
   browseType: 'items' | 'users'
 }
 
+import { useLanguageStore } from '../../stores/language'
+
 interface Emits {
   (e: 'update:browseType', value: 'items' | 'users'): void
 }
 
 defineProps<Props>()
 defineEmits<Emits>()
+
+const languageStore = useLanguageStore()
 </script>
 
 <template>
@@ -23,7 +27,7 @@ defineEmits<Emits>()
       ]"
       @click="$emit('update:browseType', 'items')"
     >
-      Items
+      {{ languageStore.t('items') }}
     </button>
     <button
       type="button"
@@ -35,7 +39,7 @@ defineEmits<Emits>()
       ]"
       @click="$emit('update:browseType', 'users')"
     >
-      Users
+      {{ languageStore.t('users') }}
     </button>
   </div>
 </template>

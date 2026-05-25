@@ -13,7 +13,6 @@ onMounted(async () => {
 </script>
 
 <template>
-
   <div :class="languageStore.language === 'Khmer' ? 'font-khmer' : ''">
     <router-view v-slot="{ Component }">
       <transition name="fade" mode="out-in">

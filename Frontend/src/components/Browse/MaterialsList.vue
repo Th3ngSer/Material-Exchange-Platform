@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import MaterialCard from '@/components/materialDetail/MaterialCard.vue'
+import MaterialCard from '../materialDetail/MaterialCard.vue'
 import NoResults from './NoResults.vue'
-import { type MaterialItem } from '@/data/materials'
+import { useLanguageStore } from '../../stores/language'
+import { type MaterialItem } from '../../data/materials'
+
+const languageStore = useLanguageStore()
 
 interface Props {
   materials: MaterialItem[]
@@ -18,7 +21,7 @@ withDefaults(defineProps<Props>(), {
     <div
       v-if="materials.length > 0"
       class="mt-7 grid justify-center gap-6 [grid-template-columns:repeat(auto-fill,minmax(320px,320px))] max-[768px]:gap-4 max-[768px]:[grid-template-columns:repeat(auto-fill,minmax(250px,250px))]"
-      aria-label="Material listings"
+      :aria-label="languageStore.t('materialListings')"
     >
       <MaterialCard v-for="item in materials" :key="item.id" :item="item" />
     </div>
@@ -26,8 +29,8 @@ withDefaults(defineProps<Props>(), {
     <NoResults
       v-else
       type="items"
-      message="No Results found"
-      description="We couldn't find what you searched for. Try searching again."
+      :message="languageStore.t('noResultsFound')"
+      :description="languageStore.t('noResultsDescription')"
     />
 
     <div
@@ -35,7 +38,7 @@ withDefaults(defineProps<Props>(), {
       class="flex items-center justify-center py-8 text-sm font-semibold text-[#6a6f93]"
       aria-hidden="true"
     >
-      Loading more materials...
+      {{ languageStore.t('loadingMoreMaterials') }}
     </div>
   </div>
 </template>
