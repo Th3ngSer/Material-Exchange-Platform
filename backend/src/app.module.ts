@@ -11,6 +11,7 @@ import { AdminDashboardModule } from './admin/admin-dashboard.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { PostsModule } from './posts/posts.module';
 import { ReportsModule } from './reports/reports.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { ReportsModule } from './reports/reports.module';
     AdminDashboardModule,
     TransactionsModule,
     ReportsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

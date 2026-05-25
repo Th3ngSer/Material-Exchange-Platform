@@ -11,9 +11,11 @@ import { useAuthStore } from '@/stores/auth'
 import { validateEmail } from '@/utils/validation'
 import type { LoginCredentials } from '@/types/auth'
 import Logo from '@/assets/images/Logo.png'
+import { useLanguageStore } from '@/stores/language'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const languageStore = useLanguageStore()
 
 // Form data
 const email = ref('')
@@ -39,7 +41,7 @@ function validateEmailInput() {
  */
 function validatePasswordInput() {
   if (!password.value.trim()) {
-    passwordError.value = 'Password is required'
+    passwordError.value = languageStore.t('passwordRequired')
   } else {
     passwordError.value = ''
   }
@@ -90,7 +92,7 @@ async function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit" class="login-form">
-    <h1 class="login-title">Login into <img :src="Logo" alt="Material Exchange logo" class="inline-block h-5 align-middle ml-2" /></h1>
+    <h1 class="login-title">{{ languageStore.t('loginInto') }} <img :src="Logo" alt="Material Exchange logo" class="inline-block h-5 align-middle ml-2" /></h1>
 
     <!-- Error Display -->
     <div v-if="authStore.error" class="error-message" role="alert">
@@ -99,12 +101,12 @@ async function handleSubmit() {
 
     <!-- Email Input -->
     <div class="form-group">
-      <label for="email" >Enter your Email</label>
+      <label for="email">{{ languageStore.t('enterYourEmail') }}</label>
       <input
         id="email"
         v-model="email"
         type="email"
-        placeholder="Your email here"
+        :placeholder="languageStore.t('enterYourEmail')"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validateEmailInput"
         @input="emailError = ''"
@@ -114,12 +116,12 @@ async function handleSubmit() {
 
     <!-- Password Input -->
     <div class="form-group">
-      <label for="password">Password</label>
+      <label for="password">{{ languageStore.t('password') }}</label>
       <input
         id="password"
         v-model="password"
         type="password"
-        placeholder="Password"
+        :placeholder="languageStore.t('enterYourPassword')"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validatePasswordInput"
         @input="passwordError = ''"
@@ -134,14 +136,14 @@ async function handleSubmit() {
       class="submit-button"
     >
       <span v-if="isSubmitting || authStore.isLoading" class="loading-spinner"></span>
-      {{ isSubmitting || authStore.isLoading ? 'Logging in...' : 'Login' }}
+      {{ isSubmitting || authStore.isLoading ? languageStore.t('loggingIn') : languageStore.t('login') }}
     </button>
 
     <!-- Link to Sign-Up -->
     <div class="form-footer">
       <p>
-        Don't have an account?
-        <RouterLink to="/signup">Sign up here</RouterLink>
+        {{ languageStore.t('dontHaveAccount') }}
+        <RouterLink to="/signup">{{ languageStore.t('signUpHere') }}</RouterLink>
       </p>
     </div>
   </form>

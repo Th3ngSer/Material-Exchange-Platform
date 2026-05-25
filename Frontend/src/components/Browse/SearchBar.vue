@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLanguageStore } from '../../stores/language'
+
 interface Props {
   modelValue: string
 }
@@ -6,6 +8,8 @@ interface Props {
 interface Emits {
   (e: 'update:modelValue', value: string): void
 }
+
+const languageStore = useLanguageStore()
 
 defineProps<Props>()
 defineEmits<Emits>()
@@ -16,18 +20,18 @@ defineEmits<Emits>()
     class="grid flex-1 grid-cols-[1fr_42px] items-center overflow-hidden rounded-[8px] border border-[#2b2f9161] bg-[#f4f5fb] shadow-[0_6px_20px_rgba(25,28,90,0.06)]"
     role="search"
   >
-    <label class="sr-only" for="browse-search">Search materials</label>
+    <label class="sr-only" for="browse-search">{{ languageStore.t('searchMaterials') }}</label>
     <input
       id="browse-search"
       :value="modelValue"
       type="search"
-      placeholder="Search materials"
+      :placeholder="languageStore.t('searchMaterials')"
       class="min-w-0 border-0 bg-transparent px-3 outline-none"
       @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />
     <button
       type="submit"
-      aria-label="Search"
+      :aria-label="languageStore.t('search')"
       class="grid h-[34px] w-[42px] place-items-center border-0 bg-transparent text-[#201f62] cursor-pointer hover:bg-[#f0f1ff] transition-colors duration-200"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true" class="h-[25px] w-[25px] fill-current">

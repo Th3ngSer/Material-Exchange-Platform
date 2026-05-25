@@ -11,9 +11,11 @@ import MaterialDetailSellerCard from '@/components/materialDetail/MaterialDetail
 import RelatedMaterialCard from '@/components/materialDetail/MaterialCard.vue'
 import { defaultMaterials, type MaterialItem, type MaterialTone } from '@/data/materials'
 import MaterialMap from '@/components/materialDetail/MaterialMap.vue'
+import { useLanguageStore } from '@/stores/language'
 
 const route = useRoute()
 const router = useRouter()
+const languageStore = useLanguageStore()
 const authStore = useAuthStore()
 const activeTab = ref<'description' | 'specifications'>('description')
 const errorMessage = ref('')
@@ -129,13 +131,13 @@ function titleCase(value: string) {
 }
 
 function formatPrice(post: MaterialItem) {
-  if (post.type === 'Exchange') return 'Open to trade'
-  if (post.type === 'Borrow') return post.price ? `$${Number(post.price || 0).toFixed(2)}/day` : 'Open to borrow'
+  if (post.type === 'Exchange') return languageStore.t('openToTrade')
+  if (post.type === 'Borrow') return post.price ? `$${Number(post.price || 0).toFixed(2)}${languageStore.t('perDay')}` : languageStore.t('openToBorrow')
   return `$${Number(post.price || 0).toFixed(2)}`
 }
 
 function formatRelativeTime(dateString?: string) {
-  if (!dateString) return 'Recently listed'
+  if (!dateString) return languageStore.t('justNow')
 
   const createdAt = new Date(dateString).getTime()
   const difference = Date.now() - createdAt
@@ -143,9 +145,10 @@ function formatRelativeTime(dateString?: string) {
   const hours = Math.floor(minutes / 60)
   const days = Math.floor(hours / 24)
 
-  if (minutes < 60) return `${Math.max(minutes, 1)} minute${minutes === 1 ? '' : 's'} ago`
-  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`
-  return `${days} day${days === 1 ? '' : 's'} ago`
+  if (minutes < 1) return languageStore.t('justNow')
+  if (minutes < 60) return `${minutes} ${languageStore.t('minutesAgo')}`
+  if (hours < 24) return `${hours} ${languageStore.t('hoursAgo')}`
+  return `${days} ${languageStore.t('daysAgo')}`
 }
 
 const galleryImages = computed(() => (currentPost.value.images as string[]) ?? [])
@@ -160,6 +163,26 @@ const locationMapSrc = computed(() => {
   return `https://www.google.com/maps?q=${encodeURIComponent(location)}&output=embed`
 })
 
+const photoBadge = computed(
+  () => `${galleryImages.value.length} ${galleryImages.value.length === 1 ? languageStore.t('photo') : languageStore.t('photos')}`,
+)
+
+const statusLabel = computed(() =>
+  currentPost.value.type === 'Sell'
+    ? languageStore.t('available')
+    : currentPost.value.type === 'Exchange'
+    ? languageStore.t('exchange')
+    : languageStore.t('borrow'),
+)
+
+const actionButtonText = computed(() =>
+  currentPost.value.type === 'Sell'
+    ? languageStore.t('buyNow')
+    : currentPost.value.type === 'Exchange'
+    ? languageStore.t('contactToExchange')
+    : languageStore.t('contactToBorrow'),
+)
+
 const relatedCardItems = computed(() =>
   defaultMaterials
     .filter(post => post.id !== currentPost.value.id)
@@ -172,7 +195,7 @@ const relatedCardItems = computed(() =>
       type: post.type,
       category: post.category,
       tone: post.tone as MaterialTone,
-      seller: post.seller || 'Marketplace seller',
+      seller: post.seller || languageStore.t('marketplaceSeller'),
       rating: post.rating ?? 4.9,
       avatar: post.avatar,
       images: post.images,
@@ -181,10 +204,10 @@ const relatedCardItems = computed(() =>
 )
 
 const detailStats = computed(() => [
-  { label: 'Condition', value: currentPost.value.condition ?? 'Used' },
-  { label: 'Category', value: currentPost.value.category },
-  { label: 'Location', value: currentPost.value.location },
-  { label: 'Listed', value: formatRelativeTime(currentPost.value.postedTime) },
+  { label: languageStore.t('condition'), value: titleCase(currentPost.value.condition ?? 'Used') },
+  { label: languageStore.t('category'), value: currentPost.value.category },
+  { label: languageStore.t('location'), value: currentPost.value.location },
+  { label: languageStore.t('posted'), value: formatRelativeTime(currentPost.value.postedTime) },
 ])
 </script>
 
@@ -200,7 +223,7 @@ const detailStats = computed(() => [
         class="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-[#999] transition hover:text-[#1b1748]"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-left"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg>
-        Back
+        {{ languageStore.t('back') }}
       </button>
 
       <!-- Error banner -->
@@ -213,15 +236,15 @@ const detailStats = computed(() => [
         <MaterialDetailGallery
           :title="currentPost.title"
           :images="galleryImages"
-          badge="1 PHOTOS"
-          subtitle="Fast pickup and exchange ready"
+          :badge="photoBadge"
+          :subtitle="languageStore.t('fastPickupAndExchangeReady')"
         />
 
         <!-- Right: Product Details -->
         <div class="flex flex-col gap-6">
           <!-- Status Badge -->
           <div class="inline-block w-fit rounded-full bg-[#31d07f] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#0f3d25]">
-            {{ currentPost.type === 'Sell' ? 'AVAILABLE' : currentPost.type === 'Exchange' ? 'EXCHANGE' : 'BORROW' }}
+            {{ statusLabel }}
           </div>
 
           <!-- Title & Subtitle -->
@@ -237,19 +260,19 @@ const detailStats = computed(() => [
           <div>
             <template v-if="currentPost.type === 'Sell'">
               <button type="button" class="rounded-lg bg-[#1b1748] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#29255f]">
-                Buy now
+                {{ actionButtonText }}
               </button>
             </template>
 
             <template v-else-if="currentPost.type === 'Exchange'">
               <button type="button" class="rounded-lg border-2 border-[#ff8c00] bg-[#fff6ef] px-4 py-3 text-sm font-bold text-[#ff8c00] transition hover:bg-orange-50">
-                Contact to exchange
+                {{ actionButtonText }}
               </button>
             </template>
 
             <template v-else>
               <button type="button" class="rounded-lg border-2 border-[#17173d]/20 bg-white px-4 py-3 text-sm font-bold text-[#17173d] transition hover:bg-gray-50">
-                Contact to borrow
+                {{ actionButtonText }}
               </button>
             </template>
           </div>
@@ -264,9 +287,9 @@ const detailStats = computed(() => [
 
           <!-- Seller Card -->
           <MaterialDetailSellerCard
-            :name="currentPost.seller ?? 'Marketplace seller'"
+            :name="currentPost.seller ?? languageStore.t('marketplaceSeller')"
             :rating="currentPost.rating ?? 4.9"
-            response-time="Usually replies in 1 hour"
+            :response-time="languageStore.t('usuallyRepliesIn1Hour')"
             :location="currentPost.location"
             :avatar="currentPost.avatar"
           />
@@ -300,7 +323,7 @@ const detailStats = computed(() => [
               :class="activeTab === 'description' ? 'border-b-2 border-[#1b1748] text-[#1b1748]' : 'text-[#999] hover:text-[#666]'"
               @click="activeTab = 'description'"
             >
-              Description
+              {{ languageStore.t('description') }}
             </button>
             <button
               type="button"
@@ -308,12 +331,11 @@ const detailStats = computed(() => [
               :class="activeTab === 'specifications' ? 'border-b-2 border-[#1b1748] text-[#1b1748]' : 'text-[#999] hover:text-[#666]'"
               @click="activeTab = 'specifications'"
             >
-              Specifications
+              {{ languageStore.t('specifications') }}
             </button>
           </div>
         </div>
 
-        <!-- Tab Content -->
         <div class="mt-6 grid gap-8 lg:grid-cols-3">
           <div class="lg:col-span-2">
             <template v-if="activeTab === 'description'">
@@ -322,26 +344,26 @@ const detailStats = computed(() => [
             </template>
 
             <template v-else-if="activeTab === 'specifications'">
-              <h2 class="text-2xl font-black text-[#1b1748]">Specifications</h2>
+              <h2 class="text-2xl font-black text-[#1b1748]">{{ languageStore.t('specifications') }}</h2>
               <ul class="mt-4 space-y-3 text-base leading-relaxed text-[#666]">
                 <li class="flex justify-between border-b border-[#f0f0f0] pb-3">
-                  <span class="font-semibold">Category:</span>
+                  <span class="font-semibold">{{ languageStore.t('category') }}:</span>
                   <span>{{ currentPost.category }}</span>
                 </li>
                 <li class="flex justify-between border-b border-[#f0f0f0] pb-3">
-                  <span class="font-semibold">Condition:</span>
+                  <span class="font-semibold">{{ languageStore.t('condition') }}:</span>
                   <span>{{ titleCase(currentPost.condition ?? 'Used') }}</span>
                 </li>
                 <li class="flex justify-between border-b border-[#f0f0f0] pb-3">
-                  <span class="font-semibold">Location:</span>
+                  <span class="font-semibold">{{ languageStore.t('location') }}:</span>
                   <span>{{ currentPost.location }}</span>
                 </li>
                 <li v-if="currentPost.exchangeFor" class="flex justify-between border-b border-[#f0f0f0] pb-3">
-                  <span class="font-semibold">Exchange target:</span>
+                  <span class="font-semibold">{{ languageStore.t('exchangeTarget') }}:</span>
                   <span>{{ currentPost.exchangeFor }}</span>
                 </li>
                 <li class="flex justify-between">
-                  <span class="font-semibold">Posted:</span>
+                  <span class="font-semibold">{{ languageStore.t('posted') }}:</span>
                   <span>{{ formatRelativeTime(currentPost.postedTime) }}</span>
                 </li>
               </ul>
@@ -369,7 +391,11 @@ const detailStats = computed(() => [
                 />
               </div>
               <div v-else class="flex h-[300px] items-center justify-center">
+<<<<<<< HEAD
+                <div class="text-[#6b7280] text-lg font-semibold">{{ languageStore.t('mapUnavailable') }}</div>
+=======
                 <div class="text-lg font-semibold text-[#6b7280]">Map unavailable for this listing</div>
+>>>>>>> fd46333089cd703e01266c89336d7a4995ed9012
               </div>
             </div>
           </div>
@@ -408,11 +434,11 @@ const detailStats = computed(() => [
       <section class="mt-16">
         <div class="mb-8 flex items-center justify-between">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-widest text-[#999]">Related listings</p>
-            <h2 class="mt-2 text-3xl font-black text-[#1b1748]">More materials you may like</h2>
+            <p class="text-xs font-semibold uppercase tracking-widest text-[#999]">{{ languageStore.t('relatedListings') }}</p>
+            <h2 class="mt-2 text-3xl font-black text-[#1b1748]">{{ languageStore.t('moreMaterialsYouMayLike') }}</h2>
           </div>
           <a href="#" class="text-sm font-semibold text-[#ff8c00] no-underline transition hover:text-[#e67e00]">
-            View category →
+            {{ languageStore.t('viewCategory') }} →
           </a>
         </div>
 

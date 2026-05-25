@@ -9,11 +9,13 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useLanguageStore } from '@/stores/language'
 import { validateEmail, validatePassword, validatePasswordMatch } from '@/utils/validation'
 import type { RegisterCredentials } from '@/types/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const languageStore = useLanguageStore()
 
 // Form data
 const firstName = ref('')
@@ -125,7 +127,7 @@ async function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit" class="signup-form">
-    <h1 style="font-weight: bold;">Create Account</h1>
+    <h1 style="font-weight: bold;">{{ languageStore.t('createAccount') }}</h1>
 
     <!-- Error Display -->
     <div v-if="authStore.error" class="error-message" role="alert">
@@ -139,12 +141,12 @@ async function handleSubmit() {
 
     <div class="form-row">
       <div class="form-group">
-        <label for="firstName">First Name</label>
+        <label for="firstName">{{ languageStore.t('firstName') }}</label>
         <input
           id="firstName"
           v-model="firstName"
           type="text"
-          placeholder="First name"
+          :placeholder="languageStore.t('firstName')"
           :disabled="isSubmitting || authStore.isLoading"
           @blur="validateFirstNameInput"
           @input="firstNameError = ''"
@@ -153,12 +155,12 @@ async function handleSubmit() {
       </div>
 
       <div class="form-group">
-        <label for="lastName">Last Name</label>
+        <label for="lastName">{{ languageStore.t('lastName') }}</label>
         <input
           id="lastName"
           v-model="lastName"
           type="text"
-          placeholder="Last name"
+          :placeholder="languageStore.t('lastName')"
           :disabled="isSubmitting || authStore.isLoading"
           @blur="validateLastNameInput"
           @input="lastNameError = ''"
@@ -169,12 +171,12 @@ async function handleSubmit() {
 
     <!-- Email Input -->
     <div class="form-group">
-      <label for="email">Enter your Email</label>
+      <label for="email">{{ languageStore.t('enterYourEmail') }}</label>
       <input
         id="email"
         v-model="email"
         type="email"
-        placeholder="Enter your email"
+        :placeholder="languageStore.t('enterYourEmail')"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validateEmailInput"
         @input="emailError = ''"
@@ -184,12 +186,12 @@ async function handleSubmit() {
 
     <!-- Password Input -->
     <div class="form-group">
-      <label for="password">Enter the Password</label>
+      <label for="password">{{ languageStore.t('enterYourPassword') }}</label>
       <input
         id="password"
         v-model="password"
         type="password"
-        placeholder="Enter your password"
+        :placeholder="languageStore.t('enterYourPassword')"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validatePasswordInput"
         @input="passwordError = ''"
@@ -199,12 +201,12 @@ async function handleSubmit() {
 
     <!-- Confirm Password Input -->
     <div class="form-group">
-      <label for="confirmPassword">Confirm Password</label>
+      <label for="confirmPassword">{{ languageStore.t('confirmYourPassword') }}</label>
       <input
         id="confirmPassword"
         v-model="confirmPassword"
         type="password"
-        placeholder="Confirm your password"
+        :placeholder="languageStore.t('confirmYourPassword')"
         :disabled="isSubmitting || authStore.isLoading"
         @blur="validateConfirmPasswordInput"
         @input="confirmPasswordError = ''"
@@ -219,14 +221,14 @@ async function handleSubmit() {
       class="submit-button"
     >
       <span v-if="isSubmitting || authStore.isLoading" class="loading-spinner"></span>
-      {{ isSubmitting || authStore.isLoading ? 'Creating Account...' : 'Sign Up' }}
+      {{ isSubmitting || authStore.isLoading ? languageStore.t('creatingAccount') : languageStore.t('createAccount') }}
     </button>
 
     <!-- Link to Login -->
     <div class="form-footer">
       <p>
-        Already have an account?
-        <RouterLink to="/login">Login here</RouterLink>
+        {{ languageStore.t('alreadyHaveAccount') }}
+        <RouterLink to="/login">{{ languageStore.t('loginHere') }}</RouterLink>
       </p>
     </div>
   </form>

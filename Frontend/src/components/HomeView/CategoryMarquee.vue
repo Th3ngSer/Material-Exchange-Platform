@@ -1,24 +1,31 @@
 <script setup lang="ts">
 defineProps<{ selectedCategory: string }>()
 import { useLanguageStore } from '../../stores/language'
+import type { TranslationKey } from '../../stores/language'
 const languageStore = useLanguageStore()
 
 const emit = defineEmits<{
   (e: 'update:category', value: string): void
 }>()
 
+type CategoryIcon = {
+  value: string
+  labelKey: TranslationKey
+  src: string
+}
+
 // Category icons (images loaded via import.meta.url for robust paths)
-const categoryIcons = [
-  { label: 'Clothing', src: new URL('../../assets/images/Clothing.png', import.meta.url).href },
-  { label: 'Electronics', src: new URL('../../assets/images/Electronics.png', import.meta.url).href },
-  { label: 'Books', src: new URL('../../assets/images/Books.png', import.meta.url).href },
-  { label: 'Furniture', src: new URL('../../assets/images/Furniture.png', import.meta.url).href },
-  { label: 'Sports', src: new URL('../../assets/images/Sports.png', import.meta.url).href },
-  { label: 'Toys', src: new URL('../../assets/images/Toys.png', import.meta.url).href },
-  { label: 'Vehicles', src: new URL('../../assets/images/Vehicles.png', import.meta.url).href },
-  { label: 'Home & Garden', src: new URL('../../assets/images/Home & Garden.png', import.meta.url).href },
-  { label: 'Food & Drink', src: new URL('../../assets/images/Food & Drink.png', import.meta.url).href },
-  { label: 'Others', src: new URL('../../assets/images/Others.png', import.meta.url).href },
+const categoryIcons: CategoryIcon[] = [
+  { value: 'Clothing', labelKey: 'clothing', src: new URL('../../assets/images/Clothing.png', import.meta.url).href },
+  { value: 'Electronics', labelKey: 'electronics', src: new URL('../../assets/images/Electronics.png', import.meta.url).href },
+  { value: 'Books', labelKey: 'books', src: new URL('../../assets/images/Books.png', import.meta.url).href },
+  { value: 'Furniture', labelKey: 'furniture', src: new URL('../../assets/images/Furniture.png', import.meta.url).href },
+  { value: 'Sports', labelKey: 'sports', src: new URL('../../assets/images/Sports.png', import.meta.url).href },
+  { value: 'Toys', labelKey: 'toys', src: new URL('../../assets/images/Toys.png', import.meta.url).href },
+  { value: 'Vehicles', labelKey: 'vehicles', src: new URL('../../assets/images/Vehicles.png', import.meta.url).href },
+  { value: 'Home & Garden', labelKey: 'homeAndGarden', src: new URL('../../assets/images/Home & Garden.png', import.meta.url).href },
+  { value: 'Food & Drink', labelKey: 'foodAndDrink', src: new URL('../../assets/images/Food & Drink.png', import.meta.url).href },
+  { value: 'Others', labelKey: 'other', src: new URL('../../assets/images/Others.png', import.meta.url).href },
 ]
 
 function selectCategory(label: string) {
@@ -28,7 +35,7 @@ function selectCategory(label: string) {
 
 <template>
 
-  <div class="w-full py-6">
+  <div class="w-full py-6" :class="{ 'font-khmer': languageStore.isKhmer }">
    
     <div class="mx-auto w-[min(1500px,calc(100%-32px))]">
         <h2
@@ -38,26 +45,26 @@ function selectCategory(label: string) {
         </h2>     
       <div class="flex justify-center">
         <div class="icon-marquee w-full overflow-hidden">
-          <div class="marquee-track flex gap-10 items-center">
-            <div class="flex items-center gap-10">
-              <div v-for="cat in categoryIcons" :key="'a-'+cat.label" class="flex flex-col items-center gap-3 shrink-0">
+          <div class="marquee-track flex gap-12 items-center">
+            <div class="flex items-center gap-12">
+              <div v-for="cat in categoryIcons" :key="'a-'+cat.value" class="flex flex-col items-center gap-3 flex-none w-[7rem] md:w-[8rem]">
                 <button
                   class="rounded-full bg-transparent p-5 hover:scale-105 transition-transform duration-200 cursor-pointer"
-                  @click="selectCategory(cat.label)"
+                  @click="selectCategory(cat.value)"
                 >
-                  <img :src="cat.src" :alt="cat.label" class="w-14 h-14 md:w-16 md:h-16 object-contain" />
+                  <img :src="cat.src" :alt="languageStore.t(cat.labelKey)" class="w-14 h-14 md:w-16 md:h-16 object-contain" />
                 </button>
-                <span class="text-base font-semibold text-[#15152d]">{{ cat.label }}</span>
+                <span class="text-base font-semibold text-center text-[#15152d] whitespace-normal break-words">{{ languageStore.t(cat.labelKey) }}</span>
               </div>
             </div>
 
             <!-- duplicate for seamless loop -->
-            <div class="flex items-center gap-10" aria-hidden="true">
-              <div v-for="cat in categoryIcons" :key="'b-'+cat.label" class="flex flex-col items-center gap-3 shrink-0">
+            <div class="flex items-center gap-12" aria-hidden="true">
+              <div v-for="cat in categoryIcons" :key="'b-'+cat.value" class="flex flex-col items-center gap-3 flex-none w-[7rem] md:w-[8rem]">
                 <button class="rounded-full bg-transparent p-5">
-                  <img :src="cat.src" :alt="cat.label" class="w-14 h-14 md:w-16 md:h-16 object-contain" />
+                  <img :src="cat.src" :alt="languageStore.t(cat.labelKey)" class="w-14 h-14 md:w-16 md:h-16 object-contain" />
                 </button>
-                <span class="text-base font-semibold text-[#15152d]">{{ cat.label }}</span>
+                <span class="text-base font-semibold text-center text-[#15152d] whitespace-normal break-words">{{ languageStore.t(cat.labelKey) }}</span>
               </div>
             </div>
           </div>

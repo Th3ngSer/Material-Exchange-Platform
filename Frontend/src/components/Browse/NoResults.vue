@@ -1,15 +1,20 @@
 <script setup lang="ts">
+import { useLanguageStore } from '../../stores/language'
+import { computed } from 'vue'
+
 interface Props {
   type?: 'items' | 'users'
   message?: string
   description?: string
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   type: 'items',
-  message: 'No Results found',
-  description: 'We couldn\'t find what you searched for. Try searching again.'
 })
+
+const languageStore = useLanguageStore()
+const message = computed(() => props.message ?? languageStore.t('noResultsFound'))
+const description = computed(() => props.description ?? languageStore.t('noResultsDescription'))
 </script>
 
 <template>
