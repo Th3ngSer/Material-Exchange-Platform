@@ -1,9 +1,9 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
-type SupportedLanguage = 'English' | 'Khmer'
+export type SupportedLanguage = 'English' | 'Khmer'
 
-type TranslationKey =
+export type TranslationKey =
   | 'personalInformation'
   | 'trackingItem'
   | 'payments'
