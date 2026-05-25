@@ -16,6 +16,7 @@ import { useLanguageStore } from '@/stores/language'
 const route = useRoute()
 const router = useRouter()
 const languageStore = useLanguageStore()
+const authStore = useAuthStore()
 const activeTab = ref<'description' | 'specifications'>('description')
 const errorMessage = ref('')
 const showDeleteModal = ref(false)

@@ -233,6 +233,7 @@ export type TranslationKey =
   | 'savedListings'
   | 'browseSavedPosts'
   | 'createPost'
+  | 'mypost'
   | 'postsSaved'
   | 'postSaved'
   | 'refresh'
@@ -280,6 +281,8 @@ export type TranslationKey =
   | 'noResultsFound'
   | 'noResultsDescription'
   | 'loadingMoreMaterials'
+  | 'notifications'
+  | 'noNotifications'
 
 const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = {
   English: {
@@ -498,6 +501,7 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     savedListings: 'Saved listings',
     browseSavedPosts: 'Browse the posts you already saved',
     createPost: 'Create a post',
+    mypost: 'My post',
     postsSaved: 'posts saved',
     postSaved: 'post saved',
     refresh: 'Refresh',
@@ -511,23 +515,23 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     delete: 'Delete',
     confirmDelete: 'Are you sure you want to delete',
     cannotBeUndone: 'This cannot be undone.',
-    openToTrade: 'បើកចំហដើម្បីផ្លាស់ប្តូរ',
-    openToBorrow: 'បើកចំហដើម្បីខ្ចី',
-    available: 'មានស្រាប់',
-    buyNow: 'ទិញឥឡូវនេះ',
-    contactToExchange: 'ទំនាក់ទំនងដើម្បីផ្លាស់ប្តូរ',
-    contactToBorrow: 'ទំនាក់ទំនងដើម្បីខ្ចី',
-    photo: 'រូបថត',
-    photos: 'រូបថត',
-    specifications: 'លក្ខណៈពិសេស',
-    exchangeTarget: 'គោលដៅផ្លាស់ប្តូរ',
-    relatedListings: 'បញ្ជីទំនិញទាក់ទង',
-    moreMaterialsYouMayLike: 'ទំនិញបន្ថែមដែលអ្នកអាចចូលចិត្ត',
-    viewCategory: 'មើលប្រភេទ',
-    fastPickupAndExchangeReady: 'ទទួលបានយ៉ាងឆាប់រហ័ស និងរួចរាល់សម្រាប់ការផ្លាស់ប្តូរ',
-    mapUnavailable: 'ផែនទីមិនអាចប្រើបានសម្រាប់បញ្ជីនេះ',
-    usuallyRepliesIn1Hour: 'ធម្មតាឆ្លើយតបក្នុង 1 ម៉ោង',
-    marketplaceSeller: 'អ្នកលក់ទីផ្សារ',
+    openToTrade: 'Open to trade',
+    openToBorrow: 'Open to borrow',
+    available: 'Available',
+    buyNow: 'Buy now',
+    contactToExchange: 'Contact to exchange',
+    contactToBorrow: 'Contact to borrow',
+    photo: 'Photo',
+    photos: 'Photos',
+    specifications: 'Specifications',
+    exchangeTarget: 'Exchange target',
+    relatedListings: 'Related listings',
+    moreMaterialsYouMayLike: 'More materials you may like',
+    viewCategory: 'View category',
+    fastPickupAndExchangeReady: 'Fast pickup and exchange ready',
+    mapUnavailable: 'Map unavailable for this listing',
+    usuallyRepliesIn1Hour: 'Usually replies in 1 hour',
+    marketplaceSeller: 'Marketplace seller',
     wants: 'Wants:',
     users: 'Users',
     openFilters: 'Open filters',
@@ -559,6 +563,8 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     noResultsFound: 'No Results found',
     noResultsDescription: 'We couldn\'t find what you searched for. Try searching again.',
     loadingMoreMaterials: 'Loading more materials...',
+    notifications: 'Notifications',
+    noNotifications: 'No notifications',
   },
   Khmer: {
     personalInformation: 'ព័ត៌មានផ្ទាល់ខ្លួន',
@@ -776,6 +782,7 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     savedListings: 'បញ្ជីដែលបានរក្សាទុក',
     browseSavedPosts: 'រកមើលប្រកាសដែលអ្នកបានរក្សាទុករួចហើយ',
     createPost: 'ផុសទំនិញ',
+    mypost: 'ទំនិញរបស់ខ្ញុំ',
     postsSaved: 'ប្រកាសបានរក្សាទុក',
     postSaved: 'ប្រកាសបានរក្សាទុក',
     refresh: 'ផ្ទុកឡើងវិញ',
@@ -784,12 +791,28 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     createFirstListing: 'បង្កើតបញ្ជីដំបូង ហើយវានឹងបង្ហាញនៅទីនេះ។',
     errorLoadingSavedPosts: 'មានបញ្ហាក្នុងការផ្ទុកប្រកាសដែលបានរក្សាទុក។',
     failedToDeletePost: 'បរាជ័យក្នុងការលុបទំព័រ។',
+    openToTrade: 'បើកចំពោះការជួញដូរ',
+    openToBorrow: 'បើកចំពោះការខ្ចី',
+    available: 'មានស្រាប់',
+    buyNow: 'ទិញឥឡូវនេះ',
+    contactToExchange: 'ទំនាក់ទំនងដើម្បីផ្លាស់ប្តូរ',
+    contactToBorrow: 'ទំនាក់ទំនងដើម្បីខ្ចី',
+    photo: 'រូបថត',
+    photos: 'រូបថត',
+    specifications: 'លក្ខណៈពិសេស',
+    exchangeTarget: 'គោលដៅផ្លាស់ប្តូរ',
+    relatedListings: 'បញ្ជីទំនិញទាក់ទង',
+    moreMaterialsYouMayLike: 'ទំនិញបន្ថែមដែលអ្នកអាចចូលចិត្ត',
+    viewCategory: 'មើលប្រភេទ',
+    fastPickupAndExchangeReady: 'ទទួលបានយ៉ាងឆាប់រហ័ស និងរួចរាល់សម្រាប់ការផ្លាស់ប្តូរ',
+    mapUnavailable: 'ផែនទីមិនអាចប្រើបានសម្រាប់បញ្ជីនេះ',
+    usuallyRepliesIn1Hour: 'ធម្មតាឆ្លើយតបក្នុង 1 ម៉ោង',
+    marketplaceSeller: 'អ្នកលក់ទីផ្សារ',
     perDay: '/ថ្ងៃ',
     edit: 'កែប្រែ',
     delete: 'លុប',
     confirmDelete: 'តើអ្នកប្រាកដថាចង់លុប',
     cannotBeUndone: 'វាមិនអាចត្រឡប់វិញបានទេ។',
-    openToTrade: 'បើកចំពោះការជួញដូរ',
     wants: 'ចង់បាន:',
     users: 'អ្នកប្រើ',
     openFilters: 'បើកចម្រៀង',
@@ -821,6 +844,8 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     noResultsFound: 'មិនមានលទ្ធផល',
     noResultsDescription: 'យើងមិនអាចស្វែងរកអ្វីដែលអ្នកបានស្វែងរកទេ។ សូមព្យាយាមស្វែងរកម្តងទៀត។',
     loadingMoreMaterials: 'កំពុងផ្ទុកសម្ភារៈបន្ថែម...',
+    notifications: 'ការជូនដំណឹង',
+    noNotifications: 'មិនមានការជូនដំណឹង',
   },
 }
 

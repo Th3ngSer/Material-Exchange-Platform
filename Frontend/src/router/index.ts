@@ -30,7 +30,7 @@ import LogoutInformation from '@/user/LogoutInformation.vue'
 import PaymentInformation from '@/user/PaymentInformation.vue'
 import TrackingInformation from '@/user/TrackingInformation.vue'
 // Notifications
-import Notifications from '../views/Notifications.vue'
+import NotificationsView from '../components/Notificationsview.vue'
 import { useAuthStore } from '@/stores/auth'
 
 
@@ -56,7 +56,7 @@ const router = createRouter({
     { path: '/chat', name: 'chat', component: Chat },
 
     // Notifications
-    { path: '/notifications', name: 'notifications', component: Notifications, meta: { requiresAuth: true } },
+    { path: '/notifications', name: 'notifications', component: NotificationsView, meta: { requiresAuth: true } },
 
     // Profile
     { path: '/profile', name: 'profile', component: Profile },
