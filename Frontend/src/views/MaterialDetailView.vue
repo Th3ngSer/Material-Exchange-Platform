@@ -44,6 +44,15 @@ const post = ref<any>({
 
 async function loadPostById(id: string | number | undefined) {
   if (!id) return
+
+  // If the ID is clearly not a MongoDB ObjectID (e.g., our mock data IDs like '1', '2'),
+  // just fall back to local mock data immediately to avoid backend 400 errors.
+  if (String(id).length !== 24) {
+    const mockPost = defaultMaterials.find((m) => String(m.id) === String(id))
+    post.value = mockPost || defaultMaterials[0]
+    return
+  }
+
   try {
     const { data } = await axios.get(`${apiBaseUrl}/posts/${id}`)
     const p = data as any

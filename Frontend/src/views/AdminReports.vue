@@ -119,6 +119,25 @@ const confirmBulkDelete = async () => {
   }
 }
 
+const showViewModal = ref(false)
+const viewingReport = ref<AdminReport | null>(null)
+
+const openViewModal = (report: AdminReport) => {
+  viewingReport.value = report
+  showViewModal.value = true
+  // Optionally, automatically mark as reviewed when they open it
+  if (report.status === 'Pending') {
+    updateStatus(report.id, 'reviewed')
+  }
+}
+
+const closeViewModal = () => {
+  showViewModal.value = false
+  setTimeout(() => {
+    viewingReport.value = null
+  }, 200) // wait for animation
+}
+
 const reportCards = computed(() => {
   const total = reports.value.length
   const pending = reports.value.filter((r) => r.status === 'Pending').length
@@ -366,8 +385,7 @@ const isActive = (path: string) => {
               <button
                 type="button"
                 class="action review"
-                :disabled="report.status !== 'Pending'"
-                @click="updateStatus(report.id, 'reviewed')"
+                @click="openViewModal(report)"
               >
                 Review
               </button>
@@ -412,6 +430,66 @@ const isActive = (path: string) => {
               </button>
               <button class="modal-btn confirm" type="button" :disabled="isDeleting" @click="confirmBulkDelete">
                 {{ isDeleting ? 'Deleting...' : 'Yes, Delete' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- ─── View Report Details Modal ────────────────────────────────────── -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="showViewModal" class="modal-overlay" @click.self="closeViewModal">
+          <div class="modal-card view-modal">
+            <div class="modal-header">
+              <h3 class="modal-title">Report Details</h3>
+              <button class="close-btn" @click="closeViewModal">&times;</button>
+            </div>
+            
+            <div v-if="viewingReport" class="modal-content">
+              <div class="detail-row">
+                <span class="detail-label">Status:</span>
+                <span class="status" :class="viewingReport.status.toLowerCase()">{{ viewingReport.status }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Report ID:</span>
+                <span class="detail-value">#{{ viewingReport.id }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Date:</span>
+                <span class="detail-value">{{ viewingReport.date }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Reported By:</span>
+                <span class="detail-value">{{ viewingReport.name }} ({{ viewingReport.email }})</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Phone:</span>
+                <span class="detail-value">{{ viewingReport.phone || 'N/A' }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Request Type:</span>
+                <span class="detail-value">{{ viewingReport.request || 'N/A' }}</span>
+              </div>
+              
+              <div class="detail-message-box">
+                <span class="detail-label">Message / Reason:</span>
+                <p class="detail-message">{{ viewingReport.message }}</p>
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button class="modal-btn cancel" type="button" @click="closeViewModal">
+                Close
+              </button>
+              <button 
+                v-if="viewingReport?.status !== 'Done'"
+                class="modal-btn confirm" 
+                type="button" 
+                @click="updateStatus(viewingReport!.id, 'done'); closeViewModal()"
+              >
+                Mark as Done
               </button>
             </div>
           </div>
@@ -1124,5 +1202,79 @@ select {
 .modal-fade-enter-from,
 .modal-fade-leave-to {
   opacity: 0;
+}
+
+/* ─── View Modal Specifics ───────────────────────────────────────────── */
+
+.view-modal {
+  max-width: 500px;
+  text-align: left;
+  padding: 24px 28px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.modal-header .modal-title {
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.close-btn:hover {
+  color: #0f172a;
+}
+
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.detail-row {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #475569;
+  min-width: 110px;
+}
+
+.detail-value {
+  color: #0f172a;
+}
+
+.detail-message-box {
+  margin-top: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.detail-message {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: #0f172a;
+  white-space: pre-wrap;
+  line-height: 1.5;
 }
 </style>
