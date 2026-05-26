@@ -743,7 +743,7 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     books: 'សៀវភៅ',
     furniture: 'គ្រឿងសង្ហារឹម',
     sports: 'កីឡា',
-    toys: 'ប្រដាប់ក្មេងប្រុស',
+    toys: 'ប្រដាប់ក្មេងលេង',
     vehicles: 'យានយន្ត',
     homeAndGarden: 'ផ្ទះ និងសួនច្បារ',
     foodAndDrink: 'អាហារ និងភេសជ្ជៈ',

@@ -34,7 +34,7 @@ const handleAvatarError = (event: Event) => {
   <aside class="sidebar">
 
     <div class="sidebar-header">
-      <h3>Inboxes</h3>
+      <h3>ប្រអប់សារ</h3>
     </div>
 
     <!-- ❗ FIX 1: empty state -->
