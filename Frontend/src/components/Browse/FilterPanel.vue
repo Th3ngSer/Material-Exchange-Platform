@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLanguageStore } from '../../stores/language'
+
 type Condition = 'New' | 'Like new' | 'Good' | 'Fair'
 type Category = 'All' | 'Sell' | 'Exchange' | 'Borrow'
 type SortOption = 'Newest' | 'A-Z' | 'Z-A' | 'Price: Low to High' | 'Price: High to Low'
@@ -32,6 +34,30 @@ const categoryOptions: Category[] = ['All', 'Sell', 'Exchange', 'Borrow']
 const sortOptions: SortOption[] = ['Newest', 'A-Z', 'Z-A', 'Price: Low to High', 'Price: High to Low']
 const conditionOptions: Condition[] = ['New', 'Like new', 'Good', 'Fair']
 
+const languageStore = useLanguageStore()
+
+const categoryLabelMap: Record<Category, string> = {
+  All: languageStore.t('all'),
+  Sell: languageStore.t('buy'),
+  Exchange: languageStore.t('exchange'),
+  Borrow: languageStore.t('borrow'),
+}
+
+const conditionLabelMap: Record<Condition, string> = {
+  New: languageStore.t('new'),
+  'Like new': languageStore.t('likeNew'),
+  Good: languageStore.t('good'),
+  Fair: languageStore.t('fair'),
+}
+
+const sortOptionLabelMap: Record<SortOption, string> = {
+  Newest: languageStore.t('newest'),
+  'A-Z': languageStore.t('az'),
+  'Z-A': languageStore.t('za'),
+  'Price: Low to High': languageStore.t('priceLowToHigh'),
+  'Price: High to Low': languageStore.t('priceHighToLow'),
+}
+
 defineProps<Props>()
 defineEmits<Emits>()
 </script>
@@ -49,7 +75,7 @@ defineEmits<Emits>()
       v-if="isOpen"
       type="button"
       class="fixed inset-x-0 bottom-0 top-[66px] z-40 cursor-default bg-[#10112b73] backdrop-blur-[2px]"
-      aria-label="Close filters backdrop"
+      :aria-label="languageStore.t('closeFiltersBackdrop')"
       @click="$emit('close')"
     />
   </transition>
@@ -67,11 +93,11 @@ defineEmits<Emits>()
       class="fixed left-0 top-[66px] z-50 h-[calc(100vh-66px)] w-[min(100vw,430px)] overflow-y-auto border-r-2 border-r-[#2c2f8f] bg-[#efefef] p-6 shadow-[24px_0_80px_rgba(16,17,43,0.22)]"
     >
       <div class="mb-6 flex items-center justify-between border-b border-[#cfd2df] pb-3">
-        <h2 class="text-4xl font-black leading-none text-[#0f1242]">Filters</h2>
+        <h2 class="text-4xl font-black leading-none text-[#0f1242]">{{ languageStore.t('filters') }}</h2>
         <button
           type="button"
           class="grid h-9 w-9 place-items-center rounded-md text-[#1b1748] transition hover:bg-[#e4e6f0]"
-          aria-label="Close filters"
+          :aria-label="languageStore.t('closeFilters')"
           @click="$emit('close')"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" class="h-4 w-4 fill-current">
@@ -83,7 +109,7 @@ defineEmits<Emits>()
       <div class="space-y-7 pb-6">
         <!-- Price Range -->
         <div>
-          <p class="mb-3 text-2xl font-black text-[#0f1242]">Price Range</p>
+          <p class="mb-3 text-2xl font-black text-[#0f1242]">{{ languageStore.t('priceRange') }}</p>
           <div class="mb-3 grid grid-cols-2 gap-3">
             <label class="flex items-center gap-2 rounded-lg border border-[#d0d3df] bg-[#f5f5f5] px-3 py-2 text-sm text-[#24263f]">
               <span class="font-semibold">$</span>
@@ -93,7 +119,7 @@ defineEmits<Emits>()
                 min="0"
                 :max="priceUpperBound"
                 class="w-full bg-transparent outline-none"
-                aria-label="Minimum price"
+                :aria-label="languageStore.t('minimumPrice')"
                 @input="$emit('update:minPrice', Number(($event.target as HTMLInputElement).value))"
                 @blur="$emit('normalizePriceRange', 'min')"
               />
@@ -106,7 +132,7 @@ defineEmits<Emits>()
                 min="0"
                 :max="priceUpperBound"
                 class="w-full bg-transparent outline-none"
-                aria-label="Maximum price"
+                :aria-label="languageStore.t('maximumPrice')"
                 @input="$emit('update:maxPrice', Number(($event.target as HTMLInputElement).value))"
                 @blur="$emit('normalizePriceRange', 'max')"
               />
@@ -121,7 +147,7 @@ defineEmits<Emits>()
               :min="0"
               :max="priceUpperBound"
               class="dual-range"
-              aria-label="Minimum price slider"
+              :aria-label="languageStore.t('minimumPriceSlider')"
               @input="$emit('update:minPrice', Number(($event.target as HTMLInputElement).value))"
               @change="$emit('normalizePriceRange', 'min')"
             />
@@ -131,7 +157,7 @@ defineEmits<Emits>()
               :min="0"
               :max="priceUpperBound"
               class="dual-range"
-              aria-label="Maximum price slider"
+              :aria-label="languageStore.t('maximumPriceSlider')"
               @input="$emit('update:maxPrice', Number(($event.target as HTMLInputElement).value))"
               @change="$emit('normalizePriceRange', 'max')"
             />
@@ -144,7 +170,7 @@ defineEmits<Emits>()
 
         <!-- Transaction Type -->
         <div>
-          <p class="mb-3 text-2xl font-black text-[#0f1242]">Transaction type</p>
+          <p class="mb-3 text-2xl font-black text-[#0f1242]">{{ languageStore.t('transactionType') }}</p>
           <div class="flex flex-wrap gap-3">
             <button
               v-for="category in categoryOptions"
@@ -154,14 +180,14 @@ defineEmits<Emits>()
               :class="selectedCategory === category ? 'bg-[#1b1748] text-white shadow-[0_10px_20px_rgba(27,23,72,0.2)]' : 'bg-[#cfd3f3] text-[#3e4474] hover:bg-[#c2c8ef]'"
               @click="$emit('update:selectedCategory', category)"
             >
-              {{ category === 'Sell' ? 'Buy' : category }}
+              {{ categoryLabelMap[category] }}
             </button>
           </div>
         </div>
 
         <!-- Conditions -->
         <div>
-          <p class="mb-3 text-2xl font-black text-[#0f1242]">Conditions</p>
+          <p class="mb-3 text-2xl font-black text-[#0f1242]">{{ languageStore.t('conditions') }}</p>
           <div class="grid grid-cols-2 gap-2">
             <label
               v-for="condition in conditionOptions"
@@ -174,14 +200,14 @@ defineEmits<Emits>()
                 :checked="selectedConditions.includes(condition)"
                 @change="$emit('toggle-condition', condition)"
               />
-              {{ condition }}
+              {{ conditionLabelMap[condition] }}
             </label>
           </div>
         </div>
 
         <!-- Minimum Seller Rating -->
         <div>
-          <p class="mb-3 text-2xl font-black text-[#0f1242]">Minimum seller rating</p>
+          <p class="mb-3 text-2xl font-black text-[#0f1242]">{{ languageStore.t('minimumSellerRating') }}</p>
           <div class="flex items-center justify-between rounded-xl border border-[#d0d3df] bg-[#f5f5f5] px-4 py-3">
             <div class="flex items-center gap-1">
               <button
@@ -196,20 +222,20 @@ defineEmits<Emits>()
                 </svg>
               </button>
             </div>
-            <span class="text-sm font-semibold text-[#4f5575]">{{ selectedRating.toFixed(1) }} &amp; Up</span>
+            <span class="text-sm font-semibold text-[#4f5575]">{{ selectedRating.toFixed(1) }} {{ languageStore.t('up') }}</span>
           </div>
         </div>
 
         <!-- Sort By -->
         <div>
-          <p class="mb-3 text-2xl font-black text-[#0f1242]">Sort by</p>
+          <p class="mb-3 text-2xl font-black text-[#0f1242]">{{ languageStore.t('sortBy') }}</p>
           <select
             :value="selectedSort"
             @change="$emit('update:selectedSort', ($event.target as HTMLSelectElement).value)"
             class="w-full rounded-xl border border-[#d0d3df] bg-[#f5f5f5] px-4 py-3 text-sm font-semibold text-[#1b1748] outline-none transition focus:border-[#1b1748]"
           >
             <option v-for="option in sortOptions" :key="option" :value="option">
-              {{ option }}
+              {{ sortOptionLabelMap[option] }}
             </option>
           </select>
         </div>
@@ -221,14 +247,14 @@ defineEmits<Emits>()
             class="rounded-lg bg-[#c9d5fb] px-5 py-2 text-sm font-bold text-[#2d3769] transition hover:bg-[#bccbfb]"
             @click="$emit('clearFilters')"
           >
-            Reset
+            {{ languageStore.t('reset') }}
           </button>
           <button
             type="button"
             class="rounded-lg bg-[#1b1748] px-6 py-2 text-sm font-bold text-white transition hover:bg-[#242163]"
             @click="$emit('close')"
           >
-            Show {{ featuredCount }} Results
+            {{ featuredCount }} {{ languageStore.t('results') }}
           </button>
         </div>
       </div>

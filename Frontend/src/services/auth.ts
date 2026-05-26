@@ -55,14 +55,14 @@ export const authApi = {
 
             if (!response.ok) {
                 const error = await response.json().catch(() => ({}))
-                throw {
-                    statusCode: response.status,
-                    message: error.message || 'Login failed. Please check your credentials.',
-                }
+                const err = new Error(error.message || 'Login failed. Please check your credentials.')
+                ;(err as any).statusCode = response.status
+                throw err
             }
 
             return await response.json()
         } catch (error) {
+            if (error instanceof Error && (error as any).statusCode) throw error
             throw new Error(parseErrorMessage(error))
         }
     },
@@ -90,14 +90,14 @@ export const authApi = {
 
             if (!response.ok) {
                 const error = await response.json().catch(() => ({}))
-                throw {
-                    statusCode: response.status,
-                    message: error.message || 'Registration failed. Please try again.',
-                }
+                const err = new Error(error.message || 'Registration failed. Please try again.')
+                ;(err as any).statusCode = response.status
+                throw err
             }
 
             return await response.json()
         } catch (error) {
+            if (error instanceof Error && (error as any).statusCode) throw error
             throw new Error(parseErrorMessage(error))
         }
     },
@@ -113,14 +113,14 @@ export const authApi = {
 
             if (!response.ok) {
                 const error = await response.json().catch(() => ({}))
-                throw {
-                    statusCode: response.status,
-                    message: error.message || 'Failed to load profile.',
-                }
+                const err = new Error(error.message || 'Failed to load profile.')
+                ;(err as any).statusCode = response.status
+                throw err
             }
 
             return await response.json()
         } catch (error) {
+            if (error instanceof Error && (error as any).statusCode) throw error
             throw new Error(parseErrorMessage(error))
         }
     },
@@ -141,14 +141,14 @@ export const authApi = {
 
             if (!response.ok) {
                 const error = await response.json().catch(() => ({}))
-                throw {
-                    statusCode: response.status,
-                    message: error.message || 'Failed to update profile.',
-                }
+                const err = new Error(error.message || 'Failed to update profile.')
+                ;(err as any).statusCode = response.status
+                throw err
             }
 
             return await response.json()
         } catch (error) {
+            if (error instanceof Error && (error as any).statusCode) throw error
             throw new Error(parseErrorMessage(error))
         }
     }

@@ -1,9 +1,9 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
-type SupportedLanguage = 'English' | 'Khmer'
+export type SupportedLanguage = 'English' | 'Khmer'
 
-type TranslationKey =
+export type TranslationKey =
   | 'personalInformation'
   | 'trackingItem'
   | 'payments'
@@ -26,6 +26,8 @@ type TranslationKey =
   | 'email'
   | 'editProfile'
   | 'saveChanges'
+  | 'profileSaved'
+  | 'saveFailed'
   | 'paymentMethod'
   | 'bankTransfer'
   | 'cardPayment'
@@ -41,7 +43,21 @@ type TranslationKey =
   | 'itemNotAvailable'
   | 'changedMyMind'
   | 'wrongItemSelected'
+  | 'clothing'
+  | 'electronics'
+  | 'books'
+  | 'furniture'
+  | 'sports'
+  | 'toys'
+  | 'vehicles'
+  | 'homeAndGarden'
+  | 'foodAndDrink'
   | 'other'
+  | 'cityOrNeighbourhood'
+  | 'coverPhoto'
+  | 'posting'
+  | 'editListingAfterPosting'
+  | 'fillRequirementsToContinue'
   | 'troubleshoot'
   | 'troubleshootDescription'
   | 'workWithSupport'
@@ -62,6 +78,10 @@ type TranslationKey =
   | 'learnMore'
   | 'forSale'
   | 'borrow'
+  | 'all'
+  | 'newest'
+  | 'az'
+  | 'za'
   | 'posted'
   | 'justNow'
   | 'minutesAgo'
@@ -72,6 +92,9 @@ type TranslationKey =
   | 'allTypes'
   | 'loginSignUp'
   | 'footerDescription'
+  | 'productItemAlt'
+  | 'sellerAlt'
+  | 'unknownSeller'
   | 'joinLuminaryNetwork'
   | 'newsletterDescription'
   | 'subscribe'
@@ -82,10 +105,25 @@ type TranslationKey =
   | 'contact'
   | 'services'
   | 'buy'
+  | 'buyNow'
   | 'sell'
   | 'exchange'
   | 'lend'
   | 'support'
+  | 'available'
+  | 'contactToExchange'
+  | 'contactToBorrow'
+  | 'photo'
+  | 'photos'
+  | 'specifications'
+  | 'exchangeTarget'
+  | 'relatedListings'
+  | 'moreMaterialsYouMayLike'
+  | 'viewCategory'
+  | 'fastPickupAndExchangeReady'
+  | 'mapUnavailable'
+  | 'usuallyRepliesIn1Hour'
+  | 'marketplaceSeller'
   | 'helpCenter'
   | 'faq'
   | 'guides'
@@ -107,6 +145,7 @@ type TranslationKey =
   | 'password'
   | 'confirmPassword'
   | 'enterYourEmail'
+  | 'emailPlaceholder'
   | 'enterYourPassword'
   | 'confirmYourPassword'
   | 'passwordRequired'
@@ -120,8 +159,32 @@ type TranslationKey =
   | 'signUpHere'
   | 'alreadyHaveAccount'
   | 'loginHere'
+  | 'loginRequired'
+  | 'loginPromptMessage'
+  | 'back'
+  | 'loginInto'
+  | 'brandTagline'
+  | 'brandPill'
   | 'letsReleaseProduct'
+  | 'search'
+  | 'viewProfile'
+  | 'loadingMoreUsers'
+  | 'noUsersFound'
+  | 'noUsersDescription'
+  | 'item'
   | 'fillDetailsBelow'
+  | 'updateYourPost'
+  | 'makeChangesBelow'
+  | 'loadingPost'
+  | 'dailyRate'
+  | 'clickToUploadPhotos'
+  | 'replaceOrKeepPhotosHint'
+  | 'reviewYourChanges'
+  | 'reviewUpdatedPost'
+  | 'postUpdatedSuccessfully'
+  | 'lookingFor'
+  | 'updating'
+  | 'updatePost'
   | 'listingType'
   | 'listingInformation'
   | 'productTitle'
@@ -132,12 +195,16 @@ type TranslationKey =
   | 'select'
   | 'condition'
   | 'new'
+  | 'likeNew'
+  | 'good'
+  | 'fair'
   | 'used'
   | 'price'
   | 'exchangeFor'
   | 'tellWhatWantExchange'
   | 'phone'
   | 'location'
+  | 'locationPlaceholder'
   | 'addAtLeastContact'
   | 'phoneLooksInvalid'
   | 'emailLooksInvalid'
@@ -145,6 +212,16 @@ type TranslationKey =
   | 'addAtLeastOnePhoto'
   | 'listingDetails'
   | 'reviewPost'
+  | 'reviewYourListing'
+  | 'postedSuccessfully'
+  | 'contactMe'
+  | 'verifiedStudioAddress'
+  | 'postedJustNow'
+  | 'uploadPhotos'
+  | 'uploadPhotosHint'
+  | 'cover'
+  | 'nextStepReview'
+  | 'confirmPost'
   | 'titleRequired'
   | 'titleMin3Chars'
   | 'descriptionRequired'
@@ -156,18 +233,42 @@ type TranslationKey =
   | 'savedListings'
   | 'browseSavedPosts'
   | 'createPost'
+  | 'mypost'
   | 'postsSaved'
   | 'postSaved'
   | 'refresh'
   | 'loadingPosts'
   | 'noSavedPostsYet'
   | 'createFirstListing'
+  | 'errorLoadingSavedPosts'
+  | 'failedToDeletePost'
+  | 'perDay'
   | 'edit'
   | 'delete'
   | 'confirmDelete'
   | 'cannotBeUndone'
   | 'openToTrade'
+  | 'openToBorrow'
   | 'wants'
+  | 'items'
+  | 'users'
+  | 'openFilters'
+  | 'results'
+  | 'reset'
+  | 'up'
+  | 'closeFiltersBackdrop'
+  | 'closeFilters'
+  | 'filters'
+  | 'priceRange'
+  | 'minimumPrice'
+  | 'maximumPrice'
+  | 'minimumPriceSlider'
+  | 'maximumPriceSlider'
+  | 'transactionType'
+  | 'conditions'
+  | 'minimumSellerRating'
+  | 'priceLowToHigh'
+  | 'priceHighToLow'
   | 'inboxes'
   | 'searchConversations'
   | 'selectConversation'
@@ -176,7 +277,12 @@ type TranslationKey =
   | 'confirmLogout'
   | 'confirmLogoutMessage'
   | 'cancel'
-  | 'mypost'
+  | 'materialListings'
+  | 'noResultsFound'
+  | 'noResultsDescription'
+  | 'loadingMoreMaterials'
+  | 'notifications'
+  | 'noNotifications'
 
 const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = {
   English: {
@@ -202,6 +308,8 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     email: 'Email',
     editProfile: 'Edit Profile',
     saveChanges: 'Save Changes',
+    profileSaved: 'Profile saved successfully!',
+    saveFailed: 'Failed to save profile. Please try again.',
     paymentMethod: 'Payment Method',
     bankTransfer: 'Bank Transfer',
     cardPayment: 'Card Payment',
@@ -225,6 +333,8 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     contactUs: 'Contact Us',
     successSubmit: 'Thank you for your submit!! We will check as soon as possible.',
     emailAddress: 'Email Address',
+    emailPlaceholder: 'you@gmail.com',
+    locationPlaceholder: 'e.g. Phnom Penh, BKK1',
     howCanWeHelp: 'How can we help you?',
     whatCanWeProvide: 'What can we provide to you?',
     submit: 'Submit',
@@ -238,8 +348,15 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     learnMore: 'Learn more',
     forSale: 'For Sale',
     borrow: 'Borrow',
+    all: 'All',
+    newest: 'Newest',
+    az: 'A-Z',
+    za: 'Z-A',
     posted: 'Posted',
     justNow: 'Just now',
+    productItemAlt: 'Product item',
+    sellerAlt: 'Seller',
+    unknownSeller: 'U',
     minutesAgo: 'm ago',
     hoursAgo: 'h ago',
     daysAgo: 'd ago',
@@ -296,8 +413,33 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     signUpHere: 'Sign up here',
     alreadyHaveAccount: 'Already have an account?',
     loginHere: 'Login here',
+    loginRequired: 'Login required',
+    loginPromptMessage: 'You need to be logged in to use chat. Would you like to login now?',
+    back: 'Back',
+    loginInto: 'Login into',
+    brandTagline: 'An exchange online platform for sharing, selling, and borrowing everything.',
+    brandPill: 'Trade. Exchange. Borrow.',
     letsReleaseProduct: "Let's release your new product",
+    search: 'Search',
+    viewProfile: 'View Profile',
+    loadingMoreUsers: 'Loading more users...',
+    noUsersFound: 'No users found',
+    noUsersDescription: 'Try a different search term to find users.',
+    item: 'item',
+    items: 'items',
     fillDetailsBelow: 'Fill in the details below to list your item',
+    updateYourPost: 'Update your post',
+    makeChangesBelow: 'Make changes below',
+    loadingPost: 'Loading post...',
+    dailyRate: 'Daily rate',
+    clickToUploadPhotos: 'Click to upload photos',
+    replaceOrKeepPhotosHint: 'Add new photos to replace or keep existing ones',
+    reviewYourChanges: 'Review your changes',
+    reviewUpdatedPost: 'This is how your updated post will appear',
+    postUpdatedSuccessfully: 'Post updated successfully! Redirecting...',
+    lookingFor: 'Looking for:',
+    updating: 'Updating...',
+    updatePost: 'Update Post',
     listingType: 'Listing type',
     listingInformation: 'Listing Information of Product',
     productTitle: 'Product title',
@@ -308,10 +450,27 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     select: 'Select…',
     condition: 'Condition',
     new: 'New',
+    likeNew: 'Like new',
+    good: 'Good',
+    fair: 'Fair',
     used: 'Used',
     price: 'Price',
     exchangeFor: 'Exchange for',
     tellWhatWantExchange: 'Tell people what item you want in exchange',
+    clothing: 'Clothing',
+    electronics: 'Electronics',
+    books: 'Books',
+    furniture: 'Furniture',
+    sports: 'Sports',
+    toys: 'Toys',
+    vehicles: 'Vehicles',
+    homeAndGarden: 'Home & Garden',
+    foodAndDrink: 'Food & Drink',
+    cityOrNeighbourhood: 'City or neighbourhood',
+    coverPhoto: 'Cover photo',
+    posting: 'Posting…',
+    editListingAfterPosting: 'You can always edit your listing after posting',
+    fillRequirementsToContinue: 'Fill {count} required fields above to continue',
     phone: 'Phone',
     location: 'Location',
     addAtLeastContact: 'Please add at least a phone number or email',
@@ -321,6 +480,16 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     addAtLeastOnePhoto: 'Please add at least one photo',
     listingDetails: 'Listing details',
     reviewPost: 'Review & post',
+    reviewYourListing: 'Review your listing',
+    postedSuccessfully: 'Posted successfully! Your listing is now live.',
+    contactMe: 'Contact Me',
+    verifiedStudioAddress: 'Verified studio address',
+    postedJustNow: 'Posted just now',
+    uploadPhotos: 'Upload photos',
+    uploadPhotosHint: 'Show your product quality with up to 10 photos',
+    cover: 'Cover',
+    nextStepReview: 'Next Step: Review →',
+    confirmPost: 'Confirm & Post →',
     titleRequired: 'Product title is required',
     titleMin3Chars: 'Title must be at least 3 characters',
     descriptionRequired: 'Description is required',
@@ -332,18 +501,56 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     savedListings: 'Saved listings',
     browseSavedPosts: 'Browse the posts you already saved',
     createPost: 'Create a post',
+    mypost: 'My post',
     postsSaved: 'posts saved',
     postSaved: 'post saved',
     refresh: 'Refresh',
     loadingPosts: 'Loading posts...',
     noSavedPostsYet: 'No saved posts yet',
     createFirstListing: 'Create the first listing and it will show up here.',
+    errorLoadingSavedPosts: 'Error loading saved posts.',
+    failedToDeletePost: 'Failed to delete post.',
+    perDay: '/day',
     edit: 'Edit',
     delete: 'Delete',
     confirmDelete: 'Are you sure you want to delete',
     cannotBeUndone: 'This cannot be undone.',
     openToTrade: 'Open to trade',
+    openToBorrow: 'Open to borrow',
+    available: 'Available',
+    buyNow: 'Buy now',
+    contactToExchange: 'Contact to exchange',
+    contactToBorrow: 'Contact to borrow',
+    photo: 'Photo',
+    photos: 'Photos',
+    specifications: 'Specifications',
+    exchangeTarget: 'Exchange target',
+    relatedListings: 'Related listings',
+    moreMaterialsYouMayLike: 'More materials you may like',
+    viewCategory: 'View category',
+    fastPickupAndExchangeReady: 'Fast pickup and exchange ready',
+    mapUnavailable: 'Map unavailable for this listing',
+    usuallyRepliesIn1Hour: 'Usually replies in 1 hour',
+    marketplaceSeller: 'Marketplace seller',
     wants: 'Wants:',
+    users: 'Users',
+    openFilters: 'Open filters',
+    results: 'Results',
+    reset: 'Reset',
+    up: 'and up',
+    closeFiltersBackdrop: 'Close filters backdrop',
+    closeFilters: 'Close filters',
+    filters: 'Filters',
+    priceRange: 'Price Range',
+    minimumPrice: 'Minimum price',
+    maximumPrice: 'Maximum price',
+    minimumPriceSlider: 'Minimum price slider',
+    maximumPriceSlider: 'Maximum price slider',
+    transactionType: 'Transaction type',
+    conditions: 'Conditions',
+    minimumSellerRating: 'Minimum seller rating',
+    priceLowToHigh: 'Price: Low to High',
+    priceHighToLow: 'Price: High to Low',
     inboxes: 'Inboxes',
     searchConversations: 'Search conversations...',
     selectConversation: 'Select a conversation',
@@ -352,8 +559,12 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     confirmLogout: 'Confirm Logout',
     confirmLogoutMessage: 'Are you sure you want to logout?',
     cancel: 'Cancel',
-    mypost: 'My Post',
-    
+    materialListings: 'Material listings',
+    noResultsFound: 'No Results found',
+    noResultsDescription: 'We couldn\'t find what you searched for. Try searching again.',
+    loadingMoreMaterials: 'Loading more materials...',
+    notifications: 'Notifications',
+    noNotifications: 'No notifications',
   },
   Khmer: {
     personalInformation: 'ព័ត៌មានផ្ទាល់ខ្លួន',
@@ -378,6 +589,8 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     email: 'អ៊ីមែល',
     editProfile: 'កែប្រែព័ត៍មាន',
     saveChanges: 'រក្សាទុកការផ្លាស់ប្តូរ',
+    profileSaved: 'កំណត់ព័ត៍មានបានរក្សាទុក្ខសម្រួច!',
+    saveFailed: 'រក្សាទុកព័ត៍មានបរាជ័យ។ សូមព្យាយាមម្ដងទៀត។',
     paymentMethod: 'វិធីសាស្ត្រទូទាត់',
     bankTransfer: 'ផ្ទេរទៅធនាគារ',
     cardPayment: 'បង់ប្រាក់តាមកាត',
@@ -401,6 +614,8 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     contactUs: 'ទំនាក់ទំនងយើងខ្ញុំ',
     successSubmit: 'សូមអរគុណសម្រាប់ការដាក់ស្នើ! យើងនឹងពិនិត្យឆាប់ៗនេះ។',
     emailAddress: 'អាសយដ្ឋានអ៊ីមែល',
+    emailPlaceholder: 'ឧ. user@example.com',
+    locationPlaceholder: 'ឧ. ភ្នំពេញ, BKK1',
     howCanWeHelp: 'តើយើងអាចជួយអ្នកដូចម្តេច?',
     whatCanWeProvide: 'តើយើងអាចផ្តល់អ្វីឲ្យអ្នកបាន?',
     submit: 'ដាក់ស្នើ',
@@ -408,14 +623,21 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     marketplace: 'ទីផ្សារ',
     categories: 'ប្រភេទ',
     sortBy: 'តម្រៀបតាម',
-    xchangeMaterial: 'XChange Material',
+    xchangeMaterial: 'XChange សម្ភារៈ',
     heroDescription: 'វេទិកាដែលគួរឱ្យទុកចិត្តសម្រាប់ការទិញ លក់ និងផ្លាស់ប្តូរទំនិញប្រចាំថ្ងៃដោយងាយស្រួល និងថ្លៃសមរម្យ។',
     browse: 'រកមើល',
     learnMore: 'ស្វែងយល់បន្ថែម',
     forSale: 'សម្រាប់លក់',
     borrow: 'ខ្ចី',
+    all: 'ទាំងអស់',
+    newest: 'ថ្មីជាងគេ',
+    az: 'A-Z',
+    za: 'Z-A',
     posted: 'បានចុះផ្សាយ',
     justNow: 'ថ្មីៗនេះ',
+    productItemAlt: 'ទំនិញផលិតផល',
+    sellerAlt: 'អ្នកលក់',
+    unknownSeller: 'U',
     minutesAgo: 'នាទីមុន',
     hoursAgo: 'ម៉ោងមុន',
     daysAgo: 'ថ្ងៃមុន',
@@ -472,8 +694,33 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     signUpHere: 'ចុះឈ្មោះនៅទីនេះ',
     alreadyHaveAccount: 'មានគណនីរួចហើយ?',
     loginHere: 'ចូលនៅទីនេះ',
+    loginRequired: 'តម្រូវការចូលគណនី',
+    loginPromptMessage: 'អ្នកត្រូវតែចូលគណនីដើម្បីប្រើការជជែក។ តើអ្នកចង់ចូលឥឡូវនេះទេ?',
+    back: 'ត្រឡប់ក្រោយ',
+    loginInto: 'ចូលទៅក្នុង',
+    brandTagline: 'វេទិកាអនឡាញសម្រាប់ការផ្លាស់ប្តូរ ចែករំលែក និង ខ្ចីទំនិញគ្រប់ប្រភេទ។',
+    brandPill: 'ពាណិជ្ជកម្ម, ផ្លាស់ប្តូរ, ខ្ចី',
     letsReleaseProduct: 'តោះចេញផលិតផលថ្មីរបស់អ្នក',
+    search: 'ស្វែងរក',
+    viewProfile: 'មើលប្រវត្តិរូប',
+    loadingMoreUsers: 'កំពុងផ្ទុកអ្នកប្រើបន្ថែម...',
+    noUsersFound: 'មិនមានអ្នកប្រើ',
+    noUsersDescription: 'សូមស្វែងរកឈ្មោះផ្សេងទៀតដើម្បីរកអ្នកប្រើ។',
+    item: 'ទំនិញ',
+    items: 'ទំនិញ',
     fillDetailsBelow: 'បំពេញព័ត៌មានខាងក្រោមដើម្បីចុះបញ្ជីទំនិញរបស់អ្នក',
+    updateYourPost: 'ធ្វើបច្ចុប្បន្នភាពផ្សាយពាណិជ្ជកម្មរបស់អ្នក',
+    makeChangesBelow: 'ធ្វើការផ្លាស់ប្តូរខាងក្រោម',
+    loadingPost: 'កំពុងផ្ទុកប្រកាស...',
+    dailyRate: 'អត្រាថ្ងៃ',
+    clickToUploadPhotos: 'ចុចដើម្បីផ្ទុករូបថត',
+    replaceOrKeepPhotosHint: 'បន្ថែមរូបភាពថ្មីដើម្បីប្ដូរឬរក្សារូបភាពមានស្រាប់',
+    reviewYourChanges: 'ពិនិត្យការផ្លាស់ប្តូររបស់អ្នក',
+    reviewUpdatedPost: 'នេះគឺជារបៀបដែលប្រកាសរបស់អ្នកនឹងបង្ហាញ',
+    postUpdatedSuccessfully: 'បានធ្វើបច្ចុប្បន្នភាពប្រកាសដោយជោគជ័យ! កំពុងផ្ដល់ការបញ្ជូន...',
+    lookingFor: 'កំពុងស្វែងរក:',
+    updating: 'កំពុងធ្វើបច្ចុប្បន្នភាព...',
+    updatePost: 'ធ្វើបច្ចុប្បន្នភាពប្រកាស',
     listingType: 'ប្រភេទបញ្ជី',
     listingInformation: 'ព័ត៌មានបញ្ជីនៃផលិតផល',
     productTitle: 'ចំណងជើងផលិតផល',
@@ -484,10 +731,27 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     select: 'ជ្រើសរើស…',
     condition: 'ស្ថានភាព',
     new: 'ថ្មី',
+    likeNew: 'ដូចថ្មី',
+    good: 'ល្អ',
+    fair: 'ធម្មតា',
     used: 'ប្រើរួច',
     price: 'តម្លៃ',
     exchangeFor: 'ផ្លាស់ប្តូរសម្រាប់',
     tellWhatWantExchange: 'ប្រាប់មនុស្សអំពីទំនិញដែលអ្នកចង់ផ្លាស់ប្តូរ',
+    clothing: 'សម្លៀកបំពាក់',
+    electronics: 'ឧបករណ៍អេឡិចត្រូនិច',
+    books: 'សៀវភៅ',
+    furniture: 'គ្រឿងសង្ហារឹម',
+    sports: 'កីឡា',
+    toys: 'ប្រដាប់ក្មេងលេង',
+    vehicles: 'យានយន្ត',
+    homeAndGarden: 'ផ្ទះ និងសួនច្បារ',
+    foodAndDrink: 'អាហារ និងភេសជ្ជៈ',
+    cityOrNeighbourhood: 'ទីក្រុង ឬ សង្កាត់',
+    coverPhoto: 'រូបភាពគម្រប',
+    posting: 'កំពុងផ្ទុក...',
+    editListingAfterPosting: 'អ្នកអាចកែប្រែបញ្ជីរបស់អ្នកបន្ទាប់ពីចុះផ្សាយបានណាត់',
+    fillRequirementsToContinue: 'បំពេញ {count} ទាមទារដើម្បីបន្ត',
     phone: 'ទូរស័ព្ទ',
     location: 'ទីតាំង',
     addAtLeastContact: 'សូមបន្ថែមយ៉ាងហោចណាស់លេខទូរស័ព្ទ ឬអ៊ីមែល',
@@ -497,6 +761,16 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     addAtLeastOnePhoto: 'សូមបន្ថែមយ៉ាងហោចណាស់រូបថតមួយ',
     listingDetails: 'ព័ត៌មានបញ្ជី',
     reviewPost: 'ពិនិត្យ និងចុះផ្សាយ',
+    reviewYourListing: 'ពិនិត្យបញ្ជីរបស់អ្នក',
+    postedSuccessfully: 'បានបង្កើតបានជោគជ័យ! បញ្ជីរបស់អ្នកបានផ្សាយហើយ។',
+    contactMe: 'ទំនាក់ទំនងខ្ញុំ',
+    verifiedStudioAddress: 'អាសយដ្ឋានស្ទូឌីយ៉ូលេខត្រឹមត្រូវ',
+    postedJustNow: 'បានចុះផ្សាយថ្មីៗនេះ',
+    uploadPhotos: 'ផ្ទុករូបភាព',
+    uploadPhotosHint: 'បង្ហាញគុណភាពផលិតផលរបស់អ្នកជាមួយរូបភាពដល់ 10 គ្រាប់',
+    cover: 'គម្រប',
+    nextStepReview: 'ជំហានបន្ទាប់៖ ពិនិត្យ →',
+    confirmPost: 'បញ្ជាក់ និង ចុះផ្សាយ →',
     titleRequired: 'ចំណងជើងផលិតផលត្រូវបានទាមទារ',
     titleMin3Chars: 'ចំណងជើងត្រូវមានយ៉ាងហោចណាស់ 3 តួអក្សរ',
     descriptionRequired: 'ការពិពណ៌នាត្រូវបានទាមទារ',
@@ -508,18 +782,56 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     savedListings: 'បញ្ជីដែលបានរក្សាទុក',
     browseSavedPosts: 'រកមើលប្រកាសដែលអ្នកបានរក្សាទុករួចហើយ',
     createPost: 'ផុសទំនិញ',
+    mypost: 'ទំនិញរបស់ខ្ញុំ',
     postsSaved: 'ប្រកាសបានរក្សាទុក',
     postSaved: 'ប្រកាសបានរក្សាទុក',
     refresh: 'ផ្ទុកឡើងវិញ',
     loadingPosts: 'កំពុងផ្ទុកប្រកាស...',
     noSavedPostsYet: 'មិនទាន់មានប្រកាសដែលបានរក្សាទុកនៅឡើយទេ',
     createFirstListing: 'បង្កើតបញ្ជីដំបូង ហើយវានឹងបង្ហាញនៅទីនេះ។',
+    errorLoadingSavedPosts: 'មានបញ្ហាក្នុងការផ្ទុកប្រកាសដែលបានរក្សាទុក។',
+    failedToDeletePost: 'បរាជ័យក្នុងការលុបទំព័រ។',
+    openToTrade: 'បើកចំពោះការជួញដូរ',
+    openToBorrow: 'បើកចំពោះការខ្ចី',
+    available: 'មានស្រាប់',
+    buyNow: 'ទិញឥឡូវនេះ',
+    contactToExchange: 'ទំនាក់ទំនងដើម្បីផ្លាស់ប្តូរ',
+    contactToBorrow: 'ទំនាក់ទំនងដើម្បីខ្ចី',
+    photo: 'រូបថត',
+    photos: 'រូបថត',
+    specifications: 'លក្ខណៈពិសេស',
+    exchangeTarget: 'គោលដៅផ្លាស់ប្តូរ',
+    relatedListings: 'បញ្ជីទំនិញទាក់ទង',
+    moreMaterialsYouMayLike: 'ទំនិញបន្ថែមដែលអ្នកអាចចូលចិត្ត',
+    viewCategory: 'មើលប្រភេទ',
+    fastPickupAndExchangeReady: 'ទទួលបានយ៉ាងឆាប់រហ័ស និងរួចរាល់សម្រាប់ការផ្លាស់ប្តូរ',
+    mapUnavailable: 'ផែនទីមិនអាចប្រើបានសម្រាប់បញ្ជីនេះ',
+    usuallyRepliesIn1Hour: 'ធម្មតាឆ្លើយតបក្នុង 1 ម៉ោង',
+    marketplaceSeller: 'អ្នកលក់ទីផ្សារ',
+    perDay: '/ថ្ងៃ',
     edit: 'កែប្រែ',
     delete: 'លុប',
     confirmDelete: 'តើអ្នកប្រាកដថាចង់លុប',
     cannotBeUndone: 'វាមិនអាចត្រឡប់វិញបានទេ។',
-    openToTrade: 'បើកចំពោះការជួញដូរ',
     wants: 'ចង់បាន:',
+    users: 'អ្នកប្រើ',
+    openFilters: 'បើកចម្រៀង',
+    results: 'លទ្ធផល',
+    reset: 'កំណត់ឡើងវិញ',
+    up: 'ឡើង',
+    closeFiltersBackdrop: 'បិទផ្ទាំងចម្រៀង',
+    closeFilters: 'បិទចម្រៀង',
+    filters: 'តម្រៀបតាម',
+    priceRange: 'លំដាប់តម្លៃ',
+    minimumPrice: 'តម្លៃអប្បបរមា',
+    maximumPrice: 'តម្លៃអតិបរមា',
+    minimumPriceSlider: 'រើសតម្លៃអប្បបរមា',
+    maximumPriceSlider: 'រើសតម្លៃអតិបរមា',
+    transactionType: 'ប្រភេទប្រតិបត្តិការ',
+    conditions: 'លក្ខខណ្ឌ',
+    minimumSellerRating: 'ពិន្ទុអ្នកលក់អប្បបរមា',
+    priceLowToHigh: 'តម្លៃ៖ ទាបទៅខ្ពស់',
+    priceHighToLow: 'តម្លៃ៖ ខ្ពស់ទៅទាប',
     inboxes: 'ប្រអប់ពត៌មាន',
     searchConversations: 'ស្វែងរកស话្ហាបាន...',
     selectConversation: 'ជ្រើសរើសស话្ហាប',
@@ -528,7 +840,12 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     confirmLogout: 'បញ្ជាក់ការចាកចេញ',
     confirmLogoutMessage: 'តើអ្នកប្រាកដថាចង់ចាកចេញមែនទេ?',
     cancel: 'បោះបង់',
-    mypost: 'ប្រកាសរបស់ខ្ញុំ',
+    materialListings: 'បញ្ជីសម្ភារៈ',
+    noResultsFound: 'មិនមានលទ្ធផល',
+    noResultsDescription: 'យើងមិនអាចស្វែងរកអ្វីដែលអ្នកបានស្វែងរកទេ។ សូមព្យាយាមស្វែងរកម្តងទៀត។',
+    loadingMoreMaterials: 'កំពុងផ្ទុកសម្ភារៈបន្ថែម...',
+    notifications: 'ការជូនដំណឹង',
+    noNotifications: 'មិនមានការជូនដំណឹង',
   },
 }
 

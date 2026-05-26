@@ -470,7 +470,7 @@ const playVoice = (msg: ChatMessage, index: number) => {
             :value="props.newMessage"
             @input="updateNewMessage"
             @keyup.enter="emit('send-message')"
-            placeholder="Type message"
+            placeholder="វាយសារ"
             class="text-input"
           />
 

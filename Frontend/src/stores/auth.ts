@@ -18,7 +18,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Computed
   const isAuthenticated = computed(() => user.value !== null)
-  const token = computed(() => sessionStorage.getItem('authToken'))
+  const token = computed(() => {
+    try {
+      return sessionStorage.getItem('authToken')
+    } catch {
+      return null
+    }
+  })
 
   /**
    * Get current auth state (for debugging/monitoring)
@@ -43,12 +49,16 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function writeStoredUser(value: User | null) {
-    if (!value) {
-      sessionStorage.removeItem(USER_STORAGE_KEY)
-      return
-    }
+    try {
+      if (!value) {
+        sessionStorage.removeItem(USER_STORAGE_KEY)
+        return
+      }
 
-    sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(value))
+      sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(value))
+    } catch {
+      // Silently ignore storage errors (e.g., from tracking prevention)
+    }
   }
 
 
@@ -64,9 +74,13 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await authApi.login(credentials)
 
       if (response.user && !response.user.avatar) {
-        const savedAvatar = sessionStorage.getItem(getAvatarStorageKey(response.user.id))
-        if (savedAvatar) {
-          response.user.avatar = savedAvatar
+        try {
+          const savedAvatar = sessionStorage.getItem(getAvatarStorageKey(response.user.id))
+          if (savedAvatar) {
+            response.user.avatar = savedAvatar
+          }
+        } catch {
+          // Silently ignore storage errors (e.g., from tracking prevention)
         }
       }
 
@@ -75,7 +89,11 @@ export const useAuthStore = defineStore('auth', () => {
       writeStoredUser(response.user)
 
       // Store token persistently
-      sessionStorage.setItem('authToken', response.accessToken)
+      try {
+        sessionStorage.setItem('authToken', response.accessToken)
+      } catch {
+        // Silently ignore storage errors (e.g., from tracking prevention)
+      }
 
       return response
     } catch (err) {
@@ -99,9 +117,13 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await authApi.register(credentials)
 
       if (response.user && !response.user.avatar) {
-        const savedAvatar = sessionStorage.getItem(getAvatarStorageKey(response.user.id))
-        if (savedAvatar) {
-          response.user.avatar = savedAvatar
+        try {
+          const savedAvatar = sessionStorage.getItem(getAvatarStorageKey(response.user.id))
+          if (savedAvatar) {
+            response.user.avatar = savedAvatar
+          }
+        } catch {
+          // Silently ignore storage errors (e.g., from tracking prevention)
         }
       }
 
@@ -110,7 +132,11 @@ export const useAuthStore = defineStore('auth', () => {
       writeStoredUser(response.user)
 
       // Store token persistently
-      sessionStorage.setItem('authToken', response.accessToken)
+      try {
+        sessionStorage.setItem('authToken', response.accessToken)
+      } catch {
+        // Silently ignore storage errors (e.g., from tracking prevention)
+      }
 
       return response
     } catch (err) {
@@ -130,7 +156,11 @@ export const useAuthStore = defineStore('auth', () => {
   function logout() {
     user.value = null
     error.value = null
-    sessionStorage.removeItem('authToken')
+    try {
+      sessionStorage.removeItem('authToken')
+    } catch {
+      // Silently ignore storage errors (e.g., from tracking prevention)
+    }
     writeStoredUser(null)
   }
 
@@ -145,22 +175,11 @@ export const useAuthStore = defineStore('auth', () => {
  * Initialize auth state
  */
   async function initializeAuth() {
-    let token = sessionStorage.getItem('authToken')
-
-    if (!token) {
-      const legacyToken = localStorage.getItem('authToken')
-      const legacyUser = localStorage.getItem(USER_STORAGE_KEY)
-
-      if (legacyToken) {
-        sessionStorage.setItem('authToken', legacyToken)
-        localStorage.removeItem('authToken')
-        token = legacyToken
-      }
-
-      if (legacyUser) {
-        sessionStorage.setItem(USER_STORAGE_KEY, legacyUser)
-        localStorage.removeItem(USER_STORAGE_KEY)
-      }
+    let token: string | null = null
+    try {
+      token = sessionStorage.getItem('authToken')
+    } catch {
+      // Silently ignore storage errors (e.g., from tracking prevention)
     }
 
     if (!token) {
@@ -177,8 +196,14 @@ export const useAuthStore = defineStore('auth', () => {
       const profile = await authApi.getProfile(token)
       user.value = profile
       writeStoredUser(profile)
-    } catch {
-      // Keep the stored user and token so refresh does not log out on transient errors.
+    } catch (err) {
+      const statusCode = (err as any)?.statusCode
+      // If token is invalid (401), logout to force re-authentication
+      if (statusCode === 401) {
+        logout()
+        return
+      }
+      // For other errors, keep the stored user and token (transient network errors)
     }
   }
 
@@ -190,7 +215,12 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
-      const token = sessionStorage.getItem('authToken')
+      let token: string | null = null
+      try {
+        token = sessionStorage.getItem('authToken')
+      } catch {
+        // Silently ignore storage errors (e.g., from tracking prevention)
+      }
 
       if (!token) {
         throw new Error('No authentication token found')
@@ -203,13 +233,45 @@ export const useAuthStore = defineStore('auth', () => {
 
       return updatedUser
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to update profile'
+      const statusCode = (err as any)?.statusCode
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update profile'
 
       error.value = errorMessage
+      if (statusCode === 401) {
+        logout()
+      }
       throw err
     } finally {
       isLoading.value = false
+    }
+  }
+
+  /**
+   * Refresh user profile from server
+   */
+  async function refreshUser() {
+    try {
+      let token: string | null = null
+      try {
+        token = sessionStorage.getItem('authToken')
+      } catch {
+        // Silently ignore storage errors (e.g., from tracking prevention)
+      }
+
+      if (!token) {
+        logout()
+        return
+      }
+
+      const profile = await authApi.getProfile(token)
+      user.value = profile
+      return profile
+    } catch (err) {
+      const statusCode = (err as any)?.statusCode
+      if (statusCode === 401) {
+        logout()
+      }
+      throw err
     }
   }
 
@@ -229,6 +291,7 @@ export const useAuthStore = defineStore('auth', () => {
     clearError,
     initializeAuth,
     updateProfile,
+    refreshUser,
   }
 
 })

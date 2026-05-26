@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLanguageStore } from '../../stores/language'
+
 interface Props {
   activeTypeCount: number
   isFloating?: boolean
@@ -13,6 +15,8 @@ withDefaults(defineProps<Props>(), {
 })
 
 defineEmits<Emits>()
+
+const languageStore = useLanguageStore()
 </script>
 
 <template>
@@ -20,7 +24,7 @@ defineEmits<Emits>()
     v-if="!isFloating"
     type="button"
     class="relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#f4f5fb] text-[#201f62] transition hover:bg-[#eaecfb]"
-    aria-label="Open filters"
+    :aria-label="languageStore.t('openFilters')"
     @click="$emit('click')"
   >
     <span v-if="activeTypeCount > 0" class="absolute right-1 top-1 h-3 w-3 rounded-full bg-[#ff4b42]"></span>
@@ -41,7 +45,7 @@ defineEmits<Emits>()
     v-else
     type="button"
     class="fixed bottom-6 right-6 z-30 grid h-12 w-12 place-items-center rounded-full bg-[#1b1748] text-white shadow-[0_14px_28px_rgba(27,23,72,0.32)] transition hover:bg-[#242163] sm:bottom-8 sm:right-8"
-    aria-label="Open filters"
+    :aria-label="languageStore.t('openFilters')"
     @click="$emit('click')"
   >
     <span v-if="activeTypeCount > 0" class="absolute right-1 top-1 h-3 w-3 rounded-full bg-[#ff4b42]"></span>

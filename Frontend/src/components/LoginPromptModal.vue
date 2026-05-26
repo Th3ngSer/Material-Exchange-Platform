@@ -1,15 +1,17 @@
 <script setup lang="ts">
+import { useLanguageStore } from '../stores/language'
 const emit = defineEmits(['login', 'close'])
+const languageStore = useLanguageStore()
 </script>
 
 <template>
   <div class="modal-overlay">
     <div class="modal">
-      <h3>Login required</h3>
-      <p>You need to be logged in to use chat. Would you like to login now?</p>
+      <h3>{{ languageStore.t('loginRequired') }}</h3>
+      <p>{{ languageStore.t('loginPromptMessage') }}</p>
       <div class="actions">
-        <button class="btn primary" @click="emit('login')">Login</button>
-        <button class="btn" @click="emit('close')">Cancel</button>
+        <button class="btn primary" @click="emit('login')">{{ languageStore.t('login') }}</button>
+        <button class="btn" @click="emit('close')">{{ languageStore.t('cancel') }}</button>
       </div>
     </div>
   </div>
