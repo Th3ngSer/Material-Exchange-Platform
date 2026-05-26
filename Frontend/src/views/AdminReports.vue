@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+
 
 const navItems = [
   { label: 'Dashboard', to: '/admin' },
@@ -241,6 +243,14 @@ const isActive = (path: string) => {
   }
   return currentPath.value === path
 }
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/home')
+}
 </script>
 
 <template>
@@ -261,7 +271,7 @@ const isActive = (path: string) => {
           {{ item.label }}
         </router-link>
       </nav>
-      <button class="logout">Log out</button>
+      <button class="logout" @click="handleLogout">Log out</button>
     </aside>
 
     <main class="admin-main">
