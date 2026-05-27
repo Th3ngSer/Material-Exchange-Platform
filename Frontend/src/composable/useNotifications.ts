@@ -1,5 +1,5 @@
 import { ref, computed, onMounted } from 'vue'
-import type { DateGroup, SidebarItem, SidebarKey, Notification } from '../types/notification'
+import type { DateGroup, SidebarItem, SidebarKey } from '../types/notification'
 import { notificationService } from '../services/notification'
 
 export function useNotifications() {

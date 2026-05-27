@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { User, UserDocument, UserRole } from './schemas/user.schema';
 import { Post, PostDocument } from '../posts/entities/post.entity';
 
@@ -90,7 +90,10 @@ export class UsersService {
 
     // Get listings count for each user from the posts collection
     const userIds = users.map((u) => String(u._id));
-    const listingCounts = await this.postModel.aggregate([
+    const listingCounts = await this.postModel.aggregate<{
+      _id: string;
+      count: number;
+    }>([
       { $match: { ownerId: { $in: userIds } } },
       { $group: { _id: '$ownerId', count: { $sum: 1 } } },
     ]);
