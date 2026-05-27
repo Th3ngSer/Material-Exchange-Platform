@@ -85,6 +85,7 @@ export class PostsController {
       type?: string;
       category?: string;
       condition?: string;
+      ownerId?: string;
       page?: string;
       limit?: string;
     },

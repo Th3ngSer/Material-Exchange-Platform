@@ -8,6 +8,7 @@ import {
   UseGuards,
   UploadedFile,
   UseInterceptors,
+  Param,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -20,7 +21,7 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 
 interface AuthenticatedRequest {
-  user: JwtPayload;
+  user: { id: string; email?: string; role?: string };
 }
 
 @Controller('auth')
@@ -40,7 +41,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   me(@Request() req: AuthenticatedRequest) {
-    return this.authService.getProfile(req.user.sub);
+    return this.authService.getProfile(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -49,7 +50,7 @@ export class AuthController {
     @Request() req: AuthenticatedRequest,
     @Body() updateProfileDto: UpdateProfileDto,
   ) {
-    return this.authService.updateProfile(req.user.sub, updateProfileDto);
+    return this.authService.updateProfile(req.user.id, updateProfileDto);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -71,12 +72,17 @@ export class AuthController {
   ) {
     const avatarPath = `uploads/${file.filename}`;
 
-    await this.authService.updateProfile(req.user.sub, {
+    await this.authService.updateProfile(req.user.id, {
       avatar: avatarPath,
     });
 
     return {
       avatar: avatarPath,
     };
+  }
+
+  @Get('user/:name')
+  getUserByName(@Param('name') name: string) {
+    return this.authService.getUserByName(name);
   }
 }

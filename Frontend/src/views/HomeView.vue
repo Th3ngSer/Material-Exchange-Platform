@@ -52,7 +52,9 @@ const liveMaterials = ref<MaterialItem[]>(props.materials)
 function imageUrl(image: string) {
   if (/^https?:\/\//i.test(image)) return image
   const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '')
-  return `${uploadBaseUrl}/uploads/${image.replace(/^\/+/, '')}`
+  const clean = image.replace(/^\/+/, '')
+  if (clean.startsWith('uploads/')) return `${uploadBaseUrl}/${clean}`
+  return `${uploadBaseUrl}/uploads/${clean}`
 }
 
 function mapPostToMaterial(post: PostRecord): MaterialItem {

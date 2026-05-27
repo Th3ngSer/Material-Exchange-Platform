@@ -38,6 +38,21 @@ export class UsersService {
     return this.userModel.findById(id).exec();
   }
 
+  private escapeRegex(text: string) {
+    return text.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')
+  }
+
+  findByName(name: string): Promise<UserDocument | null> {
+    const safe = this.escapeRegex(name)
+    const nameRegex = new RegExp(`^${safe}$`, 'i')
+    return this.userModel.findOne({
+      $or: [
+        { name: nameRegex },
+        { username: nameRegex },
+      ],
+    }).exec();
+  }
+
   updateUser(
     userId: string,
     update: UpdateUserInput,

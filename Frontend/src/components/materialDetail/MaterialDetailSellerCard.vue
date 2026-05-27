@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+
 const isFollowed = ref(false)
 
 const toggleFollow = () => {
@@ -20,7 +22,13 @@ const getAvatarUrl = (avatar?: string) => {
   if (!normalized || normalized.toLowerCase() === 'null' || normalized.toLowerCase() === 'undefined') {
     return 'https://via.placeholder.com/48'
   }
-  return normalized
+
+  if (/^https?:\/\//i.test(normalized)) return normalized
+
+  const uploadBase = apiBaseUrl.replace(/\/api\/?$/, '')
+  const clean = normalized.replace(/^\/+/, '')
+  if (clean.startsWith('uploads/')) return `${uploadBase}/${clean}`
+  return `${uploadBase}/uploads/${clean}`
 }
 
 const avatarUrl = computed(() => getAvatarUrl(props.avatar))
@@ -35,7 +43,7 @@ const handleAvatarError = (event: Event) => {
 <template>
   <div class="rounded-[22px] border border-white/70 bg-white p-4 text-[#1e2058] shadow-[0_18px_50px_rgba(21,24,66,0.08)]">
     <router-link
-      to="/profile"
+      :to="{ name: 'profile', query: { user: name } }"
       class="flex items-center gap-3"
     >
       <div class="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-[#23216e] text-sm font-bold text-white">

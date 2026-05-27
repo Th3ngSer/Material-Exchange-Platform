@@ -283,6 +283,9 @@ export type TranslationKey =
   | 'loadingMoreMaterials'
   | 'notifications'
   | 'noNotifications'
+  | 'myPosts'
+  | 'noPosts'
+  | 'loading'
 
 const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = {
   English: {
@@ -565,6 +568,9 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     loadingMoreMaterials: 'Loading more materials...',
     notifications: 'Notifications',
     noNotifications: 'No notifications',
+    myPosts: 'My Posts',
+    noPosts: 'No posts yet',
+    loading: 'Loading...',
   },
   Khmer: {
     personalInformation: 'ព័ត៌មានផ្ទាល់ខ្លួន',
@@ -846,6 +852,9 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     loadingMoreMaterials: 'កំពុងផ្ទុកសម្ភារៈបន្ថែម...',
     notifications: 'ការជូនដំណឹង',
     noNotifications: 'មិនមានការជូនដំណឹង',
+    myPosts: 'ប្រកាសរបស់ខ្ញុំ',
+    noPosts: 'មិនមានប្រកាសឡើយ',
+    loading: 'កំពុងផ្ទុក...',
   },
 }
 

@@ -119,17 +119,19 @@ export class PostsService {
     type?: string;
     category?: string;
     condition?: string;
+    ownerId?: string;
     page?: string;
     limit?: string;
   }) {
     try {
       this.logger.log(`Fetching posts with filters: ${JSON.stringify(query)}`);
-      const { type, category, condition, page = '1', limit = '20' } = query;
+      const { type, category, condition, ownerId, page = '1', limit = '20' } = query;
 
       const filter: Record<string, any> = {};
       if (type) filter.type = type;
       if (category) filter.category = category;
       if (condition) filter.condition = condition;
+      if (ownerId) filter.ownerId = ownerId;
 
       const skip = (parseInt(page) - 1) * parseInt(limit);
       const total = await this.postModel.countDocuments(filter);

@@ -62,7 +62,9 @@ function formatPrice(post: Post) {
 function imageUrl(filename: string) {
   if (/^https?:\/\//i.test(filename)) return filename
   const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '')
-  return `${uploadBaseUrl}/uploads/${filename.replace(/^\/+/, '')}`
+  const clean = filename.replace(/^\/+/, '')
+  if (clean.startsWith('uploads/')) return `${uploadBaseUrl}/${clean}`
+  return `${uploadBaseUrl}/uploads/${clean}`
 }
 
 function detailPath(postId: string) {
