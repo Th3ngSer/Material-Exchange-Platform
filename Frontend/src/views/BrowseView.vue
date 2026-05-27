@@ -384,25 +384,25 @@ const activeTypeCount = computed(() => {
   ].filter(Boolean).length
 })
 
-const uniqueUsers = computed(() => {
-  const userMap = new Map<string, { name: string; avatar: string; rating: number; itemsCount: number }>()
-
-  liveMaterials.value.forEach((item) => {
-    if (item.seller && !userMap.has(item.seller)) {
-      userMap.set(item.seller, {
-        name: item.seller,
-        avatar: item.avatar || '',
-        rating: item.rating || 0,
-        itemsCount: 1,
-      })
-    } else if (item.seller) {
-      const user = userMap.get(item.seller)!
-      user.itemsCount += 1
-    }
-  })
-
-  return Array.from(userMap.values())
-})
+// const uniqueUsers = computed(() => {
+//   const userMap = new Map<string, { name: string; avatar: string; rating: number; itemsCount: number }>()
+// 
+//   liveMaterials.value.forEach((item) => {
+//     if (item.seller && !userMap.has(item.seller)) {
+//       userMap.set(item.seller, {
+//         name: item.seller,
+//         avatar: item.avatar || '',
+//         rating: item.rating || 0,
+//         itemsCount: 1,
+//       })
+//     } else if (item.seller) {
+//       const user = userMap.get(item.seller)!
+//       user.itemsCount += 1
+//     }
+//   })
+// 
+//   return Array.from(userMap.values())
+// })
 
 const filteredUsers = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()

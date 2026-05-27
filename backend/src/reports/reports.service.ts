@@ -45,7 +45,9 @@ export class ReportsService {
     if (!ids.length) {
       return { deleted: 0 };
     }
-    const result = await this.reportModel.deleteMany({ _id: { $in: ids } }).exec();
+    const result = await this.reportModel
+      .deleteMany({ _id: { $in: ids } })
+      .exec();
     return { deleted: result.deletedCount ?? 0 };
   }
 }

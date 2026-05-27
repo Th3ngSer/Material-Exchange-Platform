@@ -4,7 +4,7 @@
  */
 
 import axios from 'axios'
-import type { Notification } from '@/types/notification'
+// import type { Notification } from '@/types/notification'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 const notificationApi = axios.create({

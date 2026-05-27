@@ -25,12 +25,12 @@ import { useLanguageStore } from '@/stores/language'
 const languageStore = useLanguageStore()
 
 
-function getBadgeLabel(category: string): string {
-  if (category === 'Sell') return languageStore.t('forSale')
-  if (category === 'Exchange') return languageStore.t('exchange')
-  if (category === 'Borrow') return languageStore.t('borrow')
-  return category
-}
+// function getBadgeLabel(category: string): string {
+//   if (category === 'Sell') return languageStore.t('forSale')
+//   if (category === 'Exchange') return languageStore.t('exchange')
+//   if (category === 'Borrow') return languageStore.t('borrow')
+//   return category
+// }
 
 function getTimeAgo(dateString: string | undefined): string {
   if (!dateString) return languageStore.t('justNow')

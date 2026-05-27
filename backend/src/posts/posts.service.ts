@@ -250,7 +250,7 @@ export class PostsService {
     }
 
     try {
-      const parsed = JSON.parse(retainImages);
+      const parsed = JSON.parse(retainImages) as unknown;
       if (!Array.isArray(parsed)) {
         return [];
       }
