@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -32,5 +33,11 @@ export class ReportsController {
   @Patch('admin/reports/:id/status')
   updateStatus(@Param('id') id: string, @Body() dto: UpdateReportStatusDto) {
     return this.reportsService.updateStatus(id, dto.status);
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Delete('admin/reports')
+  bulkDelete(@Body() body: { ids: string[] }) {
+    return this.reportsService.bulkDelete(body.ids ?? []);
   }
 }

@@ -76,8 +76,17 @@ const router = createRouter({
     { path: '/admin/reviews', name: 'admin-reviews', component: AdminReviews, meta: { requiresAdmin: true } },
     { path: '/admin/transactions', name: 'admin-transactions', component: AdminTransactions, meta: { requiresAdmin: true } },
     { path: '/admin/users', name: 'admin-users', component: AdminUsers, meta: { requiresAdmin: true } },
+
+    {
+      path: '/sandbox',
+      name: 'sandbox',
+      component: () => import('../views/DesignSandbox.vue')
+    },
+
   ],
 })
+
+export default router
 
 function getRoleFromToken(token: string | null) {
   if (!token) return null
@@ -132,4 +141,4 @@ router.beforeEach((to) => {
   return true
 })
 
-export default router
+

@@ -6,10 +6,10 @@ export type NotificationDocument = Notification & Document;
 @Schema({ timestamps: true })
 export class Notification {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  userId: Types.ObjectId;
+  userId!: Types.ObjectId;
 
   @Prop({ required: true })
-  title: string;
+  title!: string;
 
   @Prop()
   message?: string;
@@ -18,10 +18,10 @@ export class Notification {
     enum: ['message', 'exchange', 'review', 'following', 'order', 'alert'],
     default: 'alert',
   })
-  type: string;
+  type!: string;
 
   @Prop({ default: false })
-  unread: boolean;
+  unread!: boolean;
 
   @Prop()
   relatedPostId?: Types.ObjectId;

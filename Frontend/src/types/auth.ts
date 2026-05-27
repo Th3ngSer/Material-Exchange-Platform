@@ -1,11 +1,3 @@
-/**
- * Authentication Types and Interfaces
- * Defines the structure for authentication-related data
- */
-
-/**
- * User object returned from backend
- */
 export interface User {
   id: string
   email: string

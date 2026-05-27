@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import axios from 'axios'
 import { useLanguageStore } from '@/stores/language'
+import { useAuthStore } from '@/stores/auth'
 
 interface Post {
   _id: string
@@ -31,7 +32,18 @@ const posts = ref<Post[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
 const languageStore = useLanguageStore()
+const authStore = useAuthStore()
 const hasPosts = computed(() => posts.value.length > 0)
+const total = computed(() => posts.value.length)
+const visiblePosts = computed(() => posts.value)
+const currentUserIdentifiers = computed(() => {
+  const user = authStore.user
+  if (!user) return []
+
+  return [user.id, user.name, user.username]
+    .filter((value): value is string => Boolean(value))
+    .map((value) => value.toLowerCase().trim())
+})
 
 function formatType(type: Post['type']) {
   return languageStore.t(type)

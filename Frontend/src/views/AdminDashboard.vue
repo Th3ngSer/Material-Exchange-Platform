@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
@@ -125,6 +126,13 @@ const isActive = (path: string) => {
   if (path === '/admin') return currentPath.value === '/admin'
   return currentPath.value === path
 }
+const authStore = useAuthStore()
+const router = useRouter()
+
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/home')
+}
 </script>
 
 <template>
@@ -145,7 +153,7 @@ const isActive = (path: string) => {
           {{ item.label }}
         </router-link>
       </nav>
-      <button class="logout">Log out</button>
+      <button class="logout" @click="handleLogout">Log out</button>
     </aside>
 
     <main class="admin-main">

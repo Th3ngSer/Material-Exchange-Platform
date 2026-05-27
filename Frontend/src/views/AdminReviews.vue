@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const navItems = [
   { label: 'Dashboard', to: '/admin' },
@@ -93,6 +94,13 @@ const isActive = (path: string) => {
 }
 
 const renderStars = (rating: number) => Array.from({ length: rating })
+const authStore = useAuthStore()
+const router = useRouter()
+
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/home')
+}
 </script>
 
 <template>
@@ -113,7 +121,7 @@ const renderStars = (rating: number) => Array.from({ length: rating })
           {{ item.label }}
         </router-link>
       </nav>
-      <button class="logout">Log out</button>
+      <button class="logout" @click="handleLogout">Log out</button>
     </aside>
 
     <main class="admin-main">
