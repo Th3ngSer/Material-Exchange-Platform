@@ -37,6 +37,11 @@ export class ChatController {
     );
   }
 
+  @Get('users')
+  async getUsers(@Req() req: AuthenticatedRequest) {
+    return this.usersService.findAllExcept(req.user.id);
+  }
+
   @Get('history')
   async getHistory(
     @Query() query: GetConversationDto,

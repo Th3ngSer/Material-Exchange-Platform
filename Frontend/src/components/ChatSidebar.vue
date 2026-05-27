@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { ChatUser } from '@/types/chat'
 
+const API_URL = 'http://localhost:3000'
+
 const { users, selectedUser } = defineProps<{
   users: ChatUser[]
   selectedUser: ChatUser | null
@@ -10,15 +12,29 @@ const emit = defineEmits<{
   (e: 'select-user', user: ChatUser): void
 }>()
 
+const normalizeAvatarUrl = (value: string | undefined | null, name = 'User') => {
+  const avatarValue = String(value || '').trim()
+  if (!avatarValue || ['null', 'undefined'].includes(avatarValue.toLowerCase())) {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff`
+  }
+  if (avatarValue.startsWith('http')) {
+    return avatarValue
+  }
+  if (avatarValue.startsWith('/')) {
+    return `${API_URL}${avatarValue}`
+  }
+  return `${API_URL}/${avatarValue}`
+}
+
 const getAvatarUrl = (user: ChatUser) => {
   const avatarValue = user.avatar?.trim()
   if (avatarValue) {
-    return avatarValue
+    return normalizeAvatarUrl(avatarValue, user.name || 'User')
   }
 
   const stored = localStorage.getItem(`avatar_${String(user.id)}`)
   if (stored) {
-    return stored
+    return normalizeAvatarUrl(stored, user.name || 'User')
   }
 
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=0D8ABC&color=fff`

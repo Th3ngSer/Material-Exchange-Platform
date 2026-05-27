@@ -2,11 +2,11 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import { useAuthStore } from '@/stores/auth'
-import LoginPromptModal from '@/components/LoginPromptModal.vue'
-import { connectSocket, getSocket, disconnectSocket } from '@/services/socket'
-import api from '@/services/api'
-import type { ChatUser } from '@/types/chat'
+import { useAuthStore } from '../stores/auth'
+import LoginPromptModal from '../components/LoginPromptModal.vue'
+import { connectSocket, getSocket, disconnectSocket } from '../services/socket'
+import api from '../services/api'
+import type { ChatUser } from '../types/chat'
 
 import ChatSidebar from "../components/ChatSidebar.vue"
 import ChatWindow from "../components/ChatWindow.vue"
@@ -33,12 +33,20 @@ const showLoginPrompt = ref(false)
 // =========================
 const storageKey = computed(() => `chat_users_${auth.user?.id ?? 'guest'}`)
 
+const API_URL = 'http://localhost:3000'
+
 const normalizeAvatarUrl = (value: string | undefined | null) => {
   const normalized = String(value || '').trim()
   if (!normalized || normalized.toLowerCase() === 'null' || normalized.toLowerCase() === 'undefined') {
     return 'https://via.placeholder.com/48'
   }
-  return normalized
+  if (normalized.startsWith('http')) {
+    return normalized
+  }
+  if (normalized.startsWith('/')) {
+    return `${API_URL}${normalized}`
+  }
+  return `${API_URL}/${normalized}`
 }
 
 const loadUsers = () => {

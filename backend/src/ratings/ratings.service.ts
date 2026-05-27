@@ -3,7 +3,6 @@ import { CreateRatingDto } from '../ratingDTO/rating.dto';
 
 @Injectable()
 export class RatingsService {
-
   constructor(
     private transactionRepo: any,
     private ratingRepo: any,
@@ -18,12 +17,12 @@ export class RatingsService {
     });
 
     if (!transaction) {
-      throw new Error("Transaction not found");
+      throw new Error('Transaction not found');
     }
 
     // 2. Check status
-    if (transaction.status !== "Completed") {
-      throw new Error("Transaction not completed");
+    if (transaction.status !== 'Completed') {
+      throw new Error('Transaction not completed');
     }
 
     // 3. Prevent duplicate
@@ -32,7 +31,7 @@ export class RatingsService {
     });
 
     if (existing) {
-      throw new Error("You already rated this transaction");
+      throw new Error('You already rated this transaction');
     }
 
     // 4. Save rating

@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 
@@ -156,6 +156,7 @@ const onFileChange = async (event: Event) => {
       ...authStore.user,
       avatar: avatarPath
     }
+    authStore.writeCachedAvatar(authStore.user)
 
   } catch (error) {
     console.error('Upload failed:', error)

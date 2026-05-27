@@ -38,6 +38,27 @@ export const useAuthStore = defineStore('auth', () => {
 
   const getAvatarStorageKey = (userId: string) => `avatar_${userId}`
 
+  function readCachedAvatar(userId: string): string | null {
+    try {
+      return localStorage.getItem(getAvatarStorageKey(userId))
+    } catch {
+      return null
+    }
+  }
+
+  function writeCachedAvatar(value: User | null) {
+    try {
+      if (!value?.id) return
+      if (!value.avatar) {
+        localStorage.removeItem(getAvatarStorageKey(value.id))
+      } else {
+        localStorage.setItem(getAvatarStorageKey(value.id), value.avatar)
+      }
+    } catch {
+      // Silently ignore storage errors
+    }
+  }
+
   function readStoredUser(): User | null {
     try {
       const raw = sessionStorage.getItem(USER_STORAGE_KEY)
@@ -86,6 +107,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Store user data
       user.value = response.user
+      writeCachedAvatar(response.user)
       writeStoredUser(response.user)
 
       // Store token persistently
@@ -129,6 +151,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Store user data
       user.value = response.user
+      writeCachedAvatar(response.user)
       writeStoredUser(response.user)
 
       // Store token persistently
@@ -189,13 +212,19 @@ export const useAuthStore = defineStore('auth', () => {
 
     const storedUser = readStoredUser()
     if (storedUser) {
+      const cachedAvatar = storedUser.id ? readCachedAvatar(storedUser.id) : null
+      if (!storedUser.avatar && cachedAvatar) {
+        storedUser.avatar = cachedAvatar
+      }
       user.value = storedUser
+      writeCachedAvatar(storedUser)
     }
 
     try {
       const profile = await authApi.getProfile(token)
       user.value = profile
       writeStoredUser(profile)
+      writeCachedAvatar(profile)
     } catch (err) {
       const statusCode = (err as any)?.statusCode
       // If token is invalid (401), logout to force re-authentication
@@ -229,6 +258,7 @@ export const useAuthStore = defineStore('auth', () => {
       const updatedUser = await authApi.updateProfile(token, profileData)
 
       user.value = updatedUser
+      writeCachedAvatar(updatedUser)
       writeStoredUser(updatedUser)
 
       return updatedUser
@@ -265,6 +295,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       const profile = await authApi.getProfile(token)
       user.value = profile
+      writeCachedAvatar(profile)
       return profile
     } catch (err) {
       const statusCode = (err as any)?.statusCode
@@ -292,6 +323,7 @@ export const useAuthStore = defineStore('auth', () => {
     initializeAuth,
     updateProfile,
     refreshUser,
+    writeCachedAvatar,
   }
 
 })
