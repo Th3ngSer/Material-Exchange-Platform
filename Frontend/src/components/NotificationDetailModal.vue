@@ -5,7 +5,7 @@ import LeaveReviewModal from './LeaveReviewModal.vue'
 import InvoiceModal from './InvoiceModal.vue'
 import type { Notification } from '../types/notification'
 
-const props = defineProps<{
+defineProps<{
   notification: Notification | null
   isOpen: boolean
 }>()

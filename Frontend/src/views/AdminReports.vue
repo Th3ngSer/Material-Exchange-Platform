@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+
 
 const navItems = [
   { label: 'Dashboard', to: '/admin' },
@@ -43,6 +45,100 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const reports = ref<AdminReport[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
+
+// ─── Selection mode state ───────────────────────────────────────────────
+const selectMode = ref(false)
+const selectedIds = ref<Set<string>>(new Set())
+const showConfirmModal = ref(false)
+const isDeleting = ref(false)
+
+const toggleSelectMode = () => {
+  selectMode.value = !selectMode.value
+  if (!selectMode.value) {
+    selectedIds.value = new Set()
+  }
+}
+
+const toggleSelect = (id: string) => {
+  const next = new Set(selectedIds.value)
+  if (next.has(id)) {
+    next.delete(id)
+  } else {
+    next.add(id)
+  }
+  selectedIds.value = next
+}
+
+const isAllSelected = computed(
+  () => reports.value.length > 0 && selectedIds.value.size === reports.value.length,
+)
+
+const toggleSelectAll = () => {
+  if (isAllSelected.value) {
+    selectedIds.value = new Set()
+  } else {
+    selectedIds.value = new Set(reports.value.map((r) => r.id))
+  }
+}
+
+const openConfirmModal = () => {
+  if (selectedIds.value.size === 0) return
+  showConfirmModal.value = true
+}
+
+const closeConfirmModal = () => {
+  showConfirmModal.value = false
+}
+
+const confirmBulkDelete = async () => {
+  isDeleting.value = true
+  try {
+    const token = sessionStorage.getItem('authToken')
+    const response = await fetch(`${API_BASE_URL}/admin/reports`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ ids: Array.from(selectedIds.value) }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.message || 'Failed to delete reports')
+    }
+
+    // Remove deleted reports from the local list
+    reports.value = reports.value.filter((r) => !selectedIds.value.has(r.id))
+    selectedIds.value = new Set()
+    selectMode.value = false
+    showConfirmModal.value = false
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to delete reports'
+    alert(message)
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+const showViewModal = ref(false)
+const viewingReport = ref<AdminReport | null>(null)
+
+const openViewModal = (report: AdminReport) => {
+  viewingReport.value = report
+  showViewModal.value = true
+  // Optionally, automatically mark as reviewed when they open it
+  if (report.status === 'Pending') {
+    updateStatus(report.id, 'reviewed')
+  }
+}
+
+const closeViewModal = () => {
+  showViewModal.value = false
+  setTimeout(() => {
+    viewingReport.value = null
+  }, 200) // wait for animation
+}
 
 const reportCards = computed(() => {
   const total = reports.value.length
@@ -147,6 +243,14 @@ const isActive = (path: string) => {
   }
   return currentPath.value === path
 }
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/home')
+}
 </script>
 
 <template>
@@ -167,7 +271,7 @@ const isActive = (path: string) => {
           {{ item.label }}
         </router-link>
       </nav>
-      <button class="logout">Log out</button>
+      <button class="logout" @click="handleLogout">Log out</button>
     </aside>
 
     <main class="admin-main">
@@ -191,7 +295,33 @@ const isActive = (path: string) => {
             <p class="section-label">Review user reports and take action</p>
             <p class="section-subtitle">Escalate cases and flag risky content quickly.</p>
           </div>
-          <button class="primary">Select</button>
+          <div class="header-actions">
+            <button
+              v-if="selectMode"
+              class="btn-cancel"
+              type="button"
+              @click="toggleSelectMode"
+            >
+              Cancel
+            </button>
+            <button
+              v-if="!selectMode"
+              class="primary"
+              type="button"
+              @click="toggleSelectMode"
+            >
+              Select
+            </button>
+            <button
+              v-else
+              class="btn-remove"
+              type="button"
+              :disabled="selectedIds.size === 0"
+              @click="openConfirmModal"
+            >
+              Remove{{ selectedIds.size > 0 ? ` (${selectedIds.size})` : '' }}
+            </button>
+          </div>
         </div>
 
         <div class="card-row">
@@ -224,7 +354,14 @@ const isActive = (path: string) => {
         </div>
 
         <div class="table">
-          <div class="table-row header">
+          <div class="table-row header" :class="{ 'with-checkbox': selectMode }">
+            <label v-if="selectMode" class="checkbox-cell" @click.stop>
+              <input
+                type="checkbox"
+                :checked="isAllSelected"
+                @change="toggleSelectAll"
+              />
+            </label>
             <span>Report ID</span>
             <span>Type</span>
             <span>Reason</span>
@@ -235,7 +372,19 @@ const isActive = (path: string) => {
           </div>
           <p v-if="isLoading" class="table-note">Loading reports...</p>
           <p v-else-if="errorMessage" class="table-note error">{{ errorMessage }}</p>
-          <div v-for="report in reports" :key="report.id" class="table-row body">
+          <div
+            v-for="report in reports"
+            :key="report.id"
+            class="table-row body"
+            :class="{ 'with-checkbox': selectMode, selected: selectedIds.has(report.id) }"
+          >
+            <label v-if="selectMode" class="checkbox-cell" @click.stop>
+              <input
+                type="checkbox"
+                :checked="selectedIds.has(report.id)"
+                @change="toggleSelect(report.id)"
+              />
+            </label>
             <span>#{{ report.id.slice(-6) }}</span>
             <span class="type">Help</span>
             <span class="reason">{{ report.message }}</span>
@@ -246,8 +395,7 @@ const isActive = (path: string) => {
               <button
                 type="button"
                 class="action review"
-                :disabled="report.status !== 'Pending'"
-                @click="updateStatus(report.id, 'reviewed')"
+                @click="openViewModal(report)"
               >
                 Review
               </button>
@@ -264,6 +412,100 @@ const isActive = (path: string) => {
         </div>
       </section>
     </main>
+
+    <!-- ─── Confirm Delete Modal ─────────────────────────────────────────── -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="showConfirmModal" class="modal-overlay" @click.self="closeConfirmModal">
+          <div class="modal-card">
+            <div class="modal-icon-wrap">
+              <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                <path d="M10 11v6" />
+                <path d="M14 11v6" />
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+              </svg>
+            </div>
+            <h3 class="modal-title">Delete Reports</h3>
+            <p class="modal-body">
+              Are you sure you want to delete
+              <strong>{{ selectedIds.size }}</strong>
+              {{ selectedIds.size === 1 ? 'report' : 'reports' }}?
+              This action cannot be undone.
+            </p>
+            <div class="modal-actions">
+              <button class="modal-btn cancel" type="button" :disabled="isDeleting" @click="closeConfirmModal">
+                Cancel
+              </button>
+              <button class="modal-btn confirm" type="button" :disabled="isDeleting" @click="confirmBulkDelete">
+                {{ isDeleting ? 'Deleting...' : 'Yes, Delete' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- ─── View Report Details Modal ────────────────────────────────────── -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="showViewModal" class="modal-overlay" @click.self="closeViewModal">
+          <div class="modal-card view-modal">
+            <div class="modal-header">
+              <h3 class="modal-title">Report Details</h3>
+              <button class="close-btn" @click="closeViewModal">&times;</button>
+            </div>
+            
+            <div v-if="viewingReport" class="modal-content">
+              <div class="detail-row">
+                <span class="detail-label">Status:</span>
+                <span class="status" :class="viewingReport.status.toLowerCase()">{{ viewingReport.status }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Report ID:</span>
+                <span class="detail-value">#{{ viewingReport.id }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Date:</span>
+                <span class="detail-value">{{ viewingReport.date }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Reported By:</span>
+                <span class="detail-value">{{ viewingReport.name }} ({{ viewingReport.email }})</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Phone:</span>
+                <span class="detail-value">{{ viewingReport.phone || 'N/A' }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Request Type:</span>
+                <span class="detail-value">{{ viewingReport.request || 'N/A' }}</span>
+              </div>
+              
+              <div class="detail-message-box">
+                <span class="detail-label">Message / Reason:</span>
+                <p class="detail-message">{{ viewingReport.message }}</p>
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button class="modal-btn cancel" type="button" @click="closeViewModal">
+                Close
+              </button>
+              <button 
+                v-if="viewingReport?.status !== 'Done'"
+                class="modal-btn confirm" 
+                type="button" 
+                @click="updateStatus(viewingReport!.id, 'done'); closeViewModal()"
+              >
+                Mark as Done
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <div class="ambient">
       <div class="glow one"></div>
@@ -775,5 +1017,274 @@ select {
     grid-template-columns: 1fr;
     gap: 6px;
   }
+}
+
+/* ─── Selection mode ─────────────────────────────────────────────────── */
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.btn-remove {
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  background: #ef4444;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.btn-remove:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.35);
+}
+
+.btn-remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-cancel {
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  background: #fff;
+  color: #475569;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-cancel:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.checkbox-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.checkbox-cell input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: #1e1b4b;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.table-row.with-checkbox {
+  grid-template-columns: 36px 0.9fr 0.9fr 1.6fr 2fr 1fr 1fr 0.5fr;
+}
+
+.table-row.body.selected {
+  background: rgba(239, 68, 68, 0.06);
+  border-radius: 8px;
+}
+
+/* ─── Confirm Delete Modal ───────────────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.modal-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px 28px 28px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+  text-align: center;
+  animation: modal-pop 0.25s ease;
+}
+
+@keyframes modal-pop {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fee2e2;
+  margin-bottom: 16px;
+}
+
+.modal-icon {
+  width: 28px;
+  height: 28px;
+  color: #ef4444;
+}
+
+.modal-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.modal-body {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.modal-body strong {
+  color: #0f172a;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modal-btn {
+  padding: 10px 22px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.modal-btn.cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.modal-btn.cancel:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.modal-btn.confirm {
+  background: #ef4444;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25);
+}
+
+.modal-btn.confirm:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── Modal transition ───────────────────────────────────────────────── */
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+/* ─── View Modal Specifics ───────────────────────────────────────────── */
+
+.view-modal {
+  max-width: 500px;
+  text-align: left;
+  padding: 24px 28px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.modal-header .modal-title {
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.close-btn:hover {
+  color: #0f172a;
+}
+
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.detail-row {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #475569;
+  min-width: 110px;
+}
+
+.detail-value {
+  color: #0f172a;
+}
+
+.detail-message-box {
+  margin-top: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.detail-message {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: #0f172a;
+  white-space: pre-wrap;
+  line-height: 1.5;
 }
 </style>

@@ -10,8 +10,8 @@ interface HeroSlide {
 
 const languageStore = useLanguageStore()
 const heroText = computed(() => languageStore.t('xchangeMaterial'))
-const heroAccent = computed(() => heroText.value.slice(0, 1))
-const heroRest = computed(() => heroText.value.slice(1))
+// const heroAccent = computed(() => heroText.value.slice(0, 1))
+// const heroRest = computed(() => heroText.value.slice(1))
 
 const slides: HeroSlide[] = [
   {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLanguageStore } from '@/stores/language'
 // use the provided logo variant for consistent branding
@@ -22,7 +22,7 @@ function selectLanguage(lang: 'English' | 'Khmer') {
 
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-const route = useRoute()
+// const route = useRoute()
 
 type HeaderSearchType = 'All' | 'Sell' | 'Exchange' | 'Borrow'
 

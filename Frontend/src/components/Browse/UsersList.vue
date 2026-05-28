@@ -16,6 +16,7 @@ interface Props {
 }
 
 const router = useRouter()
+const languageStore = useLanguageStore()
 
 function goToProfile(userName: string) {
   // Navigate to the profile view and include the user name in the query

@@ -20,5 +20,4 @@ onMounted(async () => {
       </transition>
     </router-view>
   </div>
-
 </template>

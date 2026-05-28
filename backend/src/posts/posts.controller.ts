@@ -18,6 +18,7 @@ import {
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { createPostUploadOptions } from './posts-upload.config';
+import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -67,7 +68,7 @@ export class PostsController {
   // ─── POST /posts ───────────────────────────────────────────────────────────
   @UseGuards(JwtAuthGuard)
   @Post()
-  @UseInterceptors(FilesInterceptor('images', 10, createPostUploadOptions() as any))
+  @UseInterceptors(FilesInterceptor('images', 10, createPostUploadOptions() as MulterOptions))
   create(
     @Request() req: { user: { id: string } },
     @UploadedFiles() files: Express.Multer.File[] = [],
@@ -100,7 +101,7 @@ export class PostsController {
   // ─── PATCH /posts/:id ──────────────────────────────────────────────────────
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  @UseInterceptors(FilesInterceptor('images', 10, createPostUploadOptions() as any))
+  @UseInterceptors(FilesInterceptor('images', 10, createPostUploadOptions() as MulterOptions))
   update(
     @Param('id') id: string,
     @Request() req: { user: { id: string } },

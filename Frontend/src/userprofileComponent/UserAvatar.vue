@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 
@@ -53,9 +53,14 @@ const authStore = useAuthStore()
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const welcomeName = computed(() => {
+  const username = authStore.user?.username?.trim()
+  if (username) {
+    return username
+  }
+
   const fullName = authStore.user?.name?.trim() || ''
   if (fullName) {
-    return fullName.split(' ')[0]
+    return fullName.split(/\s+/)[0]
   }
 
   return authStore.user?.email?.split('@')[0] || 'Guest'
@@ -96,28 +101,8 @@ const onImageError = () => {
 /**
  * Back button
  */
-const route = useRoute()
-
 const goBack = () => {
-  // If a `from` was provided in the query (e.g. ?from=/browse?q=...), prefer that
-  const from = typeof route.query.from === 'string' ? route.query.from : ''
-  if (from) {
-    router.push(from)
-    return
-  }
-
-  // Prefer history navigation when possible
-  try {
-    if (window.history.length > 1) {
-      router.back()
-      return
-    }
-  } catch (e) {
-    // ignore errors and fall back
-  }
-
-  // Fallback to Browse
-  router.push({ name: 'browse' })
+  router.push({ name: 'home' })
 }
 
 /**

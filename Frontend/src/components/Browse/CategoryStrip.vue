@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useLanguageStore } from '@/stores/language'
 
 const props = withDefaults(defineProps<{
   options?: string[]
@@ -9,7 +10,30 @@ const props = withDefaults(defineProps<{
   modelValue: 'All',
 })
 
-const emit = defineEmits(['update:modelValue'])
+// const emit = defineEmits(['update:modelValue'])
+
+const languageStore = useLanguageStore()
+
+const categoryTranslationMap: Record<string, string> = {
+  All: 'all',
+  Clothing: 'clothing',
+  Electronics: 'electronics',
+  Books: 'books',
+  Furniture: 'furniture',
+  Sports: 'sports',
+  Toys: 'toys',
+  Vehicles: 'vehicles',
+  'Home & Garden': 'homeAndGarden',
+  'Food & Drink': 'foodAndDrink',
+  Others: 'other',
+}
+
+const translatedOptions = computed(() =>
+  props.options?.map((option) => {
+    const translationKey = categoryTranslationMap[option]
+    return translationKey ? languageStore.t(translationKey as any) : option
+  }) ?? []
+)
 
 const wrapperRef = ref<HTMLElement | null>(null)
 const showLeft = ref(false)
@@ -66,11 +90,11 @@ watch(() => props.modelValue, () => {
       ref="wrapperRef"
       class="flex gap-3 overflow-x-auto py-2 category-scroll"
       role="list"
-      aria-label="Item categories"
+      :aria-label="languageStore.t('categories')"
     >
       <div class="flex gap-3 items-center" style="padding-inline: 8px;">
         <button
-          v-for="cat in props.options"
+          v-for="(cat, index) in props.options"
           :key="cat"
           type="button"
           role="listitem"
@@ -78,7 +102,7 @@ watch(() => props.modelValue, () => {
           :class="props.modelValue === cat ? 'bg-[#1b1748] text-white shadow-[0_10px_20px_rgba(27,23,72,0.2)]' : 'bg-[#cfd3f3] text-[#3e4474] hover:bg-[#c2c8ef]'"
           @click="$emit('update:modelValue', cat)"
         >
-          {{ cat }}
+          {{ translatedOptions[index] }}
         </button>
       </div>
     </div>

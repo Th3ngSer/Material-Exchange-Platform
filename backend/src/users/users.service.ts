@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument, UserRole } from './schemas/user.schema';
+import { Post, PostDocument } from '../posts/entities/post.entity';
 
 export interface CreateUserInput {
   email: string;
@@ -21,6 +22,7 @@ export type UpdateUserInput = Partial<Omit<CreateUserInput, 'password'>>;
 export class UsersService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    @InjectModel(Post.name) private readonly postModel: Model<PostDocument>,
   ) {}
 
   createUser(input: CreateUserInput): Promise<UserDocument> {
@@ -51,6 +53,7 @@ export class UsersService {
     search?: string,
   ): Promise<{
     data: Array<{
+      _id: string;
       name?: string;
       email: string;
       role: UserRole;
@@ -72,19 +75,45 @@ export class UsersService {
         }
       : {};
 
-    const [total, data] = await Promise.all([
-      this.userModel.countDocuments(filter).exec(),
-      this.userModel
-        .find(filter)
-        .select('name email role status listingsCount rating createdAt')
-        .sort({ createdAt: -1 })
-        .skip((safePage - 1) * safeLimit)
-        .limit(safeLimit)
-        .lean()
-        .exec(),
+    const total = await this.userModel.countDocuments(filter).exec();
+    const lastPage = Math.max(1, Math.ceil(total / safeLimit));
+
+    // Fetch users with pagination
+    const users = await this.userModel
+      .find(filter)
+      .select('name email role status rating createdAt')
+      .sort({ createdAt: -1 })
+      .skip((safePage - 1) * safeLimit)
+      .limit(safeLimit)
+      .lean()
+      .exec();
+
+    // Get listings count for each user from the posts collection
+    const userIds = users.map((u) => String(u._id));
+    const listingCounts = await this.postModel.aggregate<{
+      _id: string;
+      count: number;
+    }>([
+      { $match: { ownerId: { $in: userIds } } },
+      { $group: { _id: '$ownerId', count: { $sum: 1 } } },
     ]);
 
-    const lastPage = Math.max(1, Math.ceil(total / safeLimit));
+    // Build a quick lookup map: ownerId -> count
+    const countMap = new Map<string, number>();
+    for (const entry of listingCounts) {
+      countMap.set(String(entry._id), entry.count);
+    }
+
+    const data = users.map((u) => ({
+      _id: String(u._id),
+      name: u.name,
+      email: u.email,
+      role: u.role ?? UserRole.USER,
+      status: u.status ?? 'active',
+      listingsCount: countMap.get(String(u._id)) ?? 0,
+      rating: u.rating ?? 0,
+      createdAt: u.createdAt,
+    }));
 
     return {
       data,
