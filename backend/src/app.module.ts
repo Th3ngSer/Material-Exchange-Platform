@@ -19,6 +19,7 @@ import { ActivityLogModule } from './activity-log/activity-log.module';
     // Load .env globally
     ConfigModule.forRoot({
       isGlobal: true,
+      
     }),
 
     // MongoDB connection
