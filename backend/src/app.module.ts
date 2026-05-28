@@ -18,6 +18,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     // Load .env globally
     ConfigModule.forRoot({
       isGlobal: true,
+      
     }),
 
     // MongoDB connection

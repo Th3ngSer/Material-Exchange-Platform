@@ -3,10 +3,10 @@ import { Types } from 'mongoose';
 
 export class CreateNotificationDto {
   @IsString()
-  userId: string | Types.ObjectId;
+  userId!: string | Types.ObjectId;
 
   @IsString()
-  title: string;
+  title!: string;
 
   @IsOptional()
   @IsString()
