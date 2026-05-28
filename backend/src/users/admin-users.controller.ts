@@ -4,15 +4,20 @@ import {
   Get,
   Param,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { UsersService } from './users.service';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 
 @Controller('admin/users')
 export class AdminUsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly activityLogService: ActivityLogService,
+  ) {}
 
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Get()
@@ -34,7 +39,19 @@ export class AdminUsersController {
 
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Delete(':id')
-  deleteUser(@Param('id') id: string) {
-    return this.usersService.removeById(id);
+  async deleteUser(
+    @Param('id') id: string,
+    @Req() req: { user: { id: string; email: string } },
+  ) {
+    const result = await this.usersService.removeById(id);
+
+    await this.activityLogService.logAction({
+      adminId: req.user.id,
+      adminName: req.user.email,
+      action: 'DELETE_USER',
+      details: `Deleted user ${id}`,
+    });
+
+    return result;
   }
 }

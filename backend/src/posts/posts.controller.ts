@@ -14,7 +14,7 @@ import {
   HttpStatus,
   Logger,
   UseGuards,
-  Request,
+  Req,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { createPostUploadOptions } from './posts-upload.config';
@@ -24,12 +24,16 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 
 @Controller('posts')
 export class PostsController {
   private readonly logger = new Logger(PostsController.name);
 
-  constructor(private readonly postsService: PostsService) {}
+  constructor(
+    private readonly postsService: PostsService,
+    private readonly activityLogService: ActivityLogService,
+  ) {}
 
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Get('admin/all')
@@ -70,7 +74,7 @@ export class PostsController {
   @Post()
   @UseInterceptors(FilesInterceptor('images', 10, createPostUploadOptions() as MulterOptions))
   create(
-    @Request() req: { user: { id: string } },
+    @Req() req: { user: { id: string } },
     @UploadedFiles() files: Express.Multer.File[] = [],
     @Body() dto: CreatePostDto,
   ) {
@@ -104,7 +108,7 @@ export class PostsController {
   @UseInterceptors(FilesInterceptor('images', 10, createPostUploadOptions() as MulterOptions))
   update(
     @Param('id') id: string,
-    @Request() req: { user: { id: string } },
+    @Req() req: { user: { id: string } },
     @Body() dto: UpdatePostDto,
     @UploadedFiles() files: Express.Multer.File[] = [],
   ) {
@@ -115,7 +119,7 @@ export class PostsController {
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  remove(@Param('id') id: string, @Request() req: { user: { id: string } }) {
+  remove(@Param('id') id: string, @Req() req: { user: { id: string } }) {
     return this.postsService.removeOwned(id, req.user.id) as Promise<{ message: string }>;
   }
 
@@ -123,7 +127,19 @@ export class PostsController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Delete('admin/:id')
   @HttpCode(HttpStatus.OK)
-  removeForAdmin(@Param('id') id: string) {
-    return this.postsService.removeAny(id) as Promise<{ message: string }>;
+  async removeForAdmin(
+    @Param('id') id: string,
+    @Req() req: { user: { id: string; email: string } },
+  ) {
+    const result = await this.postsService.removeAny(id);
+
+    await this.activityLogService.logAction({
+      adminId: req.user.id,
+      adminName: req.user.email,
+      action: 'DELETE_POST',
+      details: `Deleted post ${id}`,
+    });
+
+    return result;
   }
 }
