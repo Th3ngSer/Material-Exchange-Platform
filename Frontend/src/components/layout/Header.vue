@@ -56,7 +56,7 @@ const goToNotifications = () => {
     >
       <RouterLink
         class="inline-flex items-center gap-3 text-[32px] font-extrabold tracking-[-0.04em] no-underline cursor-pointer hover:opacity-80 transition-opacity duration-200"
-        to="/"
+        :to="{ name: 'home' }"
         aria-label="Material Exchange Platform home"
       >
         <img :src="Logo" alt="Material Exchange logo" class="h-6 w-auto" />

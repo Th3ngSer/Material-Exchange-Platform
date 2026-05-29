@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
+const authStore = useAuthStore()
 const isFollowed = ref(false)
 
 const toggleFollow = () => {
@@ -16,6 +18,23 @@ const props = defineProps<{
   location: string
   avatar?: string
 }>()
+
+const isCurrentUserProfile = computed(() => {
+  const currentUser = authStore.user
+  if (!currentUser) return false
+
+  const currentIdentities = [currentUser.username, currentUser.name]
+    .filter(Boolean)
+    .map((value) => String(value).trim().toLowerCase())
+
+  return currentIdentities.includes(String(props.name).trim().toLowerCase())
+})
+
+const profileLink = computed(() =>
+  isCurrentUserProfile.value
+    ? { name: 'profile' }
+    : { name: 'profile', query: { user: props.name } }
+)
 
 const getAvatarUrl = (avatar?: string) => {
   const normalized = String(avatar || '').trim()
@@ -43,7 +62,7 @@ const handleAvatarError = (event: Event) => {
 <template>
   <div class="rounded-[22px] border border-white/70 bg-white p-4 text-[#1e2058] shadow-[0_18px_50px_rgba(21,24,66,0.08)]">
     <router-link
-      :to="{ name: 'profile', query: { user: name } }"
+      :to="profileLink"
       class="flex items-center gap-3"
     >
       <div class="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-[#23216e] text-sm font-bold text-white">

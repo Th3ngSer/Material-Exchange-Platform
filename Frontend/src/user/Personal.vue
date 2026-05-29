@@ -1,8 +1,11 @@
 <template>
-  <div class="personal-info">
-    <Sidebar v-if="isOwnProfile" />
+  <div class="profile-page">
+    <Header />
 
-    <div class="content">
+    <div class="personal-info">
+      <Sidebar v-if="isOwnProfile" />
+
+      <div class="content">
       <div v-if="!isOwnProfile" class="back-button-container">
         <button class="back-btn" @click="goBack">
           ← {{ languageStore.t('back') || 'Back' }}
@@ -34,7 +37,7 @@
         </div>
       </div>
 
-
+      
       <div v-if="isOwnProfile" class="info-form">
         <!-- Left column -->
         <div class="form-column">
@@ -118,6 +121,9 @@
         <p>{{ languageStore.t('loading') || 'Loading posts...' }}</p>
       </div>
     </div>
+    </div>
+
+    <Footer />
   </div>
 </template>
 
@@ -125,9 +131,22 @@
 import { reactive, onMounted, computed, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
+import Header from '@/components/layout/Header.vue'
+import Footer from '@/components/layout/Footer.vue'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
 import { useLanguageStore } from '../stores/language'
 import { useAuthStore } from '@/stores/auth'
+import type { User } from '@/types/auth'
+
+interface UserPost {
+  _id: string
+  title: string
+  category: string
+  location: string
+  images?: string[]
+  type?: string
+  price?: number
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -137,12 +156,12 @@ const authStore = useAuthStore()
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const DEFAULT_AVATAR = '/userprofileImage/avatar.png'
 
-const profileUser = ref(null)
-const userPosts = ref([])
+const profileUser = ref<User | null>(null)
+const userPosts = ref<UserPost[]>([])
 const isLoadingPosts = ref(false)
-const viewedUsername = ref(null)
+const viewedUsername = ref<string | null>(null)
 
-const displayUser = computed(() => profileUser.value || authStore.user || null)
+const displayUser = computed<User | null>(() => profileUser.value || authStore.user || null)
 
 const displayFirstName = computed(() => {
   const name = (displayUser.value?.name || '').trim()
@@ -191,15 +210,26 @@ const form = reactive({
   email: '',
 })
 
-const isOwnProfile = computed(() => !viewedUsername.value)
+const isOwnProfile = computed(() => {
+  if (!viewedUsername.value) return true
+  const currentUser = authStore.user
+  if (!currentUser) return false
 
-function formatPrice(post) {
+  const normalizedViewed = String(viewedUsername.value).trim().toLowerCase()
+  const currentIdentities = [currentUser.username, currentUser.name]
+    .filter(Boolean)
+    .map((value) => String(value).trim().toLowerCase())
+
+  return currentIdentities.includes(normalizedViewed)
+})
+
+function formatPrice(post: UserPost) {
   if (post.type === 'exchange') return languageStore.t('openToTrade') || 'Open to Trade'
   const suffix = post.type === 'lend' ? ` ${languageStore.t('perDay') || 'per day'}` : ''
   return `$${Number(post.price || 0).toFixed(2)}${suffix}`
 }
 
-function imageUrl(filename) {
+function imageUrl(filename: string) {
   if (/^https?:\/\//i.test(filename)) return filename
   const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '')
   const clean = filename.replace(/^\/+/, '')
@@ -223,7 +253,7 @@ const fillFromAuthUser = () => {
   form.phone = authStore.user.phone || ''
 }
 
-const fillFromUser = (user) => {
+const fillFromUser = (user: User | null) => {
   if (!user) return
   const fullName = user.name || ''
   const [firstName, ...rest] = fullName.split(' ')
@@ -239,7 +269,7 @@ const fillFromUser = (user) => {
   form.phone = user.phone || ''
 }
 
-const loadUserProfile = async (userName) => {
+const loadUserProfile = async (userName: string) => {
   try {
     const response = await axios.get(`${apiBaseUrl}/auth/user/${encodeURIComponent(userName)}`)
     profileUser.value = response.data
@@ -253,7 +283,7 @@ const loadUserProfile = async (userName) => {
   }
 }
 
-const loadUserPosts = async (userId) => {
+const loadUserPosts = async (userId: string) => {
   if (!userId) return
   isLoadingPosts.value = true
   try {
@@ -271,9 +301,19 @@ const loadUserPosts = async (userId) => {
 }
 
 const loadProfile = async () => {
-  const userName = route.query.user
-  
-  if (userName) {
+  const rawUserName = route.query.user
+  const userName = Array.isArray(rawUserName) ? rawUserName[0] : rawUserName
+
+  const normalizedUserName = String(userName || '').trim().toLowerCase()
+  const currentUser = authStore.user
+  const isSameUser = currentUser
+    ? [currentUser.username, currentUser.name]
+        .filter(Boolean)
+        .map((value) => String(value).trim().toLowerCase())
+        .includes(normalizedUserName)
+    : false
+
+  if (userName && !isSameUser) {
     // Viewing another user's profile
     viewedUsername.value = userName
     const userId = await loadUserProfile(userName)
@@ -282,6 +322,7 @@ const loadProfile = async () => {
     }
   } else {
     // Viewing own profile
+    viewedUsername.value = null
     if (!authStore.user) {
       await authStore.refreshUser()
     }
