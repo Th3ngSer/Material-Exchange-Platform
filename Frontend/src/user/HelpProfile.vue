@@ -65,6 +65,8 @@
 </template>
 
 <script setup>
+import { authFetch } from '@/utils/authFetch'
+import { getToken } from '@/utils/tokenStorage'
 import { reactive, ref, computed, onMounted } from 'vue'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
 import { useLanguageStore } from '../stores/language'
@@ -117,8 +119,8 @@ const submitForm = async () => {
   isSubmitting.value = true
 
   try {
-    const token = sessionStorage.getItem('authToken')
-    const response = await fetch(`${API_BASE_URL}/reports`, {
+    const token = getToken()
+    const response = await authFetch(`${API_BASE_URL}/reports`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

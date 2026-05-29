@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { authFetch } from '@/utils/authFetch'
+import { getToken } from '@/utils/tokenStorage'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -71,8 +73,8 @@ const fetchStats = async () => {
   errorMessage.value = ''
 
   try {
-    const token = sessionStorage.getItem('authToken')
-    const response = await fetch(`${API_BASE_URL}/admin/dashboard/stats`, {
+    const token = getToken()
+    const response = await authFetch(`${API_BASE_URL}/admin/dashboard/stats`, {
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -100,7 +102,7 @@ const fetchStats = async () => {
 
 const fetchHealth = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/posts/health/db`)
+    const response = await authFetch(`${API_BASE_URL}/posts/health/db`)
     if (!response.ok) {
       throw new Error('Health check failed')
     }

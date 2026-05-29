@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getToken } from '@/utils/tokenStorage'
 import { computed, ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
@@ -119,7 +120,7 @@ async function confirmDeletePost() {
 
     await axios.delete(endpoint, {
       headers: {
-        Authorization: `Bearer ${sessionStorage.getItem('authToken') ?? ''}`,
+        Authorization: `Bearer ${getToken() ?? ''}`,
       },
     })
     showDeleteModal.value = false

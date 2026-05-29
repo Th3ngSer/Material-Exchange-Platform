@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { authFetch } from '@/utils/authFetch'
+import { getToken } from '@/utils/tokenStorage'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -93,8 +95,8 @@ const closeConfirmModal = () => {
 const confirmBulkDelete = async () => {
   isDeleting.value = true
   try {
-    const token = sessionStorage.getItem('authToken')
-    const response = await fetch(`${API_BASE_URL}/admin/reports`, {
+    const token = getToken()
+    const response = await authFetch(`${API_BASE_URL}/admin/reports`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -167,8 +169,8 @@ const fetchReports = async () => {
   errorMessage.value = ''
 
   try {
-    const token = sessionStorage.getItem('authToken')
-    const response = await fetch(`${API_BASE_URL}/admin/reports`, {
+    const token = getToken()
+    const response = await authFetch(`${API_BASE_URL}/admin/reports`, {
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -200,8 +202,8 @@ const fetchReports = async () => {
 
 const updateStatus = async (reportId: string, status: 'reviewed' | 'done') => {
   try {
-    const token = sessionStorage.getItem('authToken')
-    const response = await fetch(`${API_BASE_URL}/admin/reports/${reportId}/status`, {
+    const token = getToken()
+    const response = await authFetch(`${API_BASE_URL}/admin/reports/${reportId}/status`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',

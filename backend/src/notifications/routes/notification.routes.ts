@@ -1,4 +1,4 @@
-import { Router } from 'express'
+import { Router } from 'express';
 import {
   getNotifications,
   getUnreadCount,
@@ -6,19 +6,19 @@ import {
   markAllAsRead,
   deleteNotification,
   deleteAllNotifications,
-} from '../controller/notificationController'
-import { protect } from '../middleware/auth'
+} from '../controller/notificationController';
+import { protect } from '../middleware/auth';
 
-const router = Router()
+const router = Router();
 
 // All notification routes require auth
-router.use(protect)
+router.use(protect);
 
-router.get('/',              getNotifications)
-router.get('/unread-count',  getUnreadCount)
-router.patch('/read-all',    markAllAsRead)
-router.delete('/',           deleteAllNotifications)
-router.patch('/:id/read',    markAsRead)
-router.delete('/:id',        deleteNotification)
+router.get('/', getNotifications);
+router.get('/unread-count', getUnreadCount);
+router.patch('/read-all', markAllAsRead);
+router.delete('/', deleteAllNotifications);
+router.patch('/:id/read', markAsRead);
+router.delete('/:id', deleteNotification);
 
-export default router
+export default router;

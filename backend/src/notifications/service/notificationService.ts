@@ -1,35 +1,38 @@
-
-import { Types } from 'mongoose'
-import { Notification, NotifType, INotifAction } from '../models/notifications'
+import { Types } from 'mongoose';
+import { Notification, NotifType, INotifAction } from '../models/notifications';
 
 interface CreateNotifOptions {
-  recipient: Types.ObjectId
-  sender?: Types.ObjectId
-  type: NotifType
-  title: string
-  body: string
-  richBody?: string
-  actions?: INotifAction[]
-  orderId?: string
+  recipient: Types.ObjectId;
+  sender?: Types.ObjectId;
+  type: NotifType;
+  title: string;
+  body: string;
+  richBody?: string;
+  actions?: INotifAction[];
+  orderId?: string;
 }
 
 // Central helper — call this from any controller that needs to fire a notification
 export async function createNotification(opts: CreateNotifOptions) {
   return Notification.create({
     recipient: opts.recipient,
-    sender:    opts.sender,
-    type:      opts.type,
-    title:     opts.title,
-    body:      opts.body,
-    richBody:  opts.richBody,
-    actions:   opts.actions ?? [],
-    orderId:   opts.orderId,
-  })
+    sender: opts.sender,
+    type: opts.type,
+    title: opts.title,
+    body: opts.body,
+    richBody: opts.richBody,
+    actions: opts.actions ?? [],
+    orderId: opts.orderId,
+  });
 }
 
 // Pre-built notification factory helpers
 export const NotifFactory = {
-  newMessage(recipient: Types.ObjectId, sender: Types.ObjectId, preview: string) {
+  newMessage(
+    recipient: Types.ObjectId,
+    sender: Types.ObjectId,
+    preview: string,
+  ) {
     return createNotification({
       recipient,
       sender,
@@ -37,16 +40,16 @@ export const NotifFactory = {
       title: 'New message',
       body: preview,
       actions: [
-        { label: 'Reply',       variant: 'primary' },
+        { label: 'Reply', variant: 'primary' },
         { label: 'View Thread', variant: 'outline' },
       ],
-    })
+    });
   },
 
   exchangeCompleted(
     recipient: Types.ObjectId,
     orderId: string,
-    itemName: string
+    itemName: string,
   ) {
     return createNotification({
       recipient,
@@ -56,10 +59,10 @@ export const NotifFactory = {
       richBody: `The transaction for <a href="/orders/${orderId}">${itemName}</a> has been successfully finalized.`,
       actions: [
         { label: 'Leave Review', variant: 'outline' },
-        { label: 'Invoice',      variant: 'primary' },
+        { label: 'Invoice', variant: 'primary' },
       ],
       orderId,
-    })
+    });
   },
 
   borrowRequest(
@@ -67,7 +70,7 @@ export const NotifFactory = {
     sender: Types.ObjectId,
     itemName: string,
     days: number,
-    orderId: string
+    orderId: string,
   ) {
     return createNotification({
       recipient,
@@ -77,9 +80,9 @@ export const NotifFactory = {
       body: `Requested: ${itemName} for ${days} days.`,
       actions: [
         { label: 'Leave Review', variant: 'outline' },
-        { label: 'Invoice',      variant: 'green' },
+        { label: 'Invoice', variant: 'green' },
       ],
       orderId,
-    })
+    });
   },
-}
+};
