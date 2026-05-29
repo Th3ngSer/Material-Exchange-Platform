@@ -32,6 +32,7 @@ import TrackingInformation from '@/user/TrackingInformation.vue'
 // Notifications
 import NotificationsView from '../components/Notificationsview.vue'
 import { useAuthStore } from '@/stores/auth'
+import { getToken } from '@/utils/tokenStorage'
 
 
 const router = createRouter({
@@ -111,7 +112,7 @@ router.beforeEach((to) => {
   }
 
   const authStore = useAuthStore()
-  const token = sessionStorage.getItem('authToken')
+  const token = getToken()
   const role = authStore.user?.role ?? getRoleFromToken(token)
 
   if (!token) {
@@ -128,7 +129,7 @@ router.beforeEach((to) => {
 // Guard to check for authenticated access before post
 router.beforeEach((to) => {
   const authStore = useAuthStore()
-  const token = sessionStorage.getItem('authToken')
+  const token = getToken()
 
   if ((to.name === 'login' || to.name === 'signup') && authStore.isAuthenticated) {
     return { name: 'home' }

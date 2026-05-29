@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getToken } from '@/utils/tokenStorage'
 import { computed, onMounted, ref } from 'vue'
 import axios from 'axios'
 import { useLanguageStore } from '@/stores/language'
@@ -130,7 +131,7 @@ async function deletePost(postId: string, title: string) {
   try {
     await axios.delete(endpoint, {
       headers: {
-        Authorization: `Bearer ${sessionStorage.getItem('authToken') ?? ''}`,
+        Authorization: `Bearer ${getToken() ?? ''}`,
       },
     })
     posts.value = posts.value.filter((p) => p._id !== postId)

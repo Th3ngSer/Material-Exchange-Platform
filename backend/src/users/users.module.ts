@@ -4,6 +4,7 @@ import { AdminUsersController } from './admin-users.controller';
 import { User, UserSchema } from './schemas/user.schema';
 import { Post, PostSchema } from '../posts/entities/post.entity';
 import { UsersService } from './users.service';
+import { ActivityLogModule } from '../activity-log/activity-log.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { UsersService } from './users.service';
       { name: User.name, schema: UserSchema },
       { name: Post.name, schema: PostSchema },
     ]),
+    ActivityLogModule,
   ],
   controllers: [AdminUsersController],
   providers: [UsersService],

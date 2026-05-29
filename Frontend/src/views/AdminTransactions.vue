@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { authFetch } from '@/utils/authFetch'
+import { getToken } from '@/utils/tokenStorage'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -57,8 +59,8 @@ const fetchTransactions = async () => {
   errorMessage.value = ''
 
   try {
-    const token = sessionStorage.getItem('authToken')
-    const response = await fetch(`${API_BASE_URL}/transactions/admin/all`, {
+    const token = getToken()
+    const response = await authFetch(`${API_BASE_URL}/transactions/admin/all`, {
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

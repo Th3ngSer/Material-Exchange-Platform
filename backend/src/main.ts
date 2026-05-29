@@ -20,8 +20,19 @@ async function bootstrap() {
     }),
   );
 
+  const explicitOrigin = process.env.FRONTEND_ORIGIN;
+  const allowLocalhost = (origin: string) =>
+    /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+
   app.enableCors({
-    origin: 'http://localhost:5173', // your Vue frontend
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (explicitOrigin && origin === explicitOrigin) {
+        return callback(null, true);
+      }
+      if (allowLocalhost(origin)) return callback(null, true);
+      return callback(new Error(`CORS blocked: ${origin}`));
+    },
     methods: 'GET,POST,PUT,PATCH,DELETE',
     credentials: true,
   });

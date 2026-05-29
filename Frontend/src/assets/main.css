@@ -23,3 +23,14 @@ body {
 .font-khmer {
   font-family: 'Khmer OS Siemreap', 'Khmer', sans-serif;
 }
+
+/* Global route transition used by App.vue <transition name="fade" mode="out-in"> */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getToken } from '@/utils/tokenStorage'
 import { reactive, ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
@@ -245,7 +246,7 @@ async function submit() {
 
     await axios.post(`${apiBaseUrl}/posts`, fd, {
       headers: {
-        Authorization: `Bearer ${sessionStorage.getItem('authToken') ?? ''}`,
+        Authorization: `Bearer ${getToken() ?? ''}`,
       },
     })
     submitted.value = true

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getToken } from '@/utils/tokenStorage'
 import { computed, ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
@@ -119,7 +120,7 @@ async function confirmDeletePost() {
 
     await axios.delete(endpoint, {
       headers: {
-        Authorization: `Bearer ${sessionStorage.getItem('authToken') ?? ''}`,
+        Authorization: `Bearer ${getToken() ?? ''}`,
       },
     })
     showDeleteModal.value = false
@@ -400,11 +401,9 @@ const detailStats = computed(() => [
                 />
               </div>
               <div v-else class="flex h-[300px] items-center justify-center">
-<<<<<<< HEAD
-                <div class="text-[#6b7280] text-lg font-semibold">{{ languageStore.t('mapUnavailable') }}</div>
-=======
-                <div class="text-lg font-semibold text-[#6b7280]">Map unavailable for this listing</div>
->>>>>>> fd46333089cd703e01266c89336d7a4995ed9012
+                <div class="text-lg font-semibold text-[#6b7280]">
+                  {{ languageStore.t('mapUnavailable') }}
+                </div>
               </div>
             </div>
           </div>
