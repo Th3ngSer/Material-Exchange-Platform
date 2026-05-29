@@ -62,7 +62,6 @@ export class RatingsService {
 
     return newRating;
   }
-
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private updateSellerRating(_sellerId: number, _rating: number) {
     return;

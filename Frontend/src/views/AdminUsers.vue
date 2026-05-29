@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { authFetch } from '@/utils/authFetch'
+import { getToken } from '@/utils/tokenStorage'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -75,7 +77,7 @@ const fetchUsers = async () => {
   errorMessage.value = ''
 
   try {
-    const token = sessionStorage.getItem('authToken')
+    const token = getToken()
     const params = new URLSearchParams()
     params.set('page', String(page.value))
     params.set('limit', '10')
@@ -83,7 +85,7 @@ const fetchUsers = async () => {
       params.set('search', searchQuery.value.trim())
     }
 
-    const response = await fetch(`${API_BASE_URL}/admin/users?${params.toString()}`, {
+    const response = await authFetch(`${API_BASE_URL}/admin/users?${params.toString()}`, {
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -127,8 +129,8 @@ const deleteUser = async (userId: string, email: string) => {
 
   isDeleting.value = true
   try {
-    const token = sessionStorage.getItem('authToken')
-    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+    const token = getToken()
+    const response = await authFetch(`${API_BASE_URL}/admin/users/${userId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

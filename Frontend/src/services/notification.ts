@@ -4,6 +4,7 @@
  */
 
 import axios from 'axios'
+import { getToken } from '@/utils/tokenStorage'
 // import type { Notification } from '@/types/notification'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
@@ -13,7 +14,7 @@ const notificationApi = axios.create({
 
 // Add auth token to requests
 notificationApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken')
+  const token = getToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
