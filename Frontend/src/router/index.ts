@@ -3,9 +3,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import AdminActivity from '../views/AdminActivity.vue'
 import AdminDashboard from '../views/AdminDashboard.vue'
 import AdminListings from '../views/AdminListings.vue'
-import AdminNotifications from '../views/AdminNotifications.vue'
 import AdminReports from '../views/AdminReports.vue'
-import AdminReviews from '../views/AdminReviews.vue'
+import AdminSettings from '../views/AdminSettings.vue'
 import AdminTransactions from '../views/AdminTransactions.vue'
 import AdminUsers from '../views/AdminUsers.vue'
 // Chat System
@@ -72,9 +71,8 @@ const router = createRouter({
     { path: '/admin', name: 'SuperAdmin', component: AdminDashboard, meta: { requiresAdmin: true } },
     { path: '/admin/activity', name: 'admin-activity', component: AdminActivity, meta: { requiresAdmin: true } },
     { path: '/admin/listings', name: 'admin-listings', component: AdminListings, meta: { requiresAdmin: true } },
-    { path: '/admin/notifications', name: 'admin-notifications', component: AdminNotifications, meta: { requiresAdmin: true } },
     { path: '/admin/reports', name: 'admin-reports', component: AdminReports, meta: { requiresAdmin: true } },
-    { path: '/admin/reviews', name: 'admin-reviews', component: AdminReviews, meta: { requiresAdmin: true } },
+    { path: '/admin/settings', name: 'admin-settings', component: AdminSettings, meta: { requiresAdmin: true } },
     { path: '/admin/transactions', name: 'admin-transactions', component: AdminTransactions, meta: { requiresAdmin: true } },
     { path: '/admin/users', name: 'admin-users', component: AdminUsers, meta: { requiresAdmin: true } },
 

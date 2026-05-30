@@ -11,10 +11,7 @@ const navItems = [
   { label: 'Transactions', to: '/admin/transactions' },
   { label: 'Reports', to: '/admin/reports' },
   { label: 'Activity', to: '/admin/activity' },
-  { label: 'Notifications', to: '/admin/notifications' },
-  { label: 'Chat Monitoring', to: '/admin/chat' },
-  { label: 'Reviews', to: '/admin/reviews' },
-  { label: 'Settings', to: '/admin/settings' },
+  { label: 'Settings', to: '/admin/settings', badge: 'New' },
 ]
 
 const route = useRoute()
@@ -45,10 +42,6 @@ const confirmLogout = () => {
 <template>
   <div class="admin-shell">
     <aside class="admin-sidebar">
-      <div class="brand">
-        <span class="brand-mark">Do</span>
-        <span class="brand-mark accent">Ot</span>
-      </div>
       <nav class="nav">
         <router-link
           v-for="item in navItems"
@@ -58,6 +51,7 @@ const confirmLogout = () => {
           :to="item.to"
         >
           {{ item.label }}
+          <span v-if="item.badge" class="nav-badge">{{ item.badge }}</span>
         </router-link>
       </nav>
       <button class="logout" @click="handleLogout">Log out</button>
@@ -108,16 +102,6 @@ const confirmLogout = () => {
   z-index: 1;
 }
 
-.brand {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-}
-
-.brand-mark.accent {
-  color: #ff9f1c;
-}
-
 .nav {
   display: grid;
   gap: 12px;
@@ -137,6 +121,19 @@ const confirmLogout = () => {
 .nav-item.active {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
+}
+
+.nav-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: #ff9f1c;
+  color: #fff;
+  vertical-align: middle;
 }
 
 .logout {
