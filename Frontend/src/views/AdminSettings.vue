@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import AdminLayout from '@/components/Admin/AdminLayout.vue'
-import { ref } from 'vue'
+import { authFetch } from '@/utils/authFetch'
+import { getToken } from '@/utils/tokenStorage'
+import { onMounted, ref } from 'vue'
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 const siteName = ref('Material Xchange')
 const maintenanceMode = ref(false)
@@ -9,12 +13,110 @@ const maxListingsPerUser = ref(50)
 const defaultCurrency = ref('USD')
 
 const saved = ref(false)
+const isLoading = ref(false)
+const errorMessage = ref('')
 
-const saveSettings = () => {
-  // TODO: wire to backend
-  saved.value = true
-  setTimeout(() => (saved.value = false), 2500)
+const fetchSettings = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+  try {
+    const token = getToken()
+    const response = await authFetch(`${API_BASE_URL}/admin/settings`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+    if (!response.ok) {
+      throw new Error('Failed to fetch settings')
+    }
+    const data = await response.json()
+    siteName.value = data.siteName
+    maintenanceMode.value = data.maintenanceMode
+    allowNewRegistrations.value = data.allowNewRegistrations
+    maxListingsPerUser.value = data.maxListingsPerUser
+    defaultCurrency.value = data.defaultCurrency
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Failed to fetch settings'
+  } finally {
+    isLoading.value = false
+  }
 }
+
+const saveSettings = async () => {
+  saved.value = false
+  errorMessage.value = ''
+  try {
+    const token = getToken()
+    const response = await authFetch(`${API_BASE_URL}/admin/settings`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        siteName: siteName.value,
+        maintenanceMode: maintenanceMode.value,
+        allowNewRegistrations: allowNewRegistrations.value,
+        maxListingsPerUser: maxListingsPerUser.value,
+        defaultCurrency: defaultCurrency.value,
+      }),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to save settings')
+    }
+    saved.value = true
+    setTimeout(() => (saved.value = false), 2500)
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Failed to save settings'
+  }
+}
+
+const clearAllListings = async () => {
+  if (!confirm('Are you absolutely sure you want to delete ALL listings on the platform? This cannot be undone.')) {
+    return
+  }
+  try {
+    const token = getToken()
+    const response = await authFetch(`${API_BASE_URL}/admin/settings/listings`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+    if (!response.ok) {
+      throw new Error('Failed to clear listings')
+    }
+    alert('All listings have been deleted successfully!')
+  } catch (error) {
+    alert(error instanceof Error ? error.message : 'Failed to clear listings')
+  }
+}
+
+const resetPlatformData = async () => {
+  if (!confirm('Are you absolutely sure you want to reset all platform data (transactions, reports, activity logs)? This cannot be undone.')) {
+    return
+  }
+  try {
+    const token = getToken()
+    const response = await authFetch(`${API_BASE_URL}/admin/settings/reset`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+    if (!response.ok) {
+      throw new Error('Failed to reset platform data')
+    }
+    alert('Platform data has been reset successfully!')
+  } catch (error) {
+    alert(error instanceof Error ? error.message : 'Failed to reset platform data')
+  }
+}
+
+onMounted(fetchSettings)
 </script>
 
 <template>
@@ -25,10 +127,13 @@ const saveSettings = () => {
           <h1 class="page-title">Settings</h1>
           <p class="page-sub">Configure platform-wide options</p>
         </div>
-        <button class="save-btn" :class="{ success: saved }" @click="saveSettings">
+        <button class="save-btn" :class="{ success: saved }" :disabled="isLoading" @click="saveSettings">
           {{ saved ? '✓ Saved' : 'Save Changes' }}
         </button>
       </header>
+
+      <div v-if="errorMessage" class="error-banner">{{ errorMessage }}</div>
+      <div v-if="isLoading" class="loading-banner">Loading settings...</div>
 
       <div class="cards">
         <!-- General -->
@@ -92,14 +197,14 @@ const saveSettings = () => {
               <p class="toggle-label">Clear All Listings</p>
               <p class="toggle-desc">Permanently delete every listing on the platform</p>
             </div>
-            <button class="danger-btn">Delete All</button>
+            <button class="danger-btn" @click="clearAllListings">Delete All</button>
           </div>
           <div class="danger-row">
             <div>
               <p class="toggle-label">Reset Platform Data</p>
               <p class="toggle-desc">Wipe all transactions, reports and activity logs</p>
             </div>
-            <button class="danger-btn">Reset</button>
+            <button class="danger-btn" @click="resetPlatformData">Reset</button>
           </div>
         </section>
       </div>
@@ -149,6 +254,21 @@ const saveSettings = () => {
 
 .save-btn:hover { opacity: 0.88; transform: translateY(-1px); }
 .save-btn.success { background: linear-gradient(135deg, #22c55e, #16a34a); }
+.save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.error-banner {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.loading-banner {
+  color: #64748b;
+  font-size: 14px;
+}
 
 .cards {
   display: flex;

@@ -3,6 +3,7 @@ import AdminLayout from '@/components/Admin/AdminLayout.vue'
 import { authFetch } from '@/utils/authFetch'
 import { getToken } from '@/utils/tokenStorage'
 import { onMounted, ref } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router'
 
 
 type ActivityItem = {
@@ -118,10 +119,16 @@ const actionColor = (action: string) => {
 }
 
 onMounted(fetchActivities)
+
+onBeforeRouteLeave(() => {
+  showDetailModal.value = false
+  viewingActivity.value = null
+})
 </script>
 
 <template>
-  <AdminLayout>
+  <div class="admin-view">
+    <AdminLayout>
       <header class="admin-topbar">
         <div class="topbar-left">
           <div class="topbar-icon"></div>
@@ -156,56 +163,61 @@ onMounted(fetchActivities)
           </article>
         </div>
       </section>
-  </AdminLayout>
+    </AdminLayout>
 
-  <!-- ─── Activity Detail Modal ──────────────────────────────────────── -->
-  <Teleport to="body">
-    <Transition name="modal-fade">
-      <div v-if="showDetailModal" class="modal-overlay" @click.self="closeDetail">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h3 class="modal-title">Activity Details</h3>
-            <button class="close-btn" @click="closeDetail">&times;</button>
-          </div>
+    <!-- ─── Activity Detail Modal ──────────────────────────────────────── -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="showDetailModal" class="modal-overlay" @click.self="closeDetail">
+          <div class="modal-card">
+            <div class="modal-header">
+              <h3 class="modal-title">Activity Details</h3>
+              <button class="close-btn" @click="closeDetail">&times;</button>
+            </div>
 
-          <div v-if="viewingActivity" class="modal-content">
-            <div class="detail-row">
-              <span class="detail-label">Action:</span>
-              <span class="action-badge" :class="actionColor(viewingActivity.action)">{{ viewingActivity.title }}</span>
+            <div v-if="viewingActivity" class="modal-content">
+              <div class="detail-row">
+                <span class="detail-label">Action:</span>
+                <span class="action-badge" :class="actionColor(viewingActivity.action)">{{ viewingActivity.title }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Performed By:</span>
+                <span class="detail-value">{{ viewingActivity.adminName }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Category:</span>
+                <span class="detail-value">{{ viewingActivity.category }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Date / Time:</span>
+                <span class="detail-value">{{ viewingActivity.time }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Log ID:</span>
+                <span class="detail-value mono">#{{ viewingActivity.id }}</span>
+              </div>
+              <div class="detail-message-box">
+                <span class="detail-label">Details:</span>
+                <p class="detail-message">{{ viewingActivity.subtitle }}</p>
+              </div>
             </div>
-            <div class="detail-row">
-              <span class="detail-label">Performed By:</span>
-              <span class="detail-value">{{ viewingActivity.adminName }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Category:</span>
-              <span class="detail-value">{{ viewingActivity.category }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Date / Time:</span>
-              <span class="detail-value">{{ viewingActivity.time }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Log ID:</span>
-              <span class="detail-value mono">#{{ viewingActivity.id }}</span>
-            </div>
-            <div class="detail-message-box">
-              <span class="detail-label">Details:</span>
-              <p class="detail-message">{{ viewingActivity.subtitle }}</p>
-            </div>
-          </div>
 
-          <div class="modal-actions">
-            <button class="modal-btn cancel" type="button" @click="closeDetail">Close</button>
+            <div class="modal-actions">
+              <button class="modal-btn cancel" type="button" @click="closeDetail">Close</button>
+            </div>
           </div>
         </div>
-      </div>
-    </Transition>
-  </Teleport>
+      </Transition>
+    </Teleport>
+  </div>
 </template>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+.admin-view {
+  min-height: 100vh;
+}
 
 .admin-topbar {
   display: flex;
