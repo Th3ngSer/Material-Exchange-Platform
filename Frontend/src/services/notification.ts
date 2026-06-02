@@ -2,11 +2,6 @@
  * Notification Service
  * Handles notification-related API calls using native fetch()
  */
-
-<<<<<<< HEAD
-=======
-import axios from 'axios'
-import { getToken } from '@/utils/tokenStorage'
 import { getToken } from '@/utils/tokenStorage'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
@@ -21,6 +16,12 @@ const buildHeaders = (contentType = 'application/json'): HeadersInit => {
   if (token) headers.Authorization = `Bearer ${token}`
   return headers
 }
+
+const parseResponse = async (response: Response) => {
+  const text = await response.text()
+  const data = text ? JSON.parse(text) : null
+
+  if (!response.ok) {
     const message = data?.message || data?.error || response.statusText || 'Notification request failed'
     throw new Error(message)
   }
