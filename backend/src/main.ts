@@ -65,25 +65,29 @@ async function bootstrap() {
   );
 
   const explicitOrigin = process.env.FRONTEND_ORIGIN;
-  const allowLocalhost = (origin: string) =>
-    /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+  const allowedOrigins = [
+    'https://material-exchange-platform.pages.dev',
+    'http://localhost:5173',
+    'http://localhost:3000',
+  ];
 
   app.enableCors({
-    // origin: (origin, callback) => {
-    //   if (!origin) return callback(null, true);
-    //   if (explicitOrigin && origin === explicitOrigin) {
-    //     return callback(null, true);
-    //   }
-    //   if (allowLocalhost(origin)) return callback(null, true);
-    //   return callback(new Error(`CORS blocked: ${origin}`));
-    // },
-
-    
-    origin: [
-      'https://material-exchange-platform.pages.dev', // Production Frontend
-      'http://localhost:5173',                         // Local Dev Frontend
-      'http://localhost:3000'                          // Local Dev Backend Preview
-    ],
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const isCloudflarePages =
+        origin.endsWith('.material-exchange-platform.pages.dev') ||
+        origin === 'https://material-exchange-platform.pages.dev';
+      const isLocal = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+      if (
+        isCloudflarePages ||
+        isLocal ||
+        allowedOrigins.includes(origin) ||
+        (explicitOrigin && origin === explicitOrigin)
+      ) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked: ${origin}`));
+    },
     methods: 'GET,POST,PUT,PATCH,DELETE',
     credentials: true,
   });
