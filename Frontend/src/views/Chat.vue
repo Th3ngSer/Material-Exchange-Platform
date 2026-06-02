@@ -5,32 +5,25 @@ import { useRoute, useRouter } from "vue-router"
 import { useAuthStore } from '../stores/auth'
 import LoginPromptModal from '../components/LoginPromptModal.vue'
 import { connectSocket, getSocket, disconnectSocket } from '../services/socket'
-import api from '../services/api'
-import type { ChatUser } from '../types/chat'
+import { chatApi } from '../services/chat'
+import type { ChatUser, ChatMessage } from '../types/chat'
 
 import ChatSidebar from "../components/ChatSidebar.vue"
 import ChatWindow from "../components/ChatWindow.vue"
 import Header from "../components/layout/Header.vue"
 
 const route = useRoute()
-
-// ✅ USERS (frontend temporary until backend)
 const users = ref<ChatUser[]>([])
-
-// ✅ CURRENT CHAT USER
 const selectedUser = ref<ChatUser | null>(null)
-
-// ✅ MESSAGE INPUT
 const newMessage = ref("")
+
 
 // Auth and UI
 const auth = useAuthStore()
 const router = useRouter()
 const showLoginPrompt = ref(false)
 
-// =========================
-// 🔥 LOAD USERS (TEMP MOCK OR BACKEND LATER)
-// =========================
+// LOAD USERS 
 const storageKey = computed(() => `chat_users_${auth.user?.id ?? 'guest'}`)
 
 const API_URL = 'http://localhost:3000'
@@ -49,6 +42,26 @@ const normalizeAvatarUrl = (value: string | undefined | null) => {
   return `${API_URL}/${normalized}`
 }
 
+const normalizeChatMessage = (msg: any) => {
+  const type = String(msg.type || '').toLowerCase()
+  return {
+    text: String(msg.text ?? ''),
+    sender: String(msg.sender ?? '').toLowerCase() === 'me' ? 'me' : 'them',
+    time: String(msg.time ?? ''),
+    type: type === 'voice' ? 'voice' : type === 'image' ? 'image' : 'text',
+    imageUrl: msg.imageUrl ? String(msg.imageUrl) : undefined,
+    audioUrl: msg.audioUrl ? String(msg.audioUrl) : undefined,
+  }
+}
+
+const restoreSelectedUser = () => {
+  if (!selectedUser.value) return
+  const found = users.value.find((u) => String(u.id) === String(selectedUser.value?.id))
+  if (found) {
+    selectedUser.value = found
+  }
+}
+
 const loadUsers = () => {
   const saved = localStorage.getItem(storageKey.value)
 
@@ -58,14 +71,107 @@ const loadUsers = () => {
   }
 
   try {
-    users.value = JSON.parse(saved)
+    const parsed = JSON.parse(saved)
+    if (Array.isArray(parsed)) {
+      users.value = parsed.map((user: any) => ({
+        ...user,
+        unreadCount: typeof user.unreadCount === 'number' ? user.unreadCount : 0,
+        chat: Array.isArray(user.chat)
+          ? user.chat.map(normalizeChatMessage)
+          : [],
+      }))
+      restoreSelectedUser()
+    } else {
+      users.value = []
+    }
   } catch {
     users.value = []
   }
 }
 
+// FETCH USERS FROM BACKEND
+const fetchUsersFromBackend = async () => {
+  try {
+    const { data } = await chatApi.getUsers()
+    if (Array.isArray(data)) {
+      const backendUsers: ChatUser[] = data.map((u: any) => ({
+        id: u._id,
+        name: u.name || u.username || u.email || 'User',
+        role: u.role || 'Member',
+        message: '',
+        time: new Date().toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        avatar: u.avatar ? normalizeAvatarUrl(u.avatar) : 'https://via.placeholder.com/48',
+        online: true,
+        chat: [],
+
+        unreadCount: 0,
+      }))
+
+      // Merge with existing users, preferring existing data
+      const merged: ChatUser[] = [...backendUsers]
+      users.value.forEach((existingUser) => {
+        const found = merged.find((u) => String(u.id) === String(existingUser.id))
+        if (!found) {
+          merged.push(existingUser)
+        } else {
+          // Keep existing chat history and message preview
+          found.chat = existingUser.chat
+          found.message = existingUser.message
+          found.time = existingUser.time
+          found.unreadCount = existingUser.unreadCount ?? 0
+        }
+      })
+
+      users.value = merged
+      restoreSelectedUser()
+      saveUsers()
+    }
+  } catch (err) {
+    console.error('Failed to fetch users from backend', err)
+  }
+}
+
 const saveUsers = () => {
   localStorage.setItem(storageKey.value, JSON.stringify(users.value))
+}
+
+// LOAD CONVERSATION HISTORY
+const loadConversationHistory = async (userId: string) => {
+  try {
+    const { data } = await chatApi.getConversation(userId)
+    const currentUserId = String(auth.user?.id)
+
+    // Find the user in users list
+    const user = users.value.find((u) => String(u.id) === String(userId))
+    if (!user) return
+
+    // Clear existing chat and load history
+    user.chat = []
+
+    // Map database messages to chat format
+    if (Array.isArray(data)) {
+      data.forEach((msg: any) => {
+        const type = String(msg.type || '').toLowerCase()
+        const sender: 'me' | 'them' = String(msg.senderId) === currentUserId ? 'me' : 'them'
+        const chatEntry: ChatMessage = {
+          text: type === 'text' ? String(msg.content || '') : type === 'voice' ? 'Voice message' : type === 'image' ? 'Sent an image' : '',
+          sender,
+          time: new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          type: type === 'voice' ? 'voice' : type === 'image' ? 'image' : 'text',
+          imageUrl: type === 'image' ? String(msg.content || msg.imageUrl || '') : undefined,
+          audioUrl: type === 'voice' ? String(msg.content || msg.audioUrl || '') : undefined,
+        }
+        user.chat.push(chatEntry)
+      })
+    }
+
+    saveUsers()
+  } catch (err) {
+    console.error('Failed to load conversation history', err)
+  }
 }
 
 const blobToDataUrl = (blob: Blob) => {
@@ -90,7 +196,7 @@ const blobToDataUrl = (blob: Blob) => {
   })
 }
 
-const selectSellerFromRoute = () => {
+const selectSellerFromRoute = async () => {
   const sellerId = String(route.query.sellerId || route.query.sellerName || "").trim()
   const sellerName = String(route.query.sellerName || "").trim()
 
@@ -99,7 +205,6 @@ const selectSellerFromRoute = () => {
   }
 
   const existing = users.value.find((u) => String(u.id) === String(sellerId))
-
   if (existing) {
     const sellerAvatar = String(route.query.sellerAvatar || "").trim()
     if (sellerAvatar) {
@@ -112,9 +217,25 @@ const selectSellerFromRoute = () => {
     return true
   }
 
+  let resolvedId = sellerId
+  if (sellerId === sellerName) {
+    try {
+      const { data } = await chatApi.getUsers()
+      const matched = (data as any[]).find((item) => {
+        const itemName = String(item.name || item.username || item.email || '').trim()
+        return itemName === sellerName
+      })
+      if (matched?._id) {
+        resolvedId = String(matched._id)
+      }
+    } catch {
+      // ignore lookup failures
+    }
+  }
+
   const sellerAvatar = normalizeAvatarUrl(String(route.query.sellerAvatar || ""))
   const sellerUser: ChatUser = {
-    id: sellerId,
+    id: resolvedId,
     name: sellerName,
     role: "Seller",
     message: "Hi, I am interested in your listing.",
@@ -125,6 +246,7 @@ const selectSellerFromRoute = () => {
     avatar: sellerAvatar,
     online: true,
     chat: [],
+    unreadCount: 0,
   }
 
   users.value.unshift(sellerUser)
@@ -134,13 +256,16 @@ const selectSellerFromRoute = () => {
   return true
 }
 
-const initChat = () => {
+const initChat = async () => {
   if (users.value.length === 0) {
     loadUsers()
   }
 
-  const hasSeller = selectSellerFromRoute()
+  const hasSeller = await selectSellerFromRoute()
   if (hasSeller) {
+    if (selectedUser.value) {
+      await loadConversationHistory(String(selectedUser.value.id))
+    }
     return
   }
 
@@ -148,55 +273,71 @@ const initChat = () => {
   if (userId) {
     selectedUser.value =
       users.value.find((u) => String(u.id) === String(userId)) || null
+    if (selectedUser.value) {
+      await loadConversationHistory(String(userId))
+    }
     return
   }
 
   if (users.value.length > 0) {
     selectedUser.value = users.value[0] || null
+    if (selectedUser.value) {
+      await loadConversationHistory(String(selectedUser.value.id))
+    }
   }
 }
 
-onMounted(() => {
+// SOCKET HELPERS
+const bindSocket = () => {
+  const s = getSocket()
+  if (!s) return
+
+  s.off('message', handleIncomingMessage)
+  s.on('message', handleIncomingMessage)
+}
+
+onMounted(async () => {
   if (!auth.isAuthenticated) {
     showLoginPrompt.value = true
     return
   }
 
-  // connect socket and load chats
-  connectSocket()
-  const s = getSocket()
-  if (s) {
-    s.on('message', handleIncomingMessage)
-  }
+  // Load users from localStorage first
+  loadUsers()
 
-  initChat()
+  // Fetch fresh user list from backend
+  await fetchUsersFromBackend()
+
+  connectSocket()
+  bindSocket()
+
+  await initChat()
 })
+
 
 watch(
   () => route.query,
-  () => {
-    initChat()
+  async () => {
+    await initChat()
   },
   { deep: true },
 )
 
-// When auth state changes (e.g., user logs in), load that user's chats
+// When auth state changes 
 watch(
   () => auth.isAuthenticated,
-  (val) => {
+  async (val) => {
     if (val) {
       showLoginPrompt.value = false
       loadUsers()
 
-      // connect socket and bind
-      connectSocket()
-      const s = getSocket()
-      if (s) {
-        s.off('message', handleIncomingMessage)
-        s.on('message', handleIncomingMessage)
-      }
+      // Fetch fresh user list from backend
+      await fetchUsersFromBackend()
 
-      initChat()
+      connectSocket()
+      bindSocket()
+
+      await initChat()
     } else {
       users.value = []
       selectedUser.value = null
@@ -206,16 +347,18 @@ watch(
   }
 )
 
-// =========================
 // SELECT USER FROM SIDEBAR
-// =========================
-const selectUser = (user: ChatUser) => {
+const selectUser = async (user: ChatUser) => {
   selectedUser.value = user
+
+  if ('unreadCount' in user) {
+    user.unreadCount = 0
+  }
+  // Load conversation history when user is selected
+  await loadConversationHistory(String(user.id))
 }
 
-// =========================
 // SEND MESSAGE
-// =========================
 const sendMessage = async () => {
   if (!auth.isAuthenticated) {
     showLoginPrompt.value = true
@@ -225,12 +368,13 @@ const sendMessage = async () => {
   if (!selectedUser.value || !newMessage.value.trim()) return
 
   const text = newMessage.value
+  const receiverId = String(selectedUser.value.id)
   const time = new Date().toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
   })
 
-  // ✅ 1. INSTANT UI UPDATE (FIX)
+  // INSTANT UI UPDATE
   selectedUser.value.chat.push({
     text,
     sender: "me",
@@ -246,10 +390,11 @@ const sendMessage = async () => {
   // clear input immediately
   newMessage.value = ""
 
+  moveUserToTop(receiverId)
+
   try {
-    // ✅ 2. send to backend
-    await api.post("/chat/send", {
-      receiverId: String(selectedUser.value.id),
+    await chatApi.sendMessage({
+      receiverId,
       content: text,
       type: "text",
     })
@@ -257,9 +402,8 @@ const sendMessage = async () => {
     console.error("Send failed", err)
   }
 }
-// =========================
+
 // SEND IMAGE
-// =========================
 const sendImage = async (file: File) => {
   if (!selectedUser.value) return
 
@@ -290,11 +434,13 @@ const sendImage = async (file: File) => {
   saveUsers()
 
   try {
-    await api.post("/chat/send", {
-      receiverId: String(selectedUser.value.id),
+    const receiverId = String(selectedUser.value.id)
+    await chatApi.sendMessage({
+      receiverId,
       content: imageUrl,
       type: "image",
     })
+    moveUserToTop(receiverId)
   } catch (err) {
     console.error("Image send failed", err)
   }
@@ -330,11 +476,13 @@ const sendVoice = async (audioBlob: Blob) => {
   saveUsers()
 
   try {
-    await api.post("/chat/send", {
-      receiverId: String(selectedUser.value.id),
+    const receiverId = String(selectedUser.value.id)
+    await chatApi.sendMessage({
+      receiverId,
       content: audioUrl,
       type: "voice",
     })
+    moveUserToTop(receiverId)
   } catch (err) {
     console.error("Voice send failed", err)
   }
@@ -344,6 +492,11 @@ const sendVoice = async (audioBlob: Blob) => {
 function handleIncomingMessage(msg: any) {
   // msg: { senderId, receiverId, content, type, createdAt, _id }
   const myId = String(auth.user?.id)
+  // Ignore messages sent by myself
+  if (String(msg.senderId) === myId) {
+    return
+  }
+
   const otherId = String(msg.senderId === myId ? msg.receiverId : msg.senderId)
 
   // find or create user entry
@@ -353,27 +506,94 @@ function handleIncomingMessage(msg: any) {
       id: otherId,
       name: msg.senderId === myId ? (auth.user?.name || 'Me') : (msg.senderName || 'User'),
       role: 'Seller',
-      message: msg.content || '',
+      message: msg.type === 'text'
+        ? String(msg.content || '')
+        : msg.type === 'voice'
+          ? 'Voice message'
+          : msg.type === 'image'
+            ? 'Sent an image'
+            : '',
       time: new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       avatar: normalizeAvatarUrl(msg.senderAvatar || 'https://via.placeholder.com/48'),
       online: true,
       chat: [],
+      unreadCount: 0,
     }
     users.value.unshift(u)
   }
 
-  const chatEntry = {
-    text: msg.content,
-    sender: String(msg.senderId) === myId ? ('me' as const) : ('them' as const),
-    time: new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    type: msg.type === 'voice' ? ('voice' as const) : msg.type === 'image' ? ('image' as const) : ('text' as const),
-    imageUrl: msg.imageUrl || (msg.type === 'image' ? msg.content : undefined),
-    audioUrl: msg.type === 'voice' ? msg.audioUrl || msg.content || undefined : undefined,
+  const isCurrentChat =
+  selectedUser.value && String(selectedUser.value.id) === otherId
+
+  if (!isCurrentChat) {
+    u.unreadCount = (u.unreadCount || 0) + 1
   }
 
-  u.chat.push(chatEntry)
-  u.message = chatEntry.type === 'voice' ? 'Sent a voice message' : chatEntry.text || (chatEntry.type === 'image' ? 'Sent an image' : '')
-  u.time = chatEntry.time
+  // optional (you can keep or remove this)
+  if (isCurrentChat) {
+    selectedUser.value = u
+  }
+
+  if (selectedUser.value && String(selectedUser.value.id) === otherId) {
+    selectedUser.value = u
+  }
+
+  moveUserToTop(otherId)
+
+  const type = String(msg.type || '').toLowerCase()
+  const messageText = type === 'text'
+    ? String(msg.content ?? '')
+    : type === 'voice'
+      ? 'Voice message'
+      : type === 'image'
+        ? 'Sent an image'
+        : ''
+
+  const imageUrl = type === 'image'
+    ? String(msg.content || msg.imageUrl || '')
+    : undefined
+  const audioUrl = type === 'voice'
+    ? String(msg.content || msg.audioUrl || '')
+    : undefined
+
+  const sender: 'me' | 'them' = String(msg.senderId) === myId ? 'me' : 'them'
+  const chatEntry: ChatMessage = {
+    text: messageText,
+    sender,
+    time: new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    type: type === 'voice' ? 'voice' : type === 'image' ? 'image' : 'text',
+    imageUrl,
+    audioUrl,
+  }
+
+  // PREVENT DUPLICATES
+  const messageExists = u.chat.some(
+    (m) => m.text === chatEntry.text &&
+           m.sender === chatEntry.sender &&
+           m.type === chatEntry.type &&
+           Math.abs(new Date(m.time).getTime() - new Date(chatEntry.time).getTime()) < 2000 // within 2 seconds
+  )
+
+  if (!messageExists) {
+    u.chat.push(chatEntry)
+    u.message = chatEntry.type === 'voice' ? 'Sent a voice message' : chatEntry.text || (chatEntry.type === 'image' ? 'Sent an image' : '')
+    u.time = chatEntry.time
+    
+    saveUsers()
+    moveUserToTop(otherId)
+  }
+}
+
+const moveUserToTop = (userId: string) => {
+  const index = users.value.findIndex(
+    (u) => String(u.id) === String(userId)
+  )
+
+  if (index === -1) return
+
+  const user = users.value.splice(index, 1)[0]
+  users.value.unshift(user)
+
   saveUsers()
 }
 
@@ -387,6 +607,7 @@ function handleIncomingMessage(msg: any) {
       <ChatSidebar
         :users="users"
         :selected-user="selectedUser"
+        :is-active="auth.isAuthenticated"
         @select-user="selectUser"
       />
 

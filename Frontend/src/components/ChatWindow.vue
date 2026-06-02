@@ -106,9 +106,7 @@ watch(
   }
 )
 
-// =========================
 // ATTACH FILE
-// =========================
 const handleAttachClick = () => {
   fileInput.value?.click()
 }

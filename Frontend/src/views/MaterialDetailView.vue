@@ -297,6 +297,7 @@ const detailStats = computed(() => [
 
           <!-- Seller Card -->
           <MaterialDetailSellerCard
+            :seller-id="currentPost.ownerId"
             :name="currentPost.seller ?? languageStore.t('marketplaceSeller')"
             :rating="currentPost.rating ?? 4.9"
             :response-time="languageStore.t('usuallyRepliesIn1Hour')"

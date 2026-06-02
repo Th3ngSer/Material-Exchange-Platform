@@ -8,6 +8,7 @@ const toggleFollow = () => {
 }
 
 const props = defineProps<{
+  sellerId?: string
   name: string
   rating: number
   responseTime: string
@@ -90,7 +91,7 @@ const handleAvatarError = (event: Event) => {
         :to="{
           name: 'chat',
           query: {
-            sellerId: props.name,
+            sellerId: props.sellerId || props.name,
             sellerName: props.name,
             sellerAvatar: getAvatarUrl(props.avatar),
             sellerLocation: props.location,

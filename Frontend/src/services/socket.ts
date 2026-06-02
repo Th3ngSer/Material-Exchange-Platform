@@ -4,13 +4,18 @@ import { getToken } from '@/utils/tokenStorage'
 let socket: Socket | null = null
 
 export function connectSocket() {
-  if (socket) return socket
+  if (socket?.connected) return socket
 
   const token = getToken()
-  const base = import.meta.env.VITE_API_URL ? String(import.meta.env.VITE_API_URL).replace(/\/api\/?$/, '') : 'http://localhost:3000'
+  const base =
+    import.meta.env.VITE_API_URL
+      ? String(import.meta.env.VITE_API_URL).replace(/\/api\/?$/, '')
+      : 'http://localhost:3000'
 
   socket = io(base, {
     auth: { token },
+    transports: ['websocket'], 
+    maxHttpBufferSize: 10 * 1024 * 1024, // Max socket message size = 10MB
   })
 
   return socket
@@ -21,7 +26,22 @@ export function getSocket() {
 }
 
 export function disconnectSocket() {
-  if (!socket) return
-  socket.disconnect()
-  socket = null
+  if (socket) {
+    socket.removeAllListeners()
+    socket.disconnect()
+    socket = null
+  }
+}
+
+export function sendMessageViaSocket(data: {
+  receiverId: string
+  content: string
+  type: 'text' | 'image' | 'voice'
+}) {
+  if (!socket?.connected) {
+    console.warn('Socket not connected')
+    return
+  }
+
+  socket.emit('sendMessage', data)
 }

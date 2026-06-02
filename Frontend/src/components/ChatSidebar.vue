@@ -53,7 +53,7 @@ const handleAvatarError = (event: Event) => {
       <h3>ប្រអប់សារ</h3>
     </div>
 
-    <!-- ❗ FIX 1: empty state -->
+    <!--empty state -->
     <div v-if="!users || users.length === 0" class="empty">
       No users found
     </div>
@@ -80,7 +80,12 @@ const handleAvatarError = (event: Event) => {
         <div class="content">
           <div class="user-header">
             <p class="name">{{ user.name }}</p>
-            <span class="time">{{ user.time }}</span>
+            <div class="user-meta">
+              <span class="time">{{ user.time }}</span>
+              <span v-if="user.unreadCount && user.unreadCount > 0" class="unread-badge">
+                {{ user.unreadCount > 99 ? '99+' : user.unreadCount }}
+              </span>
+            </div>
           </div>
           <p class="message">{{ user.message }}</p>
         </div>
@@ -169,6 +174,26 @@ const handleAvatarError = (event: Event) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 4px;
+}
+
+.user-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.unread-badge {
+  min-width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .name {

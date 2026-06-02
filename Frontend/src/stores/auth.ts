@@ -191,29 +191,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
     // Restore user from cache — the app can render straight away
     const storedUser = readStoredUser()
-    if (storedUser) {
-      const cachedAvatar = storedUser.id ? readCachedAvatar(storedUser.id) : null
-      if (!storedUser.avatar && cachedAvatar) {
-        storedUser.avatar = cachedAvatar
-      }
-      user.value = storedUser
-      writeCachedAvatar(storedUser)
-    }
-
-    try {
-      const profile = await authApi.getProfile(token)
-      user.value = profile
-      writeStoredUser(profile)
-      writeCachedAvatar(profile)
-    } catch (err) {
-      const statusCode = (err as any)?.statusCode
-      // If token is invalid (401), logout to force re-authentication
-      if (statusCode === 401) {
-        logout()
-        return
-      }
-      // For other errors, keep the stored user and token (transient network errors)
-    }
     user.value = storedUser
   }
 

@@ -16,7 +16,7 @@ import { UsersModule } from '../users/users.module';
 
     UsersModule,
 
-    // 🔥 CRITICAL FIX FOR GATEWAY DI
+    // CRITICAL FIX FOR GATEWAY DI
     JwtModule.register({}),
   ],
   controllers: [ChatController],

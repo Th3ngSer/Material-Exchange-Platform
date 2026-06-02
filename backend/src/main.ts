@@ -5,6 +5,8 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { getModelToken } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import mongoose from 'mongoose';
+import * as bodyParser from 'body-parser';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument, UserRole } from './users/schemas/user.schema';
 
@@ -55,6 +57,9 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
+  app.use(bodyParser.json({ limit: '10mb' }));
+  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+
   // Global validation pipe -- auto-validates all DTOs
   app.useGlobalPipes(
     new ValidationPipe({
@@ -81,9 +86,17 @@ async function bootstrap() {
     credentials: true,
   });
 
+  mongoose.connection.on('connected', () => {
+    console.log('✅ MongoDB connected successfully');
+  });
+
+  mongoose.connection.on('error', (err) => {
+    console.error('❌ MongoDB connection error:', err);
+  });
+
   // Static uploads
   // Prefix all routes with /api so frontend can call /api/auth/login and /api/auth/register
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', { exclude: ['db-status'] });
 
   // Serve uploaded images as static: GET /uploads/filename.jpg
   app.useStaticAssets(

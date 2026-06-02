@@ -3,13 +3,20 @@ import {
   OnGatewayDisconnect,
   WebSocketGateway,
   WebSocketServer,
+  SubscribeMessage,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
+import { ChatService } from './chat.service';
+import { MessageType } from './schemas/message.schema';
 
-@WebSocketGateway({ cors: { origin: 'http://localhost:5173' } })
+@WebSocketGateway({
+  cors: { origin: 'http://localhost:5173' },
+  transports: ['websocket'],
+  maxHttpBufferSize: 10 * 1024 * 1024,
+})
 @Injectable()
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -20,7 +27,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // userId -> set of socket ids
   private clients = new Map<string, Set<string>>();
 
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly chatService: ChatService,
+  ) {}
 
   handleConnection(socket: Socket) {
     try {
@@ -69,6 +79,50 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         else this.clients.set(userId, set);
         this.logger.log(`User ${userId} disconnected (socket ${socket.id})`);
         break;
+      }
+    }
+  }
+
+  @SubscribeMessage('sendMessage')
+  async handleSendMessage(
+    socket: Socket,
+    data: { receiverId: string; content: string; type: string },
+  ) {
+    try {
+      const token = socket.handshake.auth?.token as string | undefined;
+      if (!token) {
+        this.logger.warn('No token for sendMessage');
+        return;
+      }
+
+      const payload = this.jwtService.verify<JwtPayload>(String(token));
+      const senderId = payload?.sub;
+
+      if (!senderId) {
+        this.logger.warn('No userId in token');
+        return;
+      }
+
+      // Save message to database via service
+      const message = await this.chatService.sendMessage(
+        senderId,
+        data.receiverId,
+        data.content,
+        data.type as MessageType,
+      );
+
+      // Emit the message to both sender and receiver
+      this.sendToUser(String(senderId), 'message', message);
+      this.sendToUser(String(data.receiverId), 'message', message);
+
+      this.logger.log(
+        `Message from ${senderId} to ${data.receiverId}: ${message._id?.toString()}`,
+      );
+    } catch (err) {
+      if (err instanceof Error) {
+        this.logger.error(`Error handling sendMessage: ${err.message}`);
+      } else {
+        this.logger.error('Error handling sendMessage');
       }
     }
   }
