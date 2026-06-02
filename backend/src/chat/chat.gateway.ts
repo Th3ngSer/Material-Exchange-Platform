@@ -9,7 +9,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 
-@WebSocketGateway({ cors: { origin: 'http://localhost:5173' } })
+@WebSocketGateway({
+  cors: {
+    origin: [
+      'https://m  aterial-exchange-platform.pages.dev', // Production Frontend
+      'http://localhost:5173',                         // Local Dev Frontend
+      'http://localhost:3000'                          // Local Dev Backend Preview
+    ],
+    credentials: true,
+  }
+})
 @Injectable()
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
