@@ -7,9 +7,13 @@ export const chatApi = {
     type?: 'text' | 'image' | 'voice'
   }) {
     return api.post('/chat/send', {
-      type: 'text',
+      type: data.type || 'text',
       ...data,
     })
+  },
+
+  getUsers() {
+    return api.get('/chat/users')
   },
 
   getConversation(userId: string) {

@@ -6,6 +6,7 @@ import { ChatGateway } from './chat.gateway';
 import { Message, MessageSchema } from './schemas/message.schema';
 import { AuthModule } from '../auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -13,7 +14,9 @@ import { JwtModule } from '@nestjs/jwt';
 
     AuthModule,
 
-    // 🔥 CRITICAL FIX FOR GATEWAY DI
+    UsersModule,
+
+    // CRITICAL FIX FOR GATEWAY DI
     JwtModule.register({}),
   ],
   controllers: [ChatController],

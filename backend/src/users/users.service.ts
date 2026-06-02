@@ -38,6 +38,15 @@ export class UsersService {
     return this.userModel.findById(id).exec();
   }
 
+  // Return basic info for all users except the provided userId
+  async findAllExcept(userId: string): Promise<any[]> {
+    return this.userModel
+      .find({ _id: { $ne: userId } })
+      .select('name email username role createdAt')
+      .lean()
+      .exec();
+  }
+
   updateUser(
     userId: string,
     update: UpdateUserInput,

@@ -61,7 +61,7 @@
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
 import { useLanguageStore } from '../stores/language'
@@ -105,6 +105,14 @@ const loadProfile = async () => {
 
   fillFromAuthUser()
 }
+
+watch(
+  () => authStore.user,
+  () => {
+    fillFromAuthUser()
+  },
+  { immediate: true, deep: true }
+)
 
 onMounted(async () => {
   await loadProfile()

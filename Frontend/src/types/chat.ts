@@ -25,4 +25,5 @@ export interface ChatUser {
   avatar?: string
   online?: boolean
   chat: ChatMessage[]
+  unreadCount: number
 }

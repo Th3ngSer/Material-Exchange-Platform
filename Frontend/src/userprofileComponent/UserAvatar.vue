@@ -156,6 +156,8 @@ const onFileChange = async (event: Event) => {
       ...authStore.user,
       avatar: avatarPath
     }
+    authStore.writeCachedAvatar(authStore.user)
+    authStore.writeStoredUser(authStore.user)
 
   } catch (error) {
     console.error('Upload failed:', error)
