@@ -6,7 +6,7 @@
  * Connects to POST /auth/register endpoint
  */
 
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLanguageStore } from '@/stores/language'
@@ -16,6 +16,21 @@ import type { RegisterCredentials } from '@/types/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 const languageStore = useLanguageStore()
+
+const registrationsAllowed = ref(true)
+
+onMounted(async () => {
+  try {
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+    const response = await fetch(`${baseUrl}/admin/settings/public`)
+    if (response.ok) {
+      const data = await response.json()
+      registrationsAllowed.value = data.allowNewRegistrations
+    }
+  } catch (err) {
+    console.error('Failed to fetch public settings:', err)
+  }
+})
 
 // Form data
 const firstName = ref('')
@@ -126,7 +141,16 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <form @submit.prevent="handleSubmit" class="signup-form">
+  <div v-if="!registrationsAllowed" class="registrations-closed">
+    <h2>Registrations Closed</h2>
+    <p>New user registrations are currently disabled by the platform administrator. Please try again later.</p>
+    <div class="form-footer">
+      <p>
+        <RouterLink to="/login">Go to Login</RouterLink>
+      </p>
+    </div>
+  </div>
+  <form v-else @submit.prevent="handleSubmit" class="signup-form">
     <h1 style="font-weight: bold;">{{ languageStore.t('createAccount') }}</h1>
 
     <!-- Error Display -->
@@ -383,5 +407,29 @@ input:disabled {
 
 .form-footer a:hover {
   text-decoration: underline;
+}
+
+.registrations-closed {
+  max-width: 400px;
+  margin: 0;
+  padding: 2.5rem 2rem;
+  border-radius: 16px;
+  background-color: #e7ecf1;
+  box-shadow: 0 16px 30px rgba(8, 10, 40, 0.25);
+  text-align: center;
+}
+
+.registrations-closed h2 {
+  color: #1b1b1b;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.registrations-closed p {
+  color: #555;
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
 }
 </style>

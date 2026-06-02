@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -11,15 +12,22 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { AdminSettingsService } from '../admin/admin-settings.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly adminSettingsService: AdminSettingsService,
   ) {}
 
   async register(registerDto: RegisterDto) {
+    const settings = await this.adminSettingsService.getSettings();
+    if (!settings.allowNewRegistrations) {
+      throw new ForbiddenException('New registrations are currently disabled by the administrator');
+    }
+
     const email = registerDto.email.toLowerCase();
     const existingUser = await this.usersService.findByEmail(email);
 
