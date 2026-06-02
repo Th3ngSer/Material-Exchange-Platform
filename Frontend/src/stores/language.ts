@@ -770,7 +770,7 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     uploadPhotosHint: 'បង្ហាញគុណភាពផលិតផលរបស់អ្នកជាមួយរូបភាពដល់ 10 គ្រាប់',
     cover: 'គម្រប',
     nextStepReview: 'ជំហានបន្ទាប់៖ ពិនិត្យ →',
-    confirmPost: 'បញ្ជាក់ និង ចុះផ្សាយ →',
+    confirmPost: 'បញ្ជាក់ និង ចុះផ្សាយ',
     titleRequired: 'ចំណងជើងផលិតផលត្រូវបានទាមទារ',
     titleMin3Chars: 'ចំណងជើងត្រូវមានយ៉ាងហោចណាស់ 3 តួអក្សរ',
     descriptionRequired: 'ការពិពណ៌នាត្រូវបានទាមទារ',
