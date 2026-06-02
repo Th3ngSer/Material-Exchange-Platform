@@ -53,12 +53,14 @@ function getTimeAgo(dateString: string | undefined): string {
 
 function formatCardPrice(item: {
   type: 'Sell' | 'Exchange' | 'Borrow'
-  price?: string
+  price?: string | number
 }): string {
   if (item.type === 'Exchange') return ''
-  if (item.type === 'Borrow') return item.price ? `$${Number(item.price || 0).toFixed(2)}/wk` : ''
+  const raw = item.price == null ? '' : String(item.price)
+  if (item.type === 'Borrow') return raw ? `$${Number(raw || 0).toFixed(2)}/wk` : ''
   // Sell
-  return item.price ? (item.price.startsWith('$') ? item.price : '$' + item.price) : ''
+  if (!raw) return ''
+  return raw.startsWith('$') ? raw : '$' + raw
 }
 </script>
 

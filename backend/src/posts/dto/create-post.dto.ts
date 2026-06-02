@@ -51,6 +51,18 @@ export class CreatePostDto {
   listerName?: string;
 
   @IsOptional()
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  @Transform(({ value }) => (value === undefined || value === null || value === '' ? undefined : parseFloat(value)))
+  @IsNumber()
+  lat?: number;
+
+  @IsOptional()
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  @Transform(({ value }) => (value === undefined || value === null || value === '' ? undefined : parseFloat(value)))
+  @IsNumber()
+  lng?: number;
+
+  @IsOptional()
   @IsString()
   retainImages?: string;
 

@@ -1,13 +1,20 @@
 <script setup lang="ts">
 import { getToken } from '@/utils/tokenStorage'
-import { reactive, ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { reactive, ref, computed, onMounted, watch } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { useLanguageStore } from '@/stores/language'
+import { useAuthStore } from '@/stores/auth'
+import HomeMaterialCard from '@/components/HomeView/MaterialCard.vue'
+import LeafletMapPicker from '@/components/Leaflet/LeafletMapPicker.vue'
+import type { MaterialItem, MaterialTone } from '@/data/materials'
+import Footer from '@/components/layout/Footer.vue'
+import Header from '@/components/layout/Header.vue'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ListingType = 'Sell' | 'Exchange' | 'Lend'
-type Condition = 'New' | 'Used'
+type Condition = 'New' | 'Like New' | 'Good' | 'Fair'
 
 interface FormState {
   type: ListingType
@@ -20,6 +27,8 @@ interface FormState {
   phone: string
   email: string
   location: string
+  lat?: number | null
+  lng?: number | null
   images: File[]
 }
 
@@ -34,16 +43,26 @@ interface FormErrors {
   images?: string
 }
 
+type DraftSnapshot = Omit<FormState, 'images'>
+type WindowWithCreateDraftCache = Window & {
+  __createPostDraftImages?: File[]
+  __createPostDraftPreviewUrls?: string[]
+}
+
+const CREATE_POST_DRAFT_KEY = 'create-post-draft'
+const DETAIL_PREVIEW_DRAFT_KEY = 'material-detail-preview-draft'
+let cachedDraftImages: File[] = []
+let cachedDraftPreviewUrls: string[] = []
+
 // ─── State ────────────────────────────────────────────────────────────────────
-const step = ref<1 | 2>(1)
 const isLoading = ref(false)
 const submitted = ref(false)
 const submitError = ref('')
 const fileInputRef = ref<HTMLInputElement | null>(null)
-const activeThumb = ref(0)
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const router = useRouter()
 const languageStore = useLanguageStore()
+const authStore = useAuthStore()
 
 const form = reactive<FormState>({
   type: 'Sell',
@@ -56,6 +75,8 @@ const form = reactive<FormState>({
   phone: '',
   email: '',
   location: '',
+  lat: undefined,
+  lng: undefined,
   images: [],
 })
 
@@ -75,20 +96,116 @@ const categoryOptions = [
 const errors = reactive<FormErrors>({})
 const previewUrls = ref<string[]>([])
 
-// ─── Computed ─────────────────────────────────────────────────────────────────
-const activeImage = computed(() => previewUrls.value[activeThumb.value] ?? '')
-const errorCount = computed(() => Object.keys(errors).length)
-const today = computed(() => new Date().toLocaleDateString('en-GB'))
+function createDraftSnapshot(): DraftSnapshot {
+  return {
+    type: form.type,
+    title: form.title,
+    description: form.description,
+    category: form.category,
+    condition: form.condition,
+    price: form.price,
+    exchangeFor: form.exchangeFor,
+    phone: form.phone,
+    email: form.email,
+    location: form.location,
+    lat: form.lat,
+    lng: form.lng,
+  }
+}
 
+function saveDraft() {
+  sessionStorage.setItem(CREATE_POST_DRAFT_KEY, JSON.stringify(createDraftSnapshot()))
+}
+
+function restoreDraft() {
+  const rawDraft = sessionStorage.getItem(CREATE_POST_DRAFT_KEY)
+  const fallbackPreviewDraft = sessionStorage.getItem(DETAIL_PREVIEW_DRAFT_KEY)
+  const source = rawDraft || fallbackPreviewDraft
+  if (!source) return
+
+  try {
+    const parsed = JSON.parse(source) as Partial<DraftSnapshot> & { type?: unknown; images?: string[] }
+    const parsedType = typeof (parsed as any).type === 'string' ? ((parsed as any).type as string) : undefined
+    const normalizedType =
+      parsedType === 'Borrow'
+        ? 'Lend'
+        : ((parsedType as ListingType | undefined) ?? form.type)
+
+    form.type = normalizedType
+    form.title = parsed.title ?? form.title
+    form.description = parsed.description ?? form.description
+    form.category = parsed.category ?? form.category
+    form.condition = (parsed.condition as Condition) || form.condition
+    form.price = parsed.price ?? form.price
+    form.exchangeFor = parsed.exchangeFor ?? form.exchangeFor
+    form.phone = parsed.phone ?? form.phone
+    form.email = parsed.email ?? form.email
+    form.location = parsed.location ?? form.location
+    form.lat = (parsed as any).lat ?? form.lat
+    form.lng = (parsed as any).lng ?? form.lng
+
+    if ((!cachedDraftPreviewUrls.length || !previewUrls.value.length) && Array.isArray(parsed.images)) {
+      previewUrls.value = [...parsed.images]
+    }
+  } catch {
+    // Ignore malformed draft payloads
+  }
+
+  const draftWindow = window as WindowWithCreateDraftCache
+  const windowCachedImages = draftWindow.__createPostDraftImages ?? []
+  const windowCachedPreviewUrls = draftWindow.__createPostDraftPreviewUrls ?? []
+
+  if (windowCachedImages.length > 0 && cachedDraftImages.length === 0) {
+    cachedDraftImages = [...windowCachedImages]
+  }
+
+  if (windowCachedPreviewUrls.length > 0 && cachedDraftPreviewUrls.length === 0) {
+    cachedDraftPreviewUrls = [...windowCachedPreviewUrls]
+  }
+
+  if (cachedDraftImages.length > 0) {
+    form.images = [...cachedDraftImages]
+  }
+
+  if (cachedDraftPreviewUrls.length > 0) {
+    previewUrls.value = [...cachedDraftPreviewUrls]
+  }
+}
+
+function updateImageCaches() {
+  cachedDraftImages = [...form.images]
+  cachedDraftPreviewUrls = [...previewUrls.value]
+
+  const draftWindow = window as WindowWithCreateDraftCache
+  draftWindow.__createPostDraftImages = [...form.images]
+  draftWindow.__createPostDraftPreviewUrls = [...previewUrls.value]
+}
+
+function clearDraft() {
+  sessionStorage.removeItem(CREATE_POST_DRAFT_KEY)
+  sessionStorage.removeItem(DETAIL_PREVIEW_DRAFT_KEY)
+  cachedDraftImages = []
+  cachedDraftPreviewUrls = []
+
+  const draftWindow = window as WindowWithCreateDraftCache
+  draftWindow.__createPostDraftImages = []
+  draftWindow.__createPostDraftPreviewUrls = []
+}
+
+// ─── Computed ─────────────────────────────────────────────────────────────────
+const errorCount = computed(() => Object.keys(errors).length)
 const translateKey = (key: string) => languageStore.t(key as any)
 
-const displayCategory = computed(() => {
-  const match = categoryOptions.find((option) => option.value === form.category)
-  return match ? translateKey(match.labelKey) : form.category
-})
-
 const listingTypeLabel = (type: string) => translateKey(type.toLowerCase())
-const conditionLabel = (condition: string) => translateKey(condition.toLowerCase())
+const conditionLabel = (condition: string) => {
+  const keyMap: Record<Condition, 'new' | 'likeNew' | 'good' | 'fair'> = {
+    New: 'new',
+    'Like New': 'likeNew',
+    Good: 'good',
+    Fair: 'fair',
+  }
+  return translateKey(keyMap[condition as Condition] ?? 'new')
+}
 
 function setListingType(value: string) {
   form.type = value as ListingType
@@ -98,26 +215,35 @@ function setCondition(value: string) {
   form.condition = value as Condition
 }
 
-const displayPrice = computed(() => {
-  if (form.type === 'Sell') return form.price ? `$${parseFloat(form.price).toFixed(2)}` : '$0.00'
-  if (form.type === 'Lend')
-    return form.price ? `$${parseFloat(form.price).toFixed(2)}${languageStore.t('perDay')}` : `$0.00${languageStore.t('perDay')}`
-  if (form.type === 'Exchange') return languageStore.t('openToTrade')
-  return ''
+const previewCardItem = computed<MaterialItem>(() => {
+  const normalizedCategory = form.category === 'Other' ? 'Others' : form.category
+  const toneMap: Record<ListingType, MaterialTone> = {
+    Sell: 'orange',
+    Exchange: 'gold',
+    Lend: 'rose',
+  }
+  const currentUser = authStore.user
+  const currentUserName = currentUser?.name || currentUser?.username || currentUser?.email || languageStore.t('unknownSeller')
+  const currentUserRating = typeof currentUser?.rating === 'number' ? currentUser.rating : 5
+
+  return {
+    id: 'preview',
+    title: form.title.trim() || languageStore.t('productTitle'),
+    price: form.price || '',
+    location: form.location.trim() || 'Phnom Penh',
+    type: form.type === 'Lend' ? 'Borrow' : form.type,
+    tone: toneMap[form.type],
+    category: normalizedCategory as MaterialItem['category'],
+    seller: currentUserName,
+    rating: currentUserRating,
+    avatar: currentUser?.avatar,
+    images: previewUrls.value,
+    postedTime: new Date().toISOString(),
+    description: form.description,
+    condition: form.condition,
+    exchangeFor: form.exchangeFor,
+  }
 })
-
-const typeBadgeClass = computed(
-  () =>
-    ({
-      Sell: 'bg-red-100 text-red-600',
-      Exchange: 'bg-indigo-100 text-indigo-600',
-      Lend: 'bg-blue-100 text-blue-700',
-    })[form.type],
-)
-
-const conditionBadgeClass = computed(() =>
-  form.condition === 'New' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600',
-)
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 function clearError(field: keyof FormErrors) {
@@ -163,31 +289,7 @@ function validate(): boolean {
   return Object.keys(errors).length === 0
 }
 
-// ─── Navigation ───────────────────────────────────────────────────────────────
-function goToPreview() {
-  if (validate()) {
-    step.value = 2
-    activeThumb.value = 0
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  } else {
-    const firstKey = Object.keys(errors)[0] as keyof FormErrors
-    document
-      .getElementById(`field-${firstKey}`)
-      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }
-}
-
-function goBack() {
-  step.value = 1
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
 function handleTopBackClick() {
-  if (step.value === 2) {
-    goBack()
-    return
-  }
-
   void router.push('/home')
 }
 
@@ -204,6 +306,8 @@ function handleUpload(e: Event) {
 
   form.images = [...form.images, ...toAdd]
   previewUrls.value = form.images.map((f) => URL.createObjectURL(f))
+  updateImageCaches()
+  saveDraft()
   clearError('images')
 }
 
@@ -212,13 +316,62 @@ function removeImage(index: number) {
   if (url) URL.revokeObjectURL(url)
   form.images.splice(index, 1)
   previewUrls.value.splice(index, 1)
-  if (activeThumb.value >= form.images.length) activeThumb.value = 0
+  updateImageCaches()
+  saveDraft()
+}
+
+function onLocationSelect(payload: { lat: number; lng: number; location: string }) {
+  form.lat = payload.lat
+  form.lng = payload.lng
+  if (payload.location) form.location = payload.location
+  saveDraft()
+  clearError('location')
+}
+
+function normalizeLocation(input: string) {
+  if (!input) return ''
+  const parts = input.split(',').map((p) => p.trim()).filter(Boolean)
+  if (parts.length >= 2) {
+    // prefer last two components as city/district might appear at end
+    const last = String(parts[parts.length - 1] ?? '')
+    const secondLast = String(parts[parts.length - 2] ?? '')
+    const strip = (s: string) => s.replace(/^(sangkat|khan)\s+/i, '').trim()
+    return `${strip(secondLast)}, ${strip(last)}`
+  }
+  const strip = (s: string) => s.replace(/^(sangkat|khan)\s+/i, '').trim()
+  return strip(parts[0] ?? '')
+}
+
+function normalizeAndSetLocation() {
+  const loc = String(form.location ?? '')
+  form.location = normalizeLocation(loc)
+  saveDraft()
+}
+
+function openMaterialDetailPreview() {
+  updateImageCaches()
+  saveDraft()
+
+  const draftPreview = {
+    ...previewCardItem.value,
+    exchangeFor: form.exchangeFor,
+    condition: form.condition,
+    phone: form.phone,
+    email: form.email,
+    lat: form.lat,
+    lng: form.lng,
+    images: [...previewUrls.value],
+  }
+
+  sessionStorage.setItem('material-detail-preview-draft', JSON.stringify(draftPreview))
+  void router.push({ name: 'material-detail-preview' })
 }
 
 // ─── Submit ───────────────────────────────────────────────────────────────────
 async function submit() {
-  if (step.value !== 2) {
-    goToPreview()
+  if (!validate()) {
+    const firstKey = Object.keys(errors)[0] as keyof FormErrors
+    document.getElementById(`field-${firstKey}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     return
   }
 
@@ -228,7 +381,8 @@ async function submit() {
   try {
     const fd = new FormData()
     const listingType = form.type.toLowerCase()
-    const listingCondition = form.condition.toLowerCase()
+    // backend expects 'new' or 'used' for condition
+    const listingCondition = form.condition === 'New' ? 'new' : 'used'
     const contact = [form.phone.trim(), form.email.trim()].filter(Boolean).join(' | ')
 
     fd.append('type', listingType)
@@ -236,12 +390,20 @@ async function submit() {
     fd.append('description', form.description)
     fd.append('category', form.category)
     fd.append('condition', listingCondition)
-    fd.append('price', form.type === 'Exchange' ? '0' : form.price)
+    // ensure price is sent as a numeric string (backend will parseFloat)
+    fd.append('price', form.type === 'Exchange' ? '0' : String(form.price || '0'))
     fd.append('contact', contact)
     if (form.type === 'Exchange' && form.exchangeFor.trim()) {
       fd.append('exchangeFor', form.exchangeFor.trim())
     }
     fd.append('location', form.location)
+    // include lister name from auth if available
+    const currentUser = authStore.user
+    if (currentUser?.name || currentUser?.email) {
+      fd.append('listerName', (currentUser.name || currentUser.email) as string)
+    }
+    if (typeof form.lat === 'number') fd.append('lat', String(form.lat))
+    if (typeof form.lng === 'number') fd.append('lng', String(form.lng))
     form.images.forEach((file) => fd.append('images', file))
 
     await axios.post(`${apiBaseUrl}/posts`, fd, {
@@ -250,6 +412,7 @@ async function submit() {
       },
     })
     submitted.value = true
+    clearDraft()
     await router.push('/browse')
   } catch (err: any) {
     console.error('Post creation error:', err)
@@ -264,23 +427,42 @@ async function submit() {
   }
 }
 
-const handlePopState = () => {
-  if (step.value === 2) goBack()
-}
-
 onMounted(() => {
-  window.history.pushState({ step: 1 }, '')
-  window.addEventListener('popstate', handlePopState)
+  restoreDraft()
 })
 
-onBeforeUnmount(() => {
-  window.removeEventListener('popstate', handlePopState)
+// Clear draft when leaving CreatePost, except when navigating to the preview page
+onBeforeRouteLeave((to, from) => {
+  if (to && to.name === 'material-detail-preview') {
+    return
+  }
+  clearDraft()
 })
+
+watch(
+  () => [
+    form.type,
+    form.title,
+    form.description,
+    form.category,
+    form.condition,
+    form.price,
+    form.exchangeFor,
+    form.phone,
+    form.email,
+    form.location,
+  ],
+  () => {
+    saveDraft()
+  },
+)
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F7FDFE] px-4 py-10">
-    <div class="mx-auto mb-6 max-w-2xl">
+  <div class="create-post-page">
+    <Header />
+    <div class="min-h-screen bg-[#F7FDFE] px-4 py-10">
+    <div class="mx-auto mb-6 w-full max-w-6xl">
       
       <button
         type="button"
@@ -292,39 +474,37 @@ onBeforeUnmount(() => {
       </button>
     </div>
 
-    <!-- ══════════════════════════════════════════════════ -->
-    <!-- STEP 1: FORM                                       -->
-    <!-- ══════════════════════════════════════════════════ -->
-    <div v-if="step === 1" class="max-w-2xl mx-auto space-y-5">
-      <div class="mb-8">
-        <h1 class="text-2xl font-bold text-black-900">{{ languageStore.t('letsReleaseProduct') }}</h1>
-        <p class="text-black-800 text-sm mt-1">{{ languageStore.t('fillDetailsBelow') }}</p>
-      </div>
-
-      <!-- Listing type -->
-      <div
-        class="bg-white rounded-2xl shadow-lg shadow-black/30 border border-gray-100 p-6 space-y-5"
-      >
-        <p class="text-xl font-bold text-Black-900 mb-3">{{ languageStore.t('listingType') }}</p>
-        <div class="grid grid-cols-3 gap-3">
-          <button
-            v-for="t in ['Sell', 'Exchange', 'Lend']"
-            :key="t"
-            @click="setListingType(t)"
-            class="flex flex-col items-center gap-1 py-3 rounded-xl border text-sm font-medium transition-all space"
-            :class="
-              form.type === t
-                ? 'bg-[#1A174A] text-[#FF8C00] border-indigo-600 shadow-sm'
-                : 'bg-gray-50 text-gray-600 border-[#666565] hover:bg-gray-100'
-            "
-          >
-            <span>{{ listingTypeLabel(t) }}</span>
-          </button>
+    <div class="mx-auto w-full max-w-6xl lg:grid lg:grid-cols-[minmax(0,1fr)_390px] lg:items-start lg:gap-8">
+      <div class="space-y-5">
+        <div class="mb-8">
+          <h1 class="text-2xl font-bold text-black-900">{{ languageStore.t('letsReleaseProduct') }}</h1>
+          <p class="text-black-800 text-sm mt-1">{{ languageStore.t('fillDetailsBelow') }}</p>
         </div>
 
-        <!-- Product details -->
-        <!-- <div class="bg-white rounded-2xl shadow-lg shadow-black/30 border border-gray-100 p-6 space-y-5"> -->
-        <p class="text-xl font-bold text-Black-900">{{ languageStore.t('listingInformation') }}</p>
+        <!-- Listing type -->
+        <div
+          class="bg-white rounded-2xl shadow-lg shadow-black/30 border border-gray-100 p-6 space-y-5"
+        >
+          <p class="text-xl font-bold text-Black-900 mb-3">{{ languageStore.t('listingType') }}</p>
+          <div class="grid grid-cols-3 gap-3">
+            <button
+              v-for="t in ['Sell', 'Exchange', 'Lend']"
+              :key="t"
+              @click="setListingType(t)"
+              class="flex flex-col items-center gap-1 py-3 rounded-xl border text-sm font-medium transition-all space"
+              :class="
+                form.type === t
+                  ? 'bg-[#1A174A] text-[#FF8C00] border-indigo-600 shadow-sm'
+                  : 'bg-gray-50 text-gray-600 border-[#666565] hover:bg-gray-100'
+              "
+            >
+              <span>{{ listingTypeLabel(t) }}</span>
+            </button>
+          </div>
+
+          <!-- Product details -->
+          <!-- <div class="bg-white rounded-2xl shadow-lg shadow-black/30 border border-gray-100 p-6 space-y-5"> -->
+          <p class="text-xl font-bold text-Black-900">{{ languageStore.t('listingInformation') }}</p>
 
         <div id="field-title">
           <label class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5">
@@ -408,7 +588,7 @@ onBeforeUnmount(() => {
             >
             <div class="flex border border-[#666565] rounded-xl overflow-hidden">
               <button
-                v-for="c in ['New', 'Used']"
+                v-for="c in ['New', 'Like New', 'Good', 'Fair']"
                 :key="c"
                 @click="setCondition(c)"
                 class="flex-1 py-2.5 text-sm font-medium transition"
@@ -585,11 +765,14 @@ onBeforeUnmount(() => {
           <label class="block text-xs text-gray-400 tracking-wide mb-1.5">
             {{ languageStore.t('cityOrNeighbourhood') }} <span class="text-red-400">*</span>
           </label>
+          <div class="mb-3">
+            <LeafletMapPicker :initialLat="form.lat ?? undefined" :initialLng="form.lng ?? undefined" :initialLocation="form.location" @select="onLocationSelect" />
+          </div>
           <div class="relative">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm">📍</span>
             <input
               v-model="form.location"
-              placeholder="e.g. Phnom Penh, BKK1"
+                placeholder="e.g. Sensok, Phnom Penh"
               class="w-full border rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none transition"
               :class="
                 errors.location
@@ -597,38 +780,26 @@ onBeforeUnmount(() => {
                   : 'border-[#666565] focus:border-indigo-400 focus:ring-2 focus:ring-indigo-50'
               "
               @input="clearError('location')"
+              @blur="normalizeAndSetLocation()"
             />
           </div>
           <p v-if="errors.location" class="text-red-500 text-xs mt-1.5">⚠ {{ errors.location }}</p>
         </div>
+        </div>
+
+        <div v-if="errorCount > 0" class="pb-8">
+          <p class="text-center text-red-500 text-xs mt-2">
+            {{ languageStore.t('fillRequirementsToContinue').replace('{count}', String(errorCount)) }}
+          </p>
+        </div>
       </div>
 
-      <!-- Next step -->
-      <div class="pb-8">
-        <button
-          @click="goToPreview"
-          class="w-full py-4 bg-[#FF8C00] hover:bg-orange-600 active:scale-[.99] text-white font-semibold rounded-2xl text-sm transition-all shadow-sm"
-        >
-          {{ languageStore.t('nextStepReview') }}
-        </button>
-        <p v-if="errorCount > 0" class="text-center text-red-500 text-xs mt-2">
-          {{ languageStore.t('fillRequirementsToContinue').replace('{count}', String(errorCount)) }}
-        </p>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════ -->
-    <!-- STEP 2: PREVIEW (matches Image 2)                  -->
-    <!-- ══════════════════════════════════════════════════ -->
-    <div v-if="step === 2" class="max-w-sm mx-auto">
-      <div class="mb-5 flex items-center justify-between">
+      <aside class="mt-8 mx-auto w-[390px] max-w-full lg:mt-0 lg:sticky lg:top-24 lg:flex-none">
+        <div class="mb-5 flex items-center justify-between">
         <div>
           <h2 class="text-lg font-bold text-black-900">{{ languageStore.t('reviewYourListing') }}</h2>
           <p class="text-xs text-gray-400 mt-0.5">{{ languageStore.t('reviewPost') }}</p>
         </div>
-        <button @click="goBack" class="text-sm text-indigo-600 font-medium hover:underline">
-          ← {{ languageStore.t('edit') }}
-        </button>
       </div>
 
       <div
@@ -645,136 +816,17 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- ── Preview Card ─────────────────────────────── -->
-      <div
-        class="bg-white rounded-3xl overflow-hidden shadow-lg shadow-black/30 border border-gray-100"
-      >
-        <!-- Image section -->
-        <div class="relative">
-          <div class="h-64 overflow-hidden bg-gray-100">
-            <img
-              v-if="activeImage"
-              :src="activeImage"
-              class="w-full h-full object-cover ring-4 ring-blue-400 ring-inset"
-            />
-            <div
-              v-else
-              class="h-full flex flex-col items-center justify-center text-gray-300 gap-2"
-            >
-              <span class="text-5xl">📷</span>
-              <span class="text-sm">Cover photo</span>
-            </div>
-          </div>
-
-          <!-- Dot indicators -->
-          <div
-            v-if="previewUrls.length > 1"
-            class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5"
-          >
-            <button
-              v-for="(_, i) in previewUrls"
-              :key="i"
-              @click="activeThumb = i"
-              class="rounded-full transition-all"
-              :class="activeThumb === i ? 'w-4 h-2 bg-white shadow' : 'w-2 h-2 bg-white/60'"
-            />
-          </div>
-
-          <!-- Category -->
-          <span
-            class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-gray-700 text-xs font-semibold px-3 py-1 rounded-full shadow-sm"
-          >
-            {{ displayCategory }}
-          </span>
-        </div>
-
-        <!-- Thumbnail row -->
-        <div
-          v-if="previewUrls.length > 1"
-          class="flex gap-2 px-3 py-2 border-b border-[#666565] overflow-x-auto"
-        >
-          <img
-            v-for="(url, i) in previewUrls"
-            :key="i"
-            :src="url"
-            @click="activeThumb = i"
-            class="w-12 h-12 object-cover rounded-lg flex-shrink-0 cursor-pointer transition"
-            :class="activeThumb === i ? 'ring-2 ring-blue-400' : 'opacity-60 hover:opacity-100'"
-          />
-        </div>
-
-        <!-- Body -->
-        <div class="px-5 pt-4 pb-5 space-y-3">
-          <!-- Title + type badge -->
-          <div class="flex items-start justify-between gap-2">
-            <h2 class="text-lg font-bold text-gray-900 leading-snug">{{ form.title }}</h2>
-            <span
-              class="text-xs font-semibold px-3 py-1 rounded-full flex-shrink-0 mt-0.5"
-              :class="typeBadgeClass"
-            >
-              {{ listingTypeLabel(form.type) }}
-            </span>
-          </div>
-
-          <!-- Price + condition -->
-          <div class="flex items-center gap-2">
-            <span class="bg-amber-100 text-amber-700 font-bold text-sm px-3 py-1 rounded-lg">
-              {{ displayPrice }}
-            </span>
-            <span
-              class="text-xs font-semibold px-2.5 py-1 rounded-full"
-              :class="conditionBadgeClass"
-            >
-              {{ conditionLabel(form.condition) }}
-            </span>
-          </div>
-
-          <!-- Description -->
-          <p class="text-gray-500 text-sm leading-relaxed">{{ form.description }}</p>
-
-          <div class="border-t border-[#666565]" />
-
-          <!-- Contact row -->
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div
-                class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-blue-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-              >
-                {{ form.email ? form.email.charAt(0).toUpperCase() : '#' }}
-              </div>
-              <div>
-                <p class="text-sm font-semibold text-gray-800">{{ form.email || languageStore.t('unknownSeller') }}</p>
-                <p class="text-xs text-gray-500">{{ form.phone || form.email }}</p>
-              </div>
-            </div>
-            <button
-              class="flex items-center gap-1.5 bg-blue-100 hover:bg-gray-200 text-black text-xs font-semibold px-3 py-2 rounded-full transition"
-            >
-              💬 {{ languageStore.t('contactMe') }}
-            </button>
-          </div>
-
-          <div class="border-t border-[#666565]" />
-
-          <!-- Location -->
-          <div class="text-center py-1">
-            <div class="inline-flex items-center gap-1.5 text-[#1A1660]">
-              <span class="text-base">📍</span>
-              <span class="font-bold text-sm">{{ form.location }}</span>
-            </div>
-            <p class="text-gray-400 text-xs uppercase tracking-wider mt-0.5">
-              {{ languageStore.t('verifiedStudioAddress') }}
-            </p>
-          </div>
-
-          <div class="border-t border-[#666565]" />
-
-          <!-- Footer -->
-          <div class="flex items-center justify-between text-xs text-gray-400">
-            <span>{{ languageStore.t('postedJustNow') }}</span>
-            <span>{{ today }}</span>
-          </div>
-        </div>
+      <div class="flex justify-center">
+        <HomeMaterialCard :item="previewCardItem" />
       </div>
+
+      <button
+        type="button"
+        class="mt-4 w-full rounded-xl border border-[#1A174A] bg-white px-4 py-2.5 text-sm font-semibold text-[#1A174A] transition hover:bg-[#f3f3ff]"
+        @click="openMaterialDetailPreview"
+      >
+        Open Material Detail Preview
+      </button>
 
       <!-- Post Now -->
       <button
@@ -804,6 +856,9 @@ onBeforeUnmount(() => {
       <p class="text-center text-gray-400 text-xs mt-3 pb-8">
         {{ languageStore.t('editListingAfterPosting') }}
       </p>
+      </aside>
     </div>
+    </div>
+    <Footer />
   </div>
 </template>

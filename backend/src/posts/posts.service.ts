@@ -13,6 +13,8 @@ import { UpdatePostDto } from './dto/update-post.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { UsersService } from '../users/users.service';
+import { AdminSettingsService } from '../admin/admin-settings.service';
+import { UserRole } from '../users/schemas/user.schema';
 
 @Injectable()
 export class PostsService {
@@ -21,6 +23,7 @@ export class PostsService {
   constructor(
     @InjectModel(Post.name) private postModel: Model<PostDocument>,
     private readonly usersService: UsersService,
+    private readonly settingsService: AdminSettingsService,
   ) {
     this.logger.log('PostsService initialized');
     void this.checkDatabaseConnection();
@@ -55,6 +58,24 @@ export class PostsService {
       }
 
       const owner = await this.usersService.findById(ownerId);
+
+      // Validate Admin Settings dynamically
+      const settings = await this.settingsService.getSettings();
+      if (settings.maintenanceMode && owner?.role !== UserRole.ADMIN) {
+        throw new ForbiddenException(
+          'The platform is currently in maintenance mode. Creating new listings is temporarily disabled.',
+        );
+      }
+
+      const currentListingsCount = await this.postModel.countDocuments({
+        ownerId,
+      });
+      if (currentListingsCount >= settings.maxListingsPerUser) {
+        throw new ForbiddenException(
+          `You have reached the maximum listing limit of ${settings.maxListingsPerUser} posts set by the administrator.`,
+        );
+      }
+
       const listerName =
         owner?.username || owner?.name || owner?.email || 'Unknown';
       const listerAvatar = owner?.avatar || undefined;

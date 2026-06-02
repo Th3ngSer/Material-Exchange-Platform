@@ -1,9 +1,26 @@
 <script setup lang="ts">
+import AdminLayout from '@/components/Admin/AdminLayout.vue'
+import DropDownMenu from '@/components/DropDownMenu.vue'
 import { authFetch } from '@/utils/authFetch'
 import { getToken } from '@/utils/tokenStorage'
-import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { onMounted, ref, computed } from 'vue'
+
+const searchQuery = ref('')
+const sortBy = ref('A-Z')
+const statusFilter = ref('All status')
+
+const sortItems = [
+  { label: 'A-Z', value: 'A-Z' },
+  { label: 'Z-A', value: 'Z-A' },
+  { label: 'Newest', value: 'Newest' },
+]
+
+const statusItems = [
+  { label: 'All status', value: 'All status' },
+  { label: 'Active', value: 'Active' },
+  { label: 'Completed', value: 'Completed' },
+  { label: 'Failed', value: 'Failed' },
+]
 
 type Transaction = {
   id: string
@@ -29,18 +46,6 @@ type TransactionApi = {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
-const navItems = [
-  { label: 'Dashboard', to: '/admin' },
-  { label: 'Users', to: '/admin/users' },
-  { label: 'Listings', to: '/admin/listings' },
-  { label: 'Transactions', to: '/admin/transactions' },
-  { label: 'Reports', to: '/admin/reports' },
-  { label: 'Activity', to: '/admin/activity' },
-  { label: 'Notifications', to: '/admin/notifications' },
-  { label: 'Chat Monitoring', to: '/admin/chat' },
-  { label: 'Reviews', to: '/admin/reviews' },
-  { label: 'Settings', to: '/admin/settings' },
-]
 
 
 const transactions = ref<Transaction[]>([])
@@ -90,48 +95,47 @@ const fetchTransactions = async () => {
   }
 }
 
-onMounted(fetchTransactions)
+const filteredTransactions = computed(() => {
+  let list = [...transactions.value]
 
-const route = useRoute()
-const currentPath = computed(() => route.path)
-
-const isActive = (path: string) => {
-  if (path === '/admin') {
-    return currentPath.value === '/admin'
+  // Filter by search query
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase().trim()
+    list = list.filter(
+      (item) =>
+        item.buyer.toLowerCase().includes(q) ||
+        item.seller.toLowerCase().includes(q) ||
+        item.item.toLowerCase().includes(q) ||
+        item.id.toLowerCase().includes(q),
+    )
   }
-  return currentPath.value === path
-}
-const authStore = useAuthStore()
-const router = useRouter()
 
-const handleLogout = () => {
-  authStore.logout()
-  router.push('/home')
-}
+  // Filter by status
+  if (statusFilter.value !== 'All status') {
+    list = list.filter((item) => item.status.toLowerCase() === statusFilter.value.toLowerCase())
+  }
+
+  // Sort
+  if (sortBy.value === 'A-Z') {
+    list.sort((a, b) => a.item.localeCompare(b.item))
+  } else if (sortBy.value === 'Z-A') {
+    list.sort((a, b) => b.item.localeCompare(a.item))
+  } else if (sortBy.value === 'Newest') {
+    list.sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0
+      const dateB = b.date ? new Date(b.date).getTime() : 0
+      return dateB - dateA
+    })
+  }
+
+  return list
+})
+
+onMounted(fetchTransactions)
 </script>
 
 <template>
-  <div class="admin-shell">
-    <aside class="admin-sidebar">
-      <div class="brand">
-        <span class="brand-mark">Do</span>
-        <span class="brand-mark accent">Ot</span>
-      </div>
-      <nav class="nav">
-        <router-link
-          v-for="item in navItems"
-          :key="item.label"
-          class="nav-item"
-          :class="{ active: isActive(item.to) }"
-          :to="item.to"
-        >
-          {{ item.label }}
-        </router-link>
-      </nav>
-      <button class="logout" @click="handleLogout">Log out</button>
-    </aside>
-
-    <main class="admin-main">
+  <AdminLayout>
       <header class="admin-topbar">
         <div class="topbar-left">
           <div class="topbar-icon"></div>
@@ -158,20 +162,11 @@ const handleLogout = () => {
         <div class="filters">
           <label class="search">
             <span class="search-icon"></span>
-            <input type="text" placeholder="Search listings..." />
+            <input v-model="searchQuery" type="text" placeholder="Search transactions..." />
           </label>
           <div class="filter-group">
-            <select>
-              <option>A-Z</option>
-              <option>Z-A</option>
-              <option>Newest</option>
-            </select>
-            <select>
-              <option>All status</option>
-              <option>Active</option>
-              <option>Completed</option>
-              <option>Failed</option>
-            </select>
+            <DropDownMenu v-model="sortBy" :items="sortItems" size="lg" />
+            <DropDownMenu v-model="statusFilter" :items="statusItems" size="sm" />
           </div>
         </div>
 
@@ -188,7 +183,7 @@ const handleLogout = () => {
             <span>Status</span>
             <span>Date</span>
           </div>
-          <div v-for="transaction in transactions" :key="transaction.id" class="table-row body">
+          <div v-for="transaction in filteredTransactions" :key="transaction.id" class="table-row body">
             <span>{{ transaction.id }}</span>
             <span>{{ transaction.buyer }}</span>
             <span>{{ transaction.seller }}</span>
@@ -200,97 +195,11 @@ const handleLogout = () => {
           </div>
         </div>
       </section>
-    </main>
-
-    <div class="ambient">
-      <div class="glow one"></div>
-      <div class="glow two"></div>
-    </div>
-  </div>
+  </AdminLayout>
 </template>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
-
-:root {
-  font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
-}
-
-.admin-shell {
-  min-height: 100vh;
-  height: 100vh;
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  background: radial-gradient(circle at top left, #fff5e1 0%, #f7f0ff 32%, #edf3ff 70%);
-  color: #0f172a;
-  position: relative;
-  overflow: hidden;
-}
-
-.admin-sidebar {
-  background: linear-gradient(180deg, #0b1026 0%, #1c1f46 50%, #15142d 100%);
-  color: #f8fafc;
-  padding: 32px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  align-self: start;
-  overflow-y: auto;
-  z-index: 1;
-}
-
-.brand {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-}
-
-.brand-mark.accent {
-  color: #ff9f1c;
-}
-
-.nav {
-  display: grid;
-  gap: 12px;
-}
-
-.nav-item {
-  padding: 10px 14px;
-  border-radius: 10px;
-  color: #d6e0ff;
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  background: transparent;
-}
-
-.nav-item:hover,
-.nav-item.active {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-}
-
-.logout {
-  margin-top: auto;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: #f8fafc;
-  cursor: pointer;
-}
-
-.admin-main {
-  padding: 40px clamp(24px, 4vw, 56px) 64px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  overflow-y: auto;
-  z-index: 1;
-}
 
 .admin-topbar {
   display: flex;
