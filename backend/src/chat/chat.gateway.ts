@@ -13,9 +13,31 @@ import { ChatService } from './chat.service';
 import { MessageType } from './schemas/message.schema';
 
 @WebSocketGateway({
-  cors: { origin: 'http://localhost:5173' },
   transports: ['websocket'],
   maxHttpBufferSize: 10 * 1024 * 1024,
+  cors: {
+    origin: (
+      origin: string,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      const allowedOrigins = [
+        'https://material-exchange-platform.pages.dev',
+        'http://localhost:5173',
+        'http://localhost:3000',
+      ];
+      if (!origin) return callback(null, true);
+      const isCloudflarePages =
+        origin.endsWith('.material-exchange-platform.pages.dev') ||
+        origin === 'https://material-exchange-platform.pages.dev';
+      const isLocal = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+      if (isCloudflarePages || isLocal || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
+    methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+    credentials: true,
+  },
 })
 @Injectable()
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {

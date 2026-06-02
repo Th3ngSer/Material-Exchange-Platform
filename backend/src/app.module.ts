@@ -13,6 +13,7 @@ import { PostsModule } from './posts/posts.module';
 import { ReportsModule } from './reports/reports.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ActivityLogModule } from './activity-log/activity-log.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { ActivityLogModule } from './activity-log/activity-log.module';
     ReportsModule,
     NotificationsModule,
     ActivityLogModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

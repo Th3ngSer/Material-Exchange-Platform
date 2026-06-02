@@ -19,7 +19,7 @@ const props = defineProps<{
 const getAvatarUrl = (avatar?: string) => {
   const normalized = String(avatar || '').trim()
   if (!normalized || normalized.toLowerCase() === 'null' || normalized.toLowerCase() === 'undefined') {
-    return 'https://via.placeholder.com/48'
+    return '/userprofileImage/avatar.png'
   }
   return normalized
 }
@@ -29,7 +29,7 @@ const avatarUrl = computed(() => getAvatarUrl(props.avatar))
 const handleAvatarError = (event: Event) => {
   const img = event.target as HTMLImageElement
   img.onerror = null
-  img.src = 'https://via.placeholder.com/48'
+  img.src = '/userprofileImage/avatar.png'
 }
 </script>
 

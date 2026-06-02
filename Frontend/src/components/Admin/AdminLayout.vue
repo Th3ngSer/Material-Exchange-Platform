@@ -52,6 +52,9 @@ onErrorCaptured((error) => {
 <template>
   <div class="admin-shell">
     <aside class="admin-sidebar">
+      <div class="brand-logo">
+        <span class="logo-text">Do<span>O</span>rt</span>
+      </div>
       <nav class="nav">
         <router-link
           v-for="item in navItems"
@@ -115,6 +118,34 @@ onErrorCaptured((error) => {
   width: 260px;
   overflow-y: auto;
   z-index: 1;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #f8fafc;
+}
+
+.logo-text {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 55px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.logo-text span {
+  color: #ff9f1c;
 }
 
 .nav {
@@ -257,6 +288,11 @@ onErrorCaptured((error) => {
     width: 100%;
     left: auto;
     bottom: auto;
+  }
+
+  .brand-logo {
+    padding-bottom: 0;
+    border-bottom: none;
   }
 
   .nav {

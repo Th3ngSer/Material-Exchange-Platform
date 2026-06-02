@@ -1,8 +1,34 @@
 <script setup lang="ts">
 import AdminLayout from '@/components/Admin/AdminLayout.vue'
+import DropDownMenu from '@/components/DropDownMenu.vue'
 import { authFetch } from '@/utils/authFetch'
 import { getToken } from '@/utils/tokenStorage'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
+
+const searchQuery = ref('')
+const sortBy = ref('A-Z')
+const statusFilter = ref('All status')
+const typeFilter = ref('All types')
+
+const sortItems = [
+  { label: 'A-Z', value: 'A-Z' },
+  { label: 'Z-A', value: 'Z-A' },
+  { label: 'Newest', value: 'Newest' },
+]
+
+const statusItems = [
+  { label: 'All status', value: 'All status' },
+  { label: 'Active', value: 'Active' },
+  { label: 'Suspended', value: 'Suspended' },
+  { label: 'Sold', value: 'Sold' },
+]
+
+const typeItems = [
+  { label: 'All types', value: 'All types' },
+  { label: 'Sell', value: 'Sell' },
+  { label: 'Exchange', value: 'Exchange' },
+  { label: 'Borrow', value: 'Borrow' },
+]
 
 type AdminListing = {
   id: string
@@ -108,6 +134,46 @@ const deleteListing = async (listingId: string, title: string) => {
   }
 }
 
+const filteredListings = computed(() => {
+  let list = [...listings.value]
+
+  // Filter by search query
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase().trim()
+    list = list.filter(
+      (item) =>
+        item.title.toLowerCase().includes(q) ||
+        item.lister.toLowerCase().includes(q) ||
+        item.category.toLowerCase().includes(q),
+    )
+  }
+
+  // Filter by status
+  if (statusFilter.value !== 'All status') {
+    list = list.filter((item) => item.status.toLowerCase() === statusFilter.value.toLowerCase())
+  }
+
+  // Filter by type
+  if (typeFilter.value !== 'All types') {
+    list = list.filter((item) => item.type.toLowerCase() === typeFilter.value.toLowerCase())
+  }
+
+  // Sort
+  if (sortBy.value === 'A-Z') {
+    list.sort((a, b) => a.title.localeCompare(b.title))
+  } else if (sortBy.value === 'Z-A') {
+    list.sort((a, b) => b.title.localeCompare(a.title))
+  } else if (sortBy.value === 'Newest') {
+    list.sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0
+      const dateB = b.date ? new Date(b.date).getTime() : 0
+      return dateB - dateA
+    })
+  }
+
+  return list
+})
+
 onMounted(fetchListings)
 </script>
 
@@ -139,26 +205,12 @@ onMounted(fetchListings)
         <div class="filters">
           <label class="search">
             <span class="search-icon"></span>
-            <input type="text" placeholder="Search listings..." />
+            <input v-model="searchQuery" type="text" placeholder="Search listings..." />
           </label>
           <div class="filter-group">
-            <select>
-              <option>A-Z</option>
-              <option>Z-A</option>
-              <option>Newest</option>
-            </select>
-            <select>
-              <option>All status</option>
-              <option>Active</option>
-              <option>Suspended</option>
-              <option>Sold</option>
-            </select>
-            <select>
-              <option>All types</option>
-              <option>Sell</option>
-              <option>Exchange</option>
-              <option>Borrow</option>
-            </select>
+            <DropDownMenu v-model="sortBy" :items="sortItems" size="lg" />
+            <DropDownMenu v-model="statusFilter" :items="statusItems" size="sm" />
+            <DropDownMenu v-model="typeFilter" :items="typeItems" size="sm" />
           </div>
         </div>
 
@@ -175,7 +227,7 @@ onMounted(fetchListings)
             <span>Date</span>
             <span>Actions</span>
           </div>
-          <div v-for="listing in listings" :key="listing.id" class="table-row body">
+          <div v-for="listing in filteredListings" :key="listing.id" class="table-row body">
             <span>{{ listing.title }}</span>
             <span>{{ listing.lister }}</span>
             <span>{{ listing.category }}</span>

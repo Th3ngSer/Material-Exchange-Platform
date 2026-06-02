@@ -29,7 +29,7 @@ export interface MaterialItem {
   images?: string[]
   postedTime?: string
   description?: string
-  condition?: 'New' | 'Used'
+  condition?: 'New' | 'Like New' | 'Good' | 'Fair' | 'Used'
   exchangeFor?: string
 }
 

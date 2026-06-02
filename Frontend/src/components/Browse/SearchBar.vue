@@ -19,6 +19,7 @@ defineEmits<Emits>()
   <form
     class="grid flex-1 grid-cols-[1fr_42px] items-center overflow-hidden rounded-[8px] border border-[#2b2f9161] bg-[#f4f5fb] shadow-[0_6px_20px_rgba(25,28,90,0.06)]"
     role="search"
+    @submit.prevent
   >
     <label class="sr-only" for="browse-search">{{ languageStore.t('searchMaterials') }}</label>
     <input

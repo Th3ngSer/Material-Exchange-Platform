@@ -17,11 +17,15 @@ export function getToken(): string | null {
 export function setToken(token: string): void {
   try {
     sessionStorage.setItem(TOKEN_KEY, token)
-  } catch {}
+  } catch {
+    // ignore sessionStorage errors
+  }
 }
 
 export function clearToken(): void {
   try {
     sessionStorage.removeItem(TOKEN_KEY)
-  } catch {}
+  } catch {
+    // ignore sessionStorage errors
+  }
 }
