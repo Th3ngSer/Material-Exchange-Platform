@@ -10,10 +10,19 @@ import {
   TrackItemUserSchema,
 } from '../trackitemuser/schemas/trackitemuser.schema';
 import { User, UserSchema } from '../users/schemas/user.schema';
-import { AdminSettings, AdminSettingsSchema } from './schemas/admin-settings.schema';
-import { Transaction, TransactionSchema } from '../transactions/schemas/transaction.schema';
+import {
+  AdminSettings,
+  AdminSettingsSchema,
+} from './schemas/admin-settings.schema';
+import {
+  Transaction,
+  TransactionSchema,
+} from '../transactions/schemas/transaction.schema';
 import { Report, ReportSchema } from '../reports/schemas/report.schema';
-import { ActivityLog, ActivityLogSchema } from '../activity-log/schemas/activity-log.schema';
+import {
+  ActivityLog,
+  ActivityLogSchema,
+} from '../activity-log/schemas/activity-log.schema';
 
 @Module({
   imports: [

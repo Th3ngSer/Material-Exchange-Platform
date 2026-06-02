@@ -25,7 +25,9 @@ export class AuthService {
   async register(registerDto: RegisterDto) {
     const settings = await this.adminSettingsService.getSettings();
     if (!settings.allowNewRegistrations) {
-      throw new ForbiddenException('New registrations are currently disabled by the administrator');
+      throw new ForbiddenException(
+        'New registrations are currently disabled by the administrator',
+      );
     }
 
     const email = registerDto.email.toLowerCase();

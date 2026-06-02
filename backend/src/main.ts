@@ -69,14 +69,21 @@ async function bootstrap() {
     /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
 
   app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (explicitOrigin && origin === explicitOrigin) {
-        return callback(null, true);
-      }
-      if (allowLocalhost(origin)) return callback(null, true);
-      return callback(new Error(`CORS blocked: ${origin}`));
-    },
+    // origin: (origin, callback) => {
+    //   if (!origin) return callback(null, true);
+    //   if (explicitOrigin && origin === explicitOrigin) {
+    //     return callback(null, true);
+    //   }
+    //   if (allowLocalhost(origin)) return callback(null, true);
+    //   return callback(new Error(`CORS blocked: ${origin}`));
+    // },
+
+    
+    origin: [
+      'https://material-exchange-platform.pages.dev', // Production Frontend
+      'http://localhost:5173',                         // Local Dev Frontend
+      'http://localhost:3000'                          // Local Dev Backend Preview
+    ],
     methods: 'GET,POST,PUT,PATCH,DELETE',
     credentials: true,
   });

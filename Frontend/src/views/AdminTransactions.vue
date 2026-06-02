@@ -1,8 +1,26 @@
 <script setup lang="ts">
 import AdminLayout from '@/components/Admin/AdminLayout.vue'
+import DropDownMenu from '@/components/DropDownMenu.vue'
 import { authFetch } from '@/utils/authFetch'
 import { getToken } from '@/utils/tokenStorage'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
+
+const searchQuery = ref('')
+const sortBy = ref('A-Z')
+const statusFilter = ref('All status')
+
+const sortItems = [
+  { label: 'A-Z', value: 'A-Z' },
+  { label: 'Z-A', value: 'Z-A' },
+  { label: 'Newest', value: 'Newest' },
+]
+
+const statusItems = [
+  { label: 'All status', value: 'All status' },
+  { label: 'Active', value: 'Active' },
+  { label: 'Completed', value: 'Completed' },
+  { label: 'Failed', value: 'Failed' },
+]
 
 type Transaction = {
   id: string
@@ -77,6 +95,42 @@ const fetchTransactions = async () => {
   }
 }
 
+const filteredTransactions = computed(() => {
+  let list = [...transactions.value]
+
+  // Filter by search query
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase().trim()
+    list = list.filter(
+      (item) =>
+        item.buyer.toLowerCase().includes(q) ||
+        item.seller.toLowerCase().includes(q) ||
+        item.item.toLowerCase().includes(q) ||
+        item.id.toLowerCase().includes(q),
+    )
+  }
+
+  // Filter by status
+  if (statusFilter.value !== 'All status') {
+    list = list.filter((item) => item.status.toLowerCase() === statusFilter.value.toLowerCase())
+  }
+
+  // Sort
+  if (sortBy.value === 'A-Z') {
+    list.sort((a, b) => a.item.localeCompare(b.item))
+  } else if (sortBy.value === 'Z-A') {
+    list.sort((a, b) => b.item.localeCompare(a.item))
+  } else if (sortBy.value === 'Newest') {
+    list.sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0
+      const dateB = b.date ? new Date(b.date).getTime() : 0
+      return dateB - dateA
+    })
+  }
+
+  return list
+})
+
 onMounted(fetchTransactions)
 </script>
 
@@ -108,20 +162,11 @@ onMounted(fetchTransactions)
         <div class="filters">
           <label class="search">
             <span class="search-icon"></span>
-            <input type="text" placeholder="Search listings..." />
+            <input v-model="searchQuery" type="text" placeholder="Search transactions..." />
           </label>
           <div class="filter-group">
-            <select>
-              <option>A-Z</option>
-              <option>Z-A</option>
-              <option>Newest</option>
-            </select>
-            <select>
-              <option>All status</option>
-              <option>Active</option>
-              <option>Completed</option>
-              <option>Failed</option>
-            </select>
+            <DropDownMenu v-model="sortBy" :items="sortItems" size="lg" />
+            <DropDownMenu v-model="statusFilter" :items="statusItems" size="sm" />
           </div>
         </div>
 
@@ -138,7 +183,7 @@ onMounted(fetchTransactions)
             <span>Status</span>
             <span>Date</span>
           </div>
-          <div v-for="transaction in transactions" :key="transaction.id" class="table-row body">
+          <div v-for="transaction in filteredTransactions" :key="transaction.id" class="table-row body">
             <span>{{ transaction.id }}</span>
             <span>{{ transaction.buyer }}</span>
             <span>{{ transaction.seller }}</span>
