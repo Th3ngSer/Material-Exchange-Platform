@@ -381,7 +381,8 @@ async function submit() {
   try {
     const fd = new FormData()
     const listingType = form.type.toLowerCase()
-    const listingCondition = form.condition.toLowerCase()
+    // backend expects 'new' or 'used' for condition
+    const listingCondition = form.condition === 'New' ? 'new' : 'used'
     const contact = [form.phone.trim(), form.email.trim()].filter(Boolean).join(' | ')
 
     fd.append('type', listingType)
@@ -389,12 +390,18 @@ async function submit() {
     fd.append('description', form.description)
     fd.append('category', form.category)
     fd.append('condition', listingCondition)
-    fd.append('price', form.type === 'Exchange' ? '0' : form.price)
+    // ensure price is sent as a numeric string (backend will parseFloat)
+    fd.append('price', form.type === 'Exchange' ? '0' : String(form.price || '0'))
     fd.append('contact', contact)
     if (form.type === 'Exchange' && form.exchangeFor.trim()) {
       fd.append('exchangeFor', form.exchangeFor.trim())
     }
     fd.append('location', form.location)
+    // include lister name from auth if available
+    const currentUser = authStore.user
+    if (currentUser?.name || currentUser?.email) {
+      fd.append('listerName', (currentUser.name || currentUser.email) as string)
+    }
     if (typeof form.lat === 'number') fd.append('lat', String(form.lat))
     if (typeof form.lng === 'number') fd.append('lng', String(form.lng))
     form.images.forEach((file) => fd.append('images', file))

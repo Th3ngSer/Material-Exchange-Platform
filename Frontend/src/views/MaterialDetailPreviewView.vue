@@ -82,6 +82,8 @@ function loadDraftPreview() {
       tone: parsed.tone || 'orange',
       images: Array.isArray(parsed.images) ? parsed.images : [],
       postedTime: parsed.postedTime || new Date().toISOString(),
+      lat: parsed.lat !== undefined && parsed.lat !== null ? Number(parsed.lat) : undefined,
+      lng: parsed.lng !== undefined && parsed.lng !== null ? Number(parsed.lng) : undefined,
     }
     draftPhone.value = parsed.phone ?? ''
     draftEmail.value = parsed.email ?? ''

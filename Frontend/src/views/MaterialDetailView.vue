@@ -63,7 +63,7 @@ async function loadPostById(id: string | number | undefined) {
       ? p.images.map((f: string) => (/^https?:\/\//i.test(f) ? f : `${uploadBase}/uploads/${String(f).replace(/^\/+/, '')}`))
       : []
 
-    post.value = {
+      post.value = {
       id: p._id,
       _id: p._id,
       title: p.title,
@@ -79,8 +79,8 @@ async function loadPostById(id: string | number | undefined) {
       avatar: p.listerAvatar,
       postedTime: p.createdAt ?? p.updatedAt,
       exchangeFor: p.exchangeFor,
-      lat: p.lat,
-      lng: p.lng,
+      lat: p.lat !== undefined && p.lat !== null ? Number(p.lat) : undefined,
+      lng: p.lng !== undefined && p.lng !== null ? Number(p.lng) : undefined,
       rating: p.rating,
       ownerId: p.ownerId,
     }
