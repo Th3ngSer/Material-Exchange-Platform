@@ -1,4 +1,5 @@
-export type NotifType = 'message' | 'exchange' | 'borrow' | 'review' | 'following'
+export type NotifType = 'message' | 'exchange' | 'borrow' | 'review' | 'following' | 'alert' | 'order'
+export type NotifId = string | number
 
 export interface NotifAction {
   label: string
@@ -6,7 +7,7 @@ export interface NotifAction {
 }
 
 export interface Notification {
-  id: number
+  id: NotifId
   type: NotifType
   sender: string
   text: string
@@ -14,6 +15,7 @@ export interface Notification {
   time: string
   unread?: boolean
   actions: NotifAction[]
+  isMock?: boolean
 }
 
 export interface DateGroup {

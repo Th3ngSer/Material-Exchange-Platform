@@ -81,8 +81,12 @@ export class NotificationsService {
       .exec();
   }
 
-  async findOne(id: string): Promise<Notification | null> {
-    return this.notificationModel.findById(new Types.ObjectId(id)).exec();
+  async findOne(id: string, userId?: string): Promise<Notification | null> {
+    const query: any = { _id: new Types.ObjectId(id) }
+    if (userId) {
+      query.userId = new Types.ObjectId(userId)
+    }
+    return this.notificationModel.findOne(query).exec();
   }
 
   async update(
@@ -96,16 +100,22 @@ export class NotificationsService {
       .exec();
   }
 
-  async remove(id: string): Promise<Notification | null> {
-    return this.notificationModel
-      .findByIdAndDelete(new Types.ObjectId(id))
-      .exec();
+  async remove(id: string, userId?: string): Promise<Notification | null> {
+    const query: any = { _id: new Types.ObjectId(id) }
+    if (userId) {
+      query.userId = new Types.ObjectId(userId)
+    }
+    return this.notificationModel.findOneAndDelete(query).exec();
   }
 
-  async markAsRead(id: string): Promise<Notification | null> {
+  async markAsRead(id: string, userId?: string): Promise<Notification | null> {
+    const query: any = { _id: new Types.ObjectId(id) }
+    if (userId) {
+      query.userId = new Types.ObjectId(userId)
+    }
     return this.notificationModel
-      .findByIdAndUpdate(
-        new Types.ObjectId(id),
+      .findOneAndUpdate(
+        query,
         { unread: false },
         { new: true },
       )

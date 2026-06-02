@@ -36,8 +36,8 @@ export class NotificationsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.notificationsService.findOne(id);
+  findOne(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+    return this.notificationsService.findOne(id, req.user.id);
   }
 
   @Patch(':id')
@@ -49,8 +49,8 @@ export class NotificationsController {
   }
 
   @Patch(':id/read')
-  markAsRead(@Param('id') id: string) {
-    return this.notificationsService.markAsRead(id);
+  markAsRead(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+    return this.notificationsService.markAsRead(id, req.user.id);
   }
 
   @Patch('/read-all')
@@ -60,8 +60,8 @@ export class NotificationsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  remove(@Param('id') id: string) {
-    return this.notificationsService.remove(id);
+  remove(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+    return this.notificationsService.remove(id, req.user.id);
   }
 
   @Delete()

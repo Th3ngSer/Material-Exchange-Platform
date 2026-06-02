@@ -28,18 +28,18 @@
         v-if="notif.richText"
         class="notif-text"
         v-html="notif.richText"
-      />
+      ></div>
       <!-- Plain text -->
       <div v-else class="notif-text">{{ notif.text }}</div>
 
       <!-- Actions -->
-      <div class="notif-actions">
+      <div class="notif-actions" @click.stop>
         <button
           v-for="action in notif.actions"
           :key="action.label"
           class="btn"
           :class="`btn-${action.variant}`"
-          @click.stop="$emit('action', { notifId: notif.id, label: action.label })"
+          @click="$emit('action', { notifId: notif.id, label: action.label })"
         >
           {{ action.label }}
         </button>
@@ -49,7 +49,7 @@
     <!-- Time + unread dot -->
     <div class="notif-meta">
       <span class="notif-time">{{ notif.time }}</span>
-      <span v-if="notif.unread" class="unread-dot" />
+      <span v-if="notif.unread" class="unread-dot"></span>
     </div>
 
     <!-- Dismiss -->
@@ -67,9 +67,9 @@ import type { Notification } from '../types/notification'
 const props = defineProps<{ notif: Notification }>()
 
 const emit = defineEmits<{
-  (e: 'action',  payload: { notifId: number; label: string }): void
-  (e: 'dismiss', id: number): void
-  (e: 'read',    id: number): void
+  (e: 'action',  payload: { notifId: string | number; label: string }): void
+  (e: 'dismiss', id: string | number): void
+  (e: 'read',    id: string | number): void
 }>()
 
 function handleHover(): void {
@@ -79,58 +79,91 @@ function handleHover(): void {
 
 <style scoped>
 .notif-card {
-  background: #1a1f3c;
-  border-radius: 12px;
-  padding: 16px 20px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px 18px;
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  margin-bottom: 10px;
   position: relative;
-  transition: transform .18s, box-shadow .18s;
-  animation: slideIn .3s ease both;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .notif-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(26, 31, 60, 0.22);
+  border-color: #d1d5db;
+  background: #f9fafb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+.notif-card.unread {
+  background: #fef3f2;
+  border-color: #fed7d0;
+}
+
+.notif-card.unread::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #f97316;
+  border-radius: 10px 0 0 10px;
 }
 
 /* Avatar */
 .notif-avatar {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   color: #fff;
+  font-weight: 600;
+  font-size: 16px;
 }
-.notif-avatar.message  { background: #f97316; }
-.notif-avatar.exchange { background: #3b4a8a; }
-.notif-avatar.borrow   { background: #2e7d6e; }
-.notif-avatar.review   { background: #7c3aed; }
-.notif-avatar svg { width: 18px; height: 18px; }
+
+.notif-avatar.message {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+.notif-avatar.exchange {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+}
+
+.notif-avatar.borrow {
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+}
+
+.notif-avatar.review {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+}
+
+.notif-avatar svg {
+  width: 20px;
+  height: 20px;
+}
 
 /* Body */
-.notif-body { flex: 1; min-width: 0; }
+.notif-body {
+  flex: 1;
+  min-width: 0;
+}
 
 .notif-sender {
   font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  margin-bottom: 3px;
+  font-weight: 700;
+  color: #1a1f3c;
+  margin-bottom: 4px;
+  letter-spacing: -0.3px;
 }
 
 .notif-text {
-  font-size: 12.5px;
-  color: rgba(255, 255, 255, 0.58);
+  font-size: 13px;
+  color: #6b7280;
   line-height: 1.5;
   margin-bottom: 10px;
   overflow: hidden;
@@ -141,75 +174,144 @@ function handleHover(): void {
   -webkit-box-orient: vertical;
 }
 
-/* Deep so v-html <a> tags get styled */
 .notif-text :deep(a) {
   color: #f97316;
   font-weight: 600;
   text-decoration: none;
 }
-.notif-text :deep(a:hover) { text-decoration: underline; }
+
+.notif-text :deep(a:hover) {
+  text-decoration: underline;
+}
 
 /* Actions */
-.notif-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.notif-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  pointer-events: auto;
+  position: relative;
+  z-index: 10;
+}
 
 .btn {
   display: inline-flex;
   align-items: center;
   font-family: 'DM Sans', sans-serif;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 5px 13px;
+  padding: 6px 14px;
   border-radius: 6px;
   border: none;
   cursor: pointer;
-  transition: opacity .13s, transform .13s;
+  transition: all 0.15s ease;
+  pointer-events: auto;
+  position: relative;
+  z-index: 10;
 }
-.btn:hover { opacity: .82; transform: scale(.97); }
 
-.btn-primary { background: #f97316; color: #fff; }
-.btn-outline  { background: rgba(255,255,255,.12); color: rgba(255,255,255,.85); }
-.btn-green    { background: #22c55e; color: #fff; }
-.btn-ghost    { background: rgba(255,255,255,.08); color: rgba(255,255,255,.6); }
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-primary {
+  background: #f97316;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #ea580c;
+}
+
+.btn-outline {
+  background: white;
+  color: #6b7280;
+  border: 1.5px solid #d1d5db;
+}
+
+.btn-outline:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #4b5563;
+}
+
+.btn-green {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.btn-green:hover {
+  background: #a7f3d0;
+}
+
+.btn-ghost {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.btn-ghost:hover {
+  background: #e5e7eb;
+  color: #4b5563;
+}
 
 /* Meta */
 .notif-meta {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
 .notif-time {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.32);
+  font-size: 12px;
+  color: #9ca3af;
   white-space: nowrap;
 }
 
 .unread-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   background: #f97316;
   border-radius: 50%;
+  box-shadow: 0 0 4px rgba(249, 115, 22, 0.4);
 }
 
 /* Dismiss */
 .dismiss-btn {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 12px;
+  right: 12px;
   background: transparent;
   border: none;
   cursor: pointer;
-  color: rgba(255,255,255,.2);
+  color: #d1d5db;
   display: flex;
   align-items: center;
-  padding: 3px;
-  border-radius: 4px;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   opacity: 0;
-  transition: opacity .15s, color .15s;
+  transition: all 0.15s ease;
 }
-.dismiss-btn svg { width: 14px; height: 14px; }
-.notif-card:hover .dismiss-btn { opacity: 1; }
-.dismiss-btn:hover { color: rgba(255,255,255,.7); }
+
+.dismiss-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.notif-card:hover .dismiss-btn {
+  opacity: 1;
+}
+
+.dismiss-btn:hover {
+  background: #f3f4f6;
+  color: #6b7280;
+}
 </style>
