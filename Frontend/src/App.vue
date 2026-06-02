@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { useAuthStore } from './stores/auth'
 import { useLanguageStore } from './stores/language'
 
-const authStore = useAuthStore()
 const languageStore = useLanguageStore()
 
-onMounted(async () => {
-  await authStore.initializeAuth()
+// NOTE: initializeAuth() is already awaited in main.ts before the app mounts.
+// Do NOT call it again here — a second call resets user to null mid-session.
+onMounted(() => {
   languageStore.initializeLanguage()
 })
 </script>

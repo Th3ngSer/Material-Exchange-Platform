@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getToken } from '@/utils/tokenStorage'
 import { computed, ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
@@ -38,6 +39,7 @@ const post = ref<any>({
   images: [],
   type: 'Sell',
   price: '',
+  contact: '',
   location: '',
   condition: 'Used',
 })
@@ -61,7 +63,7 @@ async function loadPostById(id: string | number | undefined) {
       ? p.images.map((f: string) => (/^https?:\/\//i.test(f) ? f : `${uploadBase}/uploads/${String(f).replace(/^\/+/, '')}`))
       : []
 
-    post.value = {
+      post.value = {
       id: p._id,
       _id: p._id,
       title: p.title,
@@ -69,6 +71,7 @@ async function loadPostById(id: string | number | undefined) {
       images,
       type: p.type === 'sell' ? 'Sell' : p.type === 'exchange' ? 'Exchange' : 'Borrow',
       price: p.price,
+      contact: p.contact,
       location: p.location,
       category: p.category,
       condition: p.condition === 'new' ? 'New' : 'Used',
@@ -76,8 +79,8 @@ async function loadPostById(id: string | number | undefined) {
       avatar: p.listerAvatar,
       postedTime: p.createdAt ?? p.updatedAt,
       exchangeFor: p.exchangeFor,
-      lat: p.lat,
-      lng: p.lng,
+      lat: p.lat !== undefined && p.lat !== null ? Number(p.lat) : undefined,
+      lng: p.lng !== undefined && p.lng !== null ? Number(p.lng) : undefined,
       rating: p.rating,
       ownerId: p.ownerId,
     }
@@ -119,7 +122,7 @@ async function confirmDeletePost() {
 
     await axios.delete(endpoint, {
       headers: {
-        Authorization: `Bearer ${sessionStorage.getItem('authToken') ?? ''}`,
+        Authorization: `Bearer ${getToken() ?? ''}`,
       },
     })
     showDeleteModal.value = false
@@ -141,8 +144,23 @@ function titleCase(value: string) {
 
 function formatPrice(post: MaterialItem) {
   if (post.type === 'Exchange') return languageStore.t('openToTrade')
-  if (post.type === 'Borrow') return post.price ? `$${Number(post.price || 0).toFixed(2)}${languageStore.t('perDay')}` : languageStore.t('openToBorrow')
+  if (post.type === 'Borrow') return post.price ? `$${Number(post.price || 0).toFixed(2)}/wk` : languageStore.t('openToBorrow')
   return `$${Number(post.price || 0).toFixed(2)}`
+}
+
+function formatBorrowWeeklyPrice(post: MaterialItem) {
+  if (post.type !== 'Borrow') return '-'
+  return post.price ? `$${Number(post.price || 0).toFixed(2)}/wk` : '-'
+}
+
+function extractContact(post: MaterialItem & { contact?: string }) {
+  const explicitContact = String(post.contact ?? '').trim()
+  if (explicitContact) return explicitContact
+
+  const maybePhone = String((post as any).phone ?? '').trim()
+  const maybeEmail = String((post as any).email ?? '').trim()
+  const merged = [maybePhone, maybeEmail].filter(Boolean).join(' | ')
+  return merged || '-'
 }
 
 function formatRelativeTime(dateString?: string) {
@@ -218,6 +236,8 @@ const detailStats = computed(() => [
   { label: languageStore.t('location'), value: currentPost.value.location },
   { label: languageStore.t('posted'), value: formatRelativeTime(currentPost.value.postedTime) },
 ])
+
+const contactInfo = computed(() => extractContact(currentPost.value as MaterialItem & { contact?: string }))
 </script>
 
 <template>
@@ -264,6 +284,24 @@ const detailStats = computed(() => [
 
           <!-- Price -->
           <div class="text-4xl font-black text-[#1b1748]">{{ formatPrice(currentPost) }}</div>
+
+          <div class="flex flex-wrap gap-2">
+            <span class="rounded-full bg-[#f5f5f5] px-3 py-1.5 text-sm font-semibold text-[#1b1748]">
+              Contact: {{ contactInfo }}
+            </span>
+            <span
+              v-if="currentPost.type === 'Borrow'"
+              class="rounded-full bg-[#eff9ff] px-3 py-1.5 text-sm font-semibold text-[#0b4f7a]"
+            >
+              Price / week: {{ formatBorrowWeeklyPrice(currentPost) }}
+            </span>
+            <span
+              v-if="currentPost.type === 'Exchange' && currentPost.exchangeFor"
+              class="rounded-full bg-[#fff3e7] px-3 py-1.5 text-sm font-semibold text-[#a35600]"
+            >
+              Exchange for: {{ currentPost.exchangeFor }}
+            </span>
+          </div>
 
           <!-- Action Button (shows only the relevant action per type) -->
           <div>
@@ -367,6 +405,14 @@ const detailStats = computed(() => [
                   <span class="font-semibold">{{ languageStore.t('location') }}:</span>
                   <span>{{ currentPost.location }}</span>
                 </li>
+                <li class="flex justify-between border-b border-[#f0f0f0] pb-3">
+                  <span class="font-semibold">Contact:</span>
+                  <span>{{ contactInfo }}</span>
+                </li>
+                <li v-if="currentPost.type === 'Borrow'" class="flex justify-between border-b border-[#f0f0f0] pb-3">
+                  <span class="font-semibold">Price / week:</span>
+                  <span>{{ formatBorrowWeeklyPrice(currentPost) }}</span>
+                </li>
                 <li v-if="currentPost.exchangeFor" class="flex justify-between border-b border-[#f0f0f0] pb-3">
                   <span class="font-semibold">{{ languageStore.t('exchangeTarget') }}:</span>
                   <span>{{ currentPost.exchangeFor }}</span>
@@ -400,11 +446,9 @@ const detailStats = computed(() => [
                 />
               </div>
               <div v-else class="flex h-[300px] items-center justify-center">
-<<<<<<< HEAD
-                <div class="text-[#6b7280] text-lg font-semibold">{{ languageStore.t('mapUnavailable') }}</div>
-=======
-                <div class="text-lg font-semibold text-[#6b7280]">Map unavailable for this listing</div>
->>>>>>> fd46333089cd703e01266c89336d7a4995ed9012
+                <div class="text-lg font-semibold text-[#6b7280]">
+                  {{ languageStore.t('mapUnavailable') }}
+                </div>
               </div>
             </div>
           </div>

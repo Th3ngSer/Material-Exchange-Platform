@@ -82,6 +82,8 @@ const liveMaterials = ref<MaterialItem[]>(props.materials)
 
 let filterVisibilityObserver: IntersectionObserver | null = null
 let pagingObserver: IntersectionObserver | null = null
+let searchReloadTimer: ReturnType<typeof setTimeout> | null = null
+let isApplyingRouteSearch = false
 
 function imageUrl(image: string) {
   if (/^https?:\/\//i.test(image)) return image
@@ -115,14 +117,72 @@ function mapPostToMaterial(post: PostRecord): MaterialItem {
   }
 }
 
-async function loadPosts() {
+async function loadSearchResults() {
+  const params: Record<string, string | number> = {
+    page: 1,
+    limit: 200,
+  }
+
+  const keyword = searchQuery.value.trim()
+  if (keyword.length > 0) {
+    params.q = keyword
+  }
+
+  if (selectedCategory.value !== 'All') {
+    params.type =
+      selectedCategory.value === 'Sell'
+        ? 'sell'
+        : selectedCategory.value === 'Exchange'
+          ? 'exchange'
+          : 'lend'
+  }
+
+  if (selectedItemCategory.value !== 'All') {
+    params.category = selectedItemCategory.value
+  }
+
+  const hasNew = selectedConditions.value.includes('New')
+  const hasOnlyNew = selectedConditions.value.length === 1 && hasNew
+  const hasOnlyUsed = selectedConditions.value.length > 0 && !hasNew
+
+  if (hasOnlyNew) {
+    params.condition = 'new'
+  } else if (hasOnlyUsed) {
+    params.condition = 'used'
+  }
+
+  if (selectedSort.value === 'Price: Low to High') {
+    params.sort = 'price_asc'
+  } else if (selectedSort.value === 'Price: High to Low') {
+    params.sort = 'price_desc'
+  } else if (selectedSort.value === 'Newest') {
+    params.sort = 'newest'
+  }
+
   try {
-    const { data } = await axios.get<{ posts: PostRecord[] }>(`${apiBaseUrl}/posts`)
-    const mappedPosts = (data.posts ?? []).map(mapPostToMaterial)
-    liveMaterials.value = [...mappedPosts, ...defaultMaterials]
+    const { data } = await axios.get<{ data?: PostRecord[]; posts?: PostRecord[] }>(`${apiBaseUrl}/search`, {
+      params,
+    })
+    const searchResults = Array.isArray(data.data) ? data.data : Array.isArray(data.posts) ? data.posts : []
+    liveMaterials.value = searchResults.map(mapPostToMaterial)
   } catch {
     liveMaterials.value = defaultMaterials
   }
+}
+
+function scheduleSearchReload() {
+  if (isApplyingRouteSearch) {
+    return
+  }
+
+  if (searchReloadTimer) {
+    clearTimeout(searchReloadTimer)
+  }
+
+  searchReloadTimer = setTimeout(() => {
+    searchReloadTimer = null
+    void loadSearchResults()
+  }, 250)
 }
 
 function observeFilterTriggerVisibility() {
@@ -274,7 +334,8 @@ function clearFilters() {
   selectedItemCategory.value = 'All'
 }
 
-function applyHeaderSearchFromRoute() {
+async function applyHeaderSearchFromRoute() {
+  isApplyingRouteSearch = true
   const routeQuery = typeof route.query.q === 'string' ? route.query.q : ''
   const routeType = typeof route.query.type === 'string' ? route.query.type : 'All'
   const normalizedType = categoryOptions.includes(routeType as Category) ? (routeType as Category) : 'All'
@@ -285,6 +346,9 @@ function applyHeaderSearchFromRoute() {
   selectedCategory.value = normalizedType
   selectedItemCategory.value = normalizedCategory
   browseType.value = 'items'
+
+  await nextTick()
+  isApplyingRouteSearch = false
 }
 
 // Lightweight product category detector for existing sample data
@@ -454,8 +518,14 @@ function resetPagination() {
 }
 
 watch(
-  [selectedCategory, selectedSort, selectedConditions, selectedRating, minPrice, maxPrice, searchQuery, browseType],
+  [selectedCategory, selectedSort, selectedConditions, selectedRating, minPrice, maxPrice, searchQuery, selectedItemCategory, browseType],
   resetPagination,
+  { deep: true },
+)
+
+watch(
+  [selectedCategory, selectedSort, selectedConditions, minPrice, maxPrice, searchQuery, selectedItemCategory],
+  scheduleSearchReload,
   { deep: true },
 )
 
@@ -473,8 +543,8 @@ watch(
 )
 
 onMounted(async () => {
-  await loadPosts()
-  applyHeaderSearchFromRoute()
+  await applyHeaderSearchFromRoute()
+  await loadSearchResults()
   await nextTick()
   observeFilterTriggerVisibility()
   observePagingSentinel()
@@ -482,13 +552,19 @@ onMounted(async () => {
 })
 
 watch(
-  () => [route.query.q, route.query.type],
-  () => {
-    applyHeaderSearchFromRoute()
+  () => [route.query.q, route.query.type, route.query.category],
+  async () => {
+    await applyHeaderSearchFromRoute()
+    await loadSearchResults()
   },
 )
 
 onBeforeUnmount(() => {
+  if (searchReloadTimer) {
+    clearTimeout(searchReloadTimer)
+    searchReloadTimer = null
+  }
+
   if (filterVisibilityObserver) {
     filterVisibilityObserver.disconnect()
     filterVisibilityObserver = null
@@ -498,7 +574,6 @@ onBeforeUnmount(() => {
     pagingObserver.disconnect()
     pagingObserver = null
   }
-  
 })
 
 watch(browseType, async () => {

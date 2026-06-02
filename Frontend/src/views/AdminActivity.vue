@@ -1,112 +1,134 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import AdminLayout from '@/components/Admin/AdminLayout.vue'
+import { authFetch } from '@/utils/authFetch'
+import { getToken } from '@/utils/tokenStorage'
+import { onMounted, ref } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router'
 
-const navItems = [
-  { label: 'Dashboard', to: '/admin' },
-  { label: 'Users', to: '/admin/users' },
-  { label: 'Listings', to: '/admin/listings' },
-  { label: 'Transactions', to: '/admin/transactions' },
-  { label: 'Reports', to: '/admin/reports' },
-  { label: 'Activity', to: '/admin/activity' },
-  { label: 'Notifications', to: '/admin/notifications' },
-  { label: 'Chat Monitoring', to: '/admin/chat' },
-  { label: 'Reviews', to: '/admin/reviews' },
-  { label: 'Settings', to: '/admin/settings' },
-]
 
-const activities = [
-  {
-    title: 'New user registered',
-    subtitle: 'yagami@gmail.com',
-    category: 'User',
-    time: '1 min ago',
-  },
-  {
-    title: 'Listing created',
-    subtitle: 'Industrial Pressure Washer by Yagami',
-    category: 'Listings',
-    time: '15 min ago',
-  },
-  {
-    title: 'Report submitted',
-    subtitle: 'Fake listing flagged by Yagami Devithhan',
-    category: 'Report',
-    time: '30 min ago',
-  },
-  {
-    title: 'Listing removed',
-    subtitle: 'Expired: Old Scaffolding Set',
-    category: 'Listings',
-    time: '1 hrs ago',
-  },
-  {
-    title: 'User suspended',
-    subtitle: 'spam_bot_123 - multiple violations',
-    category: 'User',
-    time: '2 hrs ago',
-  },
-  {
-    title: 'Borrow request accepted',
-    subtitle: "Emily Davis accepted Tom Wilson's request",
-    category: 'Transaction',
-    time: '3 hrs ago',
-  },
-  {
-    title: 'Exchange request accepted',
-    subtitle: "Emily Davis accepted Tom Wilson's request",
-    category: 'Transaction',
-    time: '4 hrs ago',
-  },
-  {
-    title: 'Listing updated',
-    subtitle: 'CNC Machine price changed by Sarah Chen',
-    category: 'Listings',
-    time: '5 hrs ago',
-  },
-]
+type ActivityItem = {
+  id: string
+  title: string
+  subtitle: string
+  category: string
+  time: string
+  adminName: string
+  action: string
+}
 
-const route = useRoute()
-const currentPath = computed(() => route.path)
+type ActivityApi = {
+  _id: string
+  adminId: string
+  adminName: string
+  action: string
+  details: string
+  createdAt?: string
+}
 
-const isActive = (path: string) => {
-  if (path === '/admin') {
-    return currentPath.value === '/admin'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+
+const activities = ref<ActivityItem[]>([])
+const isLoading = ref(false)
+const errorMessage = ref('')
+
+const formatDate = (value?: string): string => {
+  if (!value) return '---'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value ?? '---'
+  return date.toISOString().replace('T', ' ').slice(0, 16)
+}
+
+const mapCategory = (action: string) => {
+  if (action.includes('USER')) return 'User'
+  if (action.includes('POST')) return 'Listings'
+  if (action.includes('REPORT')) return 'Report'
+  return 'Admin'
+}
+
+const mapTitle = (action: string) => {
+  switch (action) {
+    case 'DELETE_USER':
+      return 'User deleted'
+    case 'DELETE_POST':
+      return 'Listing deleted'
+    case 'REVIEW_REPORT':
+      return 'Report reviewed'
+    case 'DONE_REPORT':
+      return 'Report closed'
+    default:
+      return action
   }
-  return currentPath.value === path
 }
-const authStore = useAuthStore()
-const router = useRouter()
 
-const handleLogout = () => {
-  authStore.logout()
-  router.push('/home')
+const fetchActivities = async () => {
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    const token = getToken()
+    const response = await authFetch(`${API_BASE_URL}/admin/activity`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.message || 'Failed to load activity log')
+    }
+
+    const data = (await response.json()) as ActivityApi[]
+    activities.value = (data ?? []).map((item) => ({
+      id: item._id,
+      title: mapTitle(item.action),
+      subtitle: item.details,
+      category: mapCategory(item.action),
+      time: formatDate(item.createdAt),
+      adminName: item.adminName,
+      action: item.action,
+    }))
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Failed to load activity log'
+  } finally {
+    isLoading.value = false
+  }
 }
+
+// ─── Detail Modal ────────────────────────────────────────────────────────────
+const showDetailModal = ref(false)
+const viewingActivity = ref<ActivityItem | null>(null)
+
+const openDetail = (item: ActivityItem) => {
+  viewingActivity.value = item
+  showDetailModal.value = true
+}
+
+const closeDetail = () => {
+  showDetailModal.value = false
+  setTimeout(() => {
+    viewingActivity.value = null
+  }, 200)
+}
+
+const actionColor = (action: string) => {
+  if (action.includes('DELETE')) return 'action-delete'
+  if (action.includes('REVIEW')) return 'action-review'
+  if (action.includes('DONE')) return 'action-done'
+  return 'action-default'
+}
+
+onMounted(fetchActivities)
+
+onBeforeRouteLeave(() => {
+  showDetailModal.value = false
+  viewingActivity.value = null
+})
 </script>
 
 <template>
-  <div class="admin-shell">
-    <aside class="admin-sidebar">
-      <div class="brand">
-        <span class="brand-mark">Do</span>
-        <span class="brand-mark accent">Ot</span>
-      </div>
-      <nav class="nav">
-        <router-link
-          v-for="item in navItems"
-          :key="item.label"
-          class="nav-item"
-          :class="{ active: isActive(item.to) }"
-          :to="item.to"
-        >
-          {{ item.label }}
-        </router-link>
-      </nav>
-      <button class="logout" @click="handleLogout">Log out</button>
-    </aside>
-
-    <main class="admin-main">
+  <div class="admin-view">
+    <AdminLayout>
       <header class="admin-topbar">
         <div class="topbar-left">
           <div class="topbar-icon"></div>
@@ -124,7 +146,9 @@ const handleLogout = () => {
 
       <section class="activity-panel">
         <div class="activity-list">
-          <article v-for="item in activities" :key="item.title" class="activity-row">
+          <p v-if="isLoading" class="activity-note">Loading activity...</p>
+          <p v-else-if="errorMessage" class="activity-note error">{{ errorMessage }}</p>
+          <article v-for="item in activities" :key="item.id" class="activity-row clickable" @click="openDetail(item)">
             <div class="activity-icon" :class="item.category.toLowerCase()"></div>
             <div class="activity-content">
               <div class="activity-main">
@@ -139,89 +163,60 @@ const handleLogout = () => {
           </article>
         </div>
       </section>
-    </main>
+    </AdminLayout>
 
-    <div class="ambient">
-      <div class="glow one"></div>
-      <div class="glow two"></div>
-    </div>
+    <!-- ─── Activity Detail Modal ──────────────────────────────────────── -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div v-if="showDetailModal" class="modal-overlay" @click.self="closeDetail">
+          <div class="modal-card">
+            <div class="modal-header">
+              <h3 class="modal-title">Activity Details</h3>
+              <button class="close-btn" @click="closeDetail">&times;</button>
+            </div>
+
+            <div v-if="viewingActivity" class="modal-content">
+              <div class="detail-row">
+                <span class="detail-label">Action:</span>
+                <span class="action-badge" :class="actionColor(viewingActivity.action)">{{ viewingActivity.title }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Performed By:</span>
+                <span class="detail-value">{{ viewingActivity.adminName }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Category:</span>
+                <span class="detail-value">{{ viewingActivity.category }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Date / Time:</span>
+                <span class="detail-value">{{ viewingActivity.time }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Log ID:</span>
+                <span class="detail-value mono">#{{ viewingActivity.id }}</span>
+              </div>
+              <div class="detail-message-box">
+                <span class="detail-label">Details:</span>
+                <p class="detail-message">{{ viewingActivity.subtitle }}</p>
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button class="modal-btn cancel" type="button" @click="closeDetail">Close</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
-:root {
-  font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
-}
-
-.admin-shell {
+.admin-view {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  background: radial-gradient(circle at top left, #fff5e1 0%, #f7f0ff 32%, #edf3ff 70%);
-  color: #0f172a;
-  position: relative;
-  overflow: hidden;
-}
-
-.admin-sidebar {
-  background: linear-gradient(180deg, #0b1026 0%, #1c1f46 50%, #15142d 100%);
-  color: #f8fafc;
-  padding: 32px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  z-index: 1;
-}
-
-.brand {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-}
-
-.brand-mark.accent {
-  color: #ff9f1c;
-}
-
-.nav {
-  display: grid;
-  gap: 12px;
-}
-
-.nav-item {
-  padding: 10px 14px;
-  border-radius: 10px;
-  color: #d6e0ff;
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  background: transparent;
-}
-
-.nav-item:hover,
-.nav-item.active {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-}
-
-.logout {
-  margin-top: auto;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: #f8fafc;
-  cursor: pointer;
-}
-
-.admin-main {
-  padding: 40px clamp(24px, 4vw, 56px) 64px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  z-index: 1;
 }
 
 .admin-topbar {
@@ -306,6 +301,16 @@ const handleLogout = () => {
   gap: 12px;
 }
 
+.activity-note {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.activity-note.error {
+  color: #ef4444;
+}
+
 .activity-row {
   display: grid;
   grid-template-columns: 42px 1fr;
@@ -315,6 +320,17 @@ const handleLogout = () => {
   border-radius: 12px;
   padding: 12px 14px;
   background: #fff;
+}
+
+.activity-row.clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.activity-row.clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
+  border-color: #c7d2fe;
 }
 
 .activity-icon {
@@ -467,5 +483,169 @@ const handleLogout = () => {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+/* ─── Modal Styles ───────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: #0f172a;
+}
+
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.detail-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  min-width: 110px;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.detail-value.mono {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #475569;
+}
+
+.action-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.action-delete {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.action-review {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.action-done {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.action-default {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.detail-message-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 4px;
+}
+
+.detail-message {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.modal-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.modal-btn.cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.modal-btn.cancel:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
 }
 </style>

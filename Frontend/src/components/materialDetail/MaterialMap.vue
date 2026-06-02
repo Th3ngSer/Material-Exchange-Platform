@@ -4,8 +4,8 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 const props = defineProps<{
-  lat: number | undefined
-  lng: number | undefined
+  lat: number | string | undefined
+  lng: number | string | undefined
   location?: string
 }>()
 
@@ -17,13 +17,21 @@ let gmarker: any = null
 let lmap: L.Map | null = null
 let lmarker: L.Marker | null = null
 
+function toNumber(v: number | string | undefined) {
+  if (v === undefined || v === null) return undefined
+  const n = typeof v === 'number' ? v : parseFloat(String(v))
+  return Number.isFinite(n) ? n : undefined
+}
+
 function hasCoordinates() {
-  return typeof props.lat === 'number' && typeof props.lng === 'number'
+  return typeof toNumber(props.lat) === 'number' && typeof toNumber(props.lng) === 'number'
 }
 
 function viewInGoogleMapsUrl() {
   if (!hasCoordinates()) return '#'
-  return `https://www.google.com/maps/search/?api=1&query=${props.lat},${props.lng}`
+  const latNum = toNumber(props.lat)!
+  const lngNum = toNumber(props.lng)!
+  return `https://www.google.com/maps/search/?api=1&query=${latNum},${lngNum}`
 }
 
 async function initMap() {
@@ -38,10 +46,12 @@ async function initMap() {
   lmap = null
   lmarker = null
 
-  const coords = { lat: props.lat!, lng: props.lng! }
+  const latNum = toNumber(props.lat)!
+  const lngNum = toNumber(props.lng)!
+  const coords = { lat: latNum, lng: lngNum }
   const apiKey = String(import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '')
-
-  if (apiKey) {
+  const preferLeaflet = String(import.meta.env.VITE_FORCE_LEAFLET || '').toLowerCase() === 'true'
+  if (apiKey && !preferLeaflet) {
     try {
       const mapsScript = document.createElement('script')
       mapsScript.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=weekly`
@@ -69,7 +79,7 @@ async function initMap() {
 
   // Leaflet fallback
   try {
-    const leafletCoords: [number, number] = [props.lat!, props.lng!]
+    const leafletCoords: [number, number] = [latNum, lngNum]
     lmap = L.map(mapContainer.value as HTMLElement, { center: leafletCoords, zoom: 13 })
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(lmap)
 
@@ -95,6 +105,7 @@ onMounted(() => {
 })
 
 watch(() => [props.lat, props.lng], () => {
+  // re-init map asynchronously to ensure updated props are applied
   setTimeout(() => initMap(), 0)
 })
 

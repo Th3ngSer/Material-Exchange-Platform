@@ -1,7 +1,27 @@
 <script setup lang="ts">
+import AdminLayout from '@/components/Admin/AdminLayout.vue'
+import DropDownMenu from '@/components/DropDownMenu.vue'
+import { authFetch } from '@/utils/authFetch'
+import { getToken } from '@/utils/tokenStorage'
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+
+const sortItems = [
+  { label: 'A-Z', value: 'A-Z' },
+  { label: 'Z-A', value: 'Z-A' },
+  { label: 'Newest', value: 'Newest' },
+]
+
+const statusItems = [
+  { label: 'All status', value: 'All status' },
+  { label: 'Active', value: 'Active' },
+  { label: 'Suspended', value: 'Suspended' },
+]
+
+const ratingItems = [
+  { label: 'All star', value: 'All star' },
+  { label: '5 star', value: '5 star' },
+  { label: '4 star', value: '4 star' },
+]
 
 type AdminUser = {
   id: string
@@ -25,18 +45,6 @@ type AdminUserApi = {
   createdAt?: string
 }
 
-const navItems = [
-  { label: 'Dashboard', to: '/admin' },
-  { label: 'Users', to: '/admin/users' },
-  { label: 'Listings', to: '/admin/listings' },
-  { label: 'Transactions', to: '/admin/transactions' },
-  { label: 'Reports', to: '/admin/reports' },
-  { label: 'Activity', to: '/admin/activity' },
-  { label: 'Notifications', to: '/admin/notifications' },
-  { label: 'Chat Monitoring', to: '/admin/chat' },
-  { label: 'Reviews', to: '/admin/reviews' },
-  { label: 'Settings', to: '/admin/settings' },
-]
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
@@ -49,14 +57,93 @@ const page = ref(1)
 const lastPage = ref(1)
 const total = ref(0)
 
-const route = useRoute()
-const currentPath = computed(() => route.path)
+const sortBy = ref('A-Z')
+const statusFilter = ref('All status')
+const ratingFilter = ref('All star')
 
-const isActive = (path: string) => {
-  if (path === '/admin') {
-    return currentPath.value === '/admin'
+// Selection mode state
+const selectMode = ref(false)
+const selectedIds = ref<Set<string>>(new Set())
+const showConfirmModal = ref(false)
+
+const toggleSelectMode = () => {
+  selectMode.value = !selectMode.value
+  if (!selectMode.value) {
+    selectedIds.value = new Set()
   }
-  return currentPath.value === path
+}
+
+const toggleSelect = (id: string) => {
+  const next = new Set(selectedIds.value)
+  if (next.has(id)) {
+    next.delete(id)
+  } else {
+    next.add(id)
+  }
+  selectedIds.value = next
+}
+
+const filteredUsers = computed(() => {
+  let list = [...users.value]
+
+  // Filter by status
+  if (statusFilter.value !== 'All status') {
+    list = list.filter((u) => u.status.toLowerCase() === statusFilter.value.toLowerCase())
+  }
+
+  // Filter by rating
+  if (ratingFilter.value !== 'All star') {
+    const starLimit = parseInt(ratingFilter.value)
+    if (starLimit === 5) {
+      list = list.filter((u) => u.rating >= 5.0)
+    } else if (starLimit === 4) {
+      list = list.filter((u) => u.rating >= 4.0)
+    }
+  }
+
+  // Sort
+  if (sortBy.value === 'A-Z') {
+    list.sort((a, b) => {
+      const nameA = (a.name || a.email).toLowerCase()
+      const nameB = (b.name || b.email).toLowerCase()
+      return nameA.localeCompare(nameB)
+    })
+  } else if (sortBy.value === 'Z-A') {
+    list.sort((a, b) => {
+      const nameA = (a.name || a.email).toLowerCase()
+      const nameB = (b.name || b.email).toLowerCase()
+      return nameB.localeCompare(nameA)
+    })
+  } else if (sortBy.value === 'Newest') {
+    list.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return dateB - dateA
+    })
+  }
+
+  return list
+})
+
+const isAllSelected = computed(
+  () => filteredUsers.value.length > 0 && selectedIds.value.size === filteredUsers.value.length,
+)
+
+const toggleSelectAll = () => {
+  if (isAllSelected.value) {
+    selectedIds.value = new Set()
+  } else {
+    selectedIds.value = new Set(filteredUsers.value.map((u) => u.id))
+  }
+}
+
+const openConfirmModal = () => {
+  if (selectedIds.value.size === 0) return
+  showConfirmModal.value = true
+}
+
+const closeConfirmModal = () => {
+  showConfirmModal.value = false
 }
 
 const formatDate = (value?: string) => {
@@ -75,7 +162,7 @@ const fetchUsers = async () => {
   errorMessage.value = ''
 
   try {
-    const token = sessionStorage.getItem('authToken')
+    const token = getToken()
     const params = new URLSearchParams()
     params.set('page', String(page.value))
     params.set('limit', '10')
@@ -83,7 +170,7 @@ const fetchUsers = async () => {
       params.set('search', searchQuery.value.trim())
     }
 
-    const response = await fetch(`${API_BASE_URL}/admin/users?${params.toString()}`, {
+    const response = await authFetch(`${API_BASE_URL}/admin/users?${params.toString()}`, {
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -120,30 +207,33 @@ const fetchUsers = async () => {
   }
 }
 
-const deleteUser = async (userId: string, email: string) => {
-  if (!confirm(`Delete user "${email}"? This cannot be undone.`)) {
-    return
-  }
-
+const confirmBulkDelete = async () => {
   isDeleting.value = true
   try {
-    const token = sessionStorage.getItem('authToken')
-    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+    const token = getToken()
+    const deletePromises = Array.from(selectedIds.value).map(async (userId) => {
+      const response = await authFetch(`${API_BASE_URL}/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      })
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}))
+        throw new Error(error.message || `Failed to delete user ${userId}`)
+      }
     })
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}))
-      throw new Error(error.message || 'Failed to delete user')
-    }
+    await Promise.all(deletePromises)
 
+    users.value = users.value.filter((u) => !selectedIds.value.has(u.id))
+    selectedIds.value = new Set()
+    selectMode.value = false
+    showConfirmModal.value = false
     await fetchUsers()
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to delete user'
+    const message = error instanceof Error ? error.message : 'Failed to delete users'
     alert(message)
   } finally {
     isDeleting.value = false
@@ -175,37 +265,10 @@ watch(searchQuery, () => {
 })
 
 onMounted(fetchUsers)
-const authStore = useAuthStore()
-const router = useRouter()
-
-const handleLogout = () => {
-  authStore.logout()
-  router.push('/home')
-}
 </script>
 
 <template>
-  <div class="admin-shell">
-    <aside class="admin-sidebar">
-      <div class="brand">
-        <span class="brand-mark">Do</span>
-        <span class="brand-mark accent">Ot</span>
-      </div>
-      <nav class="nav">
-        <router-link
-          v-for="item in navItems"
-          :key="item.label"
-          class="nav-item"
-          :class="{ active: isActive(item.to) }"
-          :to="item.to"
-        >
-          {{ item.label }}
-        </router-link>
-      </nav>
-      <button class="logout" @click="handleLogout">Log out</button>
-    </aside>
-
-    <main class="admin-main">
+  <AdminLayout>
       <header class="admin-topbar">
         <div class="topbar-left">
           <div class="topbar-icon"></div>
@@ -226,7 +289,33 @@ const handleLogout = () => {
             <p class="section-label">Manage platform users</p>
             <p class="section-subtitle">Review, verify, and moderate users in one place.</p>
           </div>
-          <button class="primary">Select</button>
+          <div class="header-actions">
+            <button
+              v-if="selectMode"
+              class="btn-cancel"
+              type="button"
+              @click="toggleSelectMode"
+            >
+              Cancel
+            </button>
+            <button
+              v-if="!selectMode"
+              class="primary"
+              type="button"
+              @click="toggleSelectMode"
+            >
+              Select
+            </button>
+            <button
+              v-else
+              class="btn-remove"
+              type="button"
+              :disabled="selectedIds.size === 0"
+              @click="openConfirmModal"
+            >
+              Remove{{ selectedIds.size > 0 ? ` (${selectedIds.size})` : '' }}
+            </button>
+          </div>
         </div>
 
         <div class="filters">
@@ -237,29 +326,24 @@ const handleLogout = () => {
           <div class="filter-group">
             <label class="filter">
               <span>Filter :</span>
-              <select>
-                <option>A-Z</option>
-                <option>Z-A</option>
-                <option>Newest</option>
-              </select>
+              <DropDownMenu v-model="sortBy" :items="sortItems" size="lg" />
             </label>
-            <select>
-              <option>All status</option>
-              <option>Active</option>
-              <option>Suspended</option>
-            </select>
-            <select>
-              <option>All star</option>
-              <option>5 star</option>
-              <option>4 star</option>
-            </select>
+            <DropDownMenu v-model="statusFilter" :items="statusItems" size="sm" />
+            <DropDownMenu v-model="ratingFilter" :items="ratingItems" size="sm" />
           </div>
         </div>
 
         <div class="table">
           <p v-if="isLoading" class="table-note">Loading users...</p>
           <p v-else-if="errorMessage" class="table-note error">{{ errorMessage }}</p>
-          <div class="table-row header">
+          <div class="table-row header" :class="{ 'with-checkbox': selectMode }">
+            <label v-if="selectMode" class="checkbox-cell" @click.stop>
+              <input
+                type="checkbox"
+                :checked="isAllSelected"
+                @change="toggleSelectAll"
+              />
+            </label>
             <span>Name</span>
             <span>Email</span>
             <span>Role</span>
@@ -267,9 +351,20 @@ const handleLogout = () => {
             <span>Listings</span>
             <span>Rating</span>
             <span>Joined</span>
-            <span>Actions</span>
           </div>
-          <div v-for="user in users" :key="user.id" class="table-row body">
+          <div
+            v-for="user in filteredUsers"
+            :key="user.id"
+            class="table-row body"
+            :class="{ 'with-checkbox': selectMode, selected: selectedIds.has(user.id) }"
+          >
+            <label v-if="selectMode" class="checkbox-cell" @click.stop>
+              <input
+                type="checkbox"
+                :checked="selectedIds.has(user.id)"
+                @change="toggleSelect(user.id)"
+              />
+            </label>
             <div class="name-cell">
               <div class="avatar small"></div>
               <span>{{ user.name || user.email.split('@')[0] }}</span>
@@ -283,14 +378,6 @@ const handleLogout = () => {
               {{ Number(user.rating || 0).toFixed(1) }}
             </span>
             <span class="joined">{{ formatDate(user.createdAt) }}</span>
-            <button
-              class="delete"
-              type="button"
-              :disabled="isDeleting"
-              @click="deleteUser(user.id, user.email)"
-            >
-              Delete
-            </button>
           </div>
         </div>
 
@@ -304,97 +391,45 @@ const handleLogout = () => {
           </button>
         </div>
       </section>
-    </main>
 
-    <div class="ambient">
-      <div class="glow one"></div>
-      <div class="glow two"></div>
-    </div>
-  </div>
+      <!-- ─── Confirm Delete Modal ─────────────────────────────────────────── -->
+      <Teleport to="body">
+        <Transition name="modal-fade">
+          <div v-if="showConfirmModal" class="modal-overlay" @click.self="closeConfirmModal">
+            <div class="modal-card">
+              <div class="modal-icon-wrap">
+                <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                </svg>
+              </div>
+              <h3 class="modal-title">Delete Users</h3>
+              <p class="modal-body">
+                Are you sure you want to delete
+                <strong>{{ selectedIds.size }}</strong>
+                {{ selectedIds.size === 1 ? 'user' : 'users' }}?
+                This action cannot be undone.
+              </p>
+              <div class="modal-actions">
+                <button class="modal-btn cancel" type="button" :disabled="isDeleting" @click="closeConfirmModal">
+                  Cancel
+                </button>
+                <button class="modal-btn confirm" type="button" :disabled="isDeleting" @click="confirmBulkDelete">
+                  {{ isDeleting ? 'Deleting...' : 'Yes, Delete' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </Teleport>
+  </AdminLayout>
 </template>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
-
-:root {
-  font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
-}
-
-.admin-shell {
-  min-height: 100vh;
-  height: 100vh;
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  background: radial-gradient(circle at top left, #fff5e1 0%, #f7f0ff 32%, #edf3ff 70%);
-  color: #0f172a;
-  position: relative;
-  overflow: hidden;
-}
-
-.admin-sidebar {
-  background: linear-gradient(180deg, #0b1026 0%, #1c1f46 50%, #15142d 100%);
-  color: #f8fafc;
-  padding: 32px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  align-self: start;
-  overflow-y: auto;
-  z-index: 1;
-}
-
-.brand {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-}
-
-.brand-mark.accent {
-  color: #ff9f1c;
-}
-
-.nav {
-  display: grid;
-  gap: 12px;
-}
-
-.nav-item {
-  padding: 10px 14px;
-  border-radius: 10px;
-  color: #d6e0ff;
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  background: transparent;
-}
-
-.nav-item:hover,
-.nav-item.active {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-}
-
-.logout {
-  margin-top: auto;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: #f8fafc;
-  cursor: pointer;
-}
-
-.admin-main {
-  padding: 40px clamp(24px, 4vw, 56px) 64px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  overflow-y: auto;
-  z-index: 1;
-}
 
 .admin-topbar {
   display: flex;
@@ -555,12 +590,35 @@ const handleLogout = () => {
 }
 
 select {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 8px 12px;
-  font-size: 12px;
-  color: #0f172a;
-  background: #fff;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 12px;
+  padding: 10px 36px 10px 16px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+select:hover {
+  border-color: #6366f1;
+  background-color: #f8fafc;
+}
+
+select:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .primary {
@@ -591,7 +649,7 @@ select {
 
 .table-row {
   display: grid;
-  grid-template-columns: 2fr 2fr 1fr 1fr 1fr 1fr 1fr 0.5fr;
+  grid-template-columns: 2fr 2.2fr 1fr 1fr 1fr 1fr 1.2fr;
   gap: 8px;
   font-size: 13px;
   padding: 10px 0;
@@ -677,24 +735,197 @@ select {
   display: block;
 }
 
-.delete {
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.btn-remove {
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 600;
   border: none;
-  border-radius: 999px;
-  padding: 6px 14px;
+  cursor: pointer;
   background: #ef4444;
   color: #fff;
-  font-size: 12px;
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.btn-remove:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.35);
+}
+
+.btn-remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-cancel {
+  padding: 10px 18px;
+  border-radius: 12px;
   font-weight: 600;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  background: #fff;
+  color: #475569;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-cancel:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.checkbox-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
-.delete:disabled {
+.checkbox-cell input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: #1e1b4b;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.table-row.with-checkbox {
+  grid-template-columns: 36px 2fr 2.2fr 1fr 1fr 1fr 1fr 1.2fr;
+}
+
+.table-row.body.selected {
+  background: rgba(239, 68, 68, 0.06);
+  border-radius: 8px;
+}
+
+/* ─── Confirm Delete Modal ───────────────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.modal-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px 28px 28px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+  text-align: center;
+  animation: modal-pop 0.25s ease;
+}
+
+@keyframes modal-pop {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fee2e2;
+  margin-bottom: 16px;
+}
+
+.modal-icon {
+  width: 28px;
+  height: 28px;
+  color: #ef4444;
+}
+
+.modal-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.modal-body {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.modal-body strong {
+  color: #0f172a;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modal-btn {
+  padding: 10px 22px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.modal-btn.cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.modal-btn.cancel:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.modal-btn.confirm {
+  background: #ef4444;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25);
+}
+
+.modal-btn.confirm:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.modal-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.delete:hover:not(:disabled) {
-  background: #dc2626;
+/* ─── Modal transition ───────────────────────────────────────────────── */
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
 }
 
 .ambient {
