@@ -489,7 +489,7 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     uploadPhotosHint: 'Show your product quality with up to 10 photos',
     cover: 'Cover',
     nextStepReview: 'Next Step: Review →',
-    confirmPost: 'Confirm & Post →',
+    confirmPost: 'Confirm & Post',
     titleRequired: 'Product title is required',
     titleMin3Chars: 'Title must be at least 3 characters',
     descriptionRequired: 'Description is required',
