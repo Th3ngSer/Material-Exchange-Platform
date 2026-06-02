@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onErrorCaptured, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import LogoutConfirmModal from './LogoutConfirmModal.vue'
@@ -28,6 +28,7 @@ const authStore = useAuthStore()
 const router = useRouter()
 
 const showLogoutModal = ref(false)
+const runtimeError = ref<string | null>(null)
 
 const handleLogout = () => {
   showLogoutModal.value = true
@@ -37,6 +38,15 @@ const confirmLogout = () => {
   authStore.logout()
   router.push('/home')
 }
+
+const reloadPage = () => {
+  window.location.reload()
+}
+
+onErrorCaptured((error) => {
+  runtimeError.value = error instanceof Error ? error.message : String(error)
+  return false
+})
 </script>
 
 <template>
@@ -58,7 +68,12 @@ const confirmLogout = () => {
     </aside>
 
     <main class="admin-main">
-      <slot />
+      <section v-if="runtimeError" class="error-panel">
+        <h2>Something went wrong</h2>
+        <p>{{ runtimeError }}</p>
+        <button class="reload" type="button" @click="reloadPage">Reload page</button>
+      </section>
+      <slot v-else />
     </main>
 
     <div class="ambient">
@@ -79,8 +94,7 @@ const confirmLogout = () => {
 
 .admin-shell {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: 260px 1fr;
+  display: flex;
   background: radial-gradient(circle at top left, #fff5e1 0%, #f7f0ff 32%, #edf3ff 70%);
   color: #0f172a;
   position: relative;
@@ -94,10 +108,11 @@ const confirmLogout = () => {
   display: flex;
   flex-direction: column;
   gap: 32px;
-  position: sticky;
+  position: fixed;
   top: 0;
-  height: 100vh;
-  align-self: start;
+  left: 0;
+  bottom: 0;
+  width: 260px;
   overflow-y: auto;
   z-index: 1;
 }
@@ -152,7 +167,39 @@ const confirmLogout = () => {
   flex-direction: column;
   gap: 24px;
   overflow-y: auto;
+  height: 100vh;
+  margin-left: 260px;
+  width: calc(100% - 260px);
   z-index: 1;
+}
+
+.error-panel {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.error-panel h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.error-panel p {
+  margin: 0 0 16px;
+  color: #475569;
+  font-size: 14px;
+}
+
+.reload {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .ambient {
@@ -196,7 +243,6 @@ const confirmLogout = () => {
 
 @media (max-width: 1024px) {
   .admin-shell {
-    grid-template-columns: 1fr;
     height: auto;
     overflow: visible;
   }
@@ -208,6 +254,9 @@ const confirmLogout = () => {
     gap: 20px;
     height: auto;
     position: relative;
+    width: 100%;
+    left: auto;
+    bottom: auto;
   }
 
   .nav {
@@ -223,6 +272,9 @@ const confirmLogout = () => {
 
   .admin-main {
     overflow: visible;
+    height: auto;
+    margin-left: 0;
+    width: 100%;
   }
 }
 </style>
