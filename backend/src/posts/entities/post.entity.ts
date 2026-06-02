@@ -35,6 +35,12 @@ export class Post {
   @Prop({ required: true })
   location!: string;
 
+  @Prop({ type: Number })
+  lat?: number;
+
+  @Prop({ type: Number })
+  lng?: number;
+
   @Prop({ trim: true })
   listerName?: string;
 
