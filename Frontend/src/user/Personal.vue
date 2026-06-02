@@ -27,6 +27,21 @@
               {{ displayFirstName }} {{ displayLastName }}
             </h1>
             <p class="mt-1 text-sm text-slate-600">@{{ displayUsername }}</p>
+            <div class="profile-rating-summary mt-4 flex flex-wrap items-center gap-3">
+              <div class="rating-score flex items-end gap-1">
+                <span class="rating-value">{{ ratingValue }}</span>
+                <span class="rating-out-of">/5</span>
+              </div>
+              <div class="rating-stars">
+                <span
+                  v-for="star in 5"
+                  :key="star"
+                  class="rating-star"
+                  :class="{ filled: star <= Math.round(displayUser?.rating || 0) }"
+                >★</span>
+              </div>
+              <div class="rating-stat text-sm text-slate-500">{{ ratingText }}</div>
+            </div>
           </div>
         </div>
 
@@ -178,6 +193,18 @@ const displayLastName = computed(() => {
 })
 
 const displayUsername = computed(() => displayUser.value?.username || '')
+const ratingValue = computed(() => {
+  if (displayUser.value?.rating !== undefined && displayUser.value?.rating !== null) {
+    return displayUser.value.rating.toFixed(1)
+  }
+  return '0.0'
+})
+const ratingText = computed(() => {
+  if (displayUser.value?.rating !== undefined && displayUser.value?.rating !== null) {
+    return 'Average rating from users'
+  }
+  return 'No ratings yet'
+})
 
 const avatarUrl = ref<string>(DEFAULT_AVATAR)
 
@@ -423,6 +450,50 @@ onMounted(async () => {
 
 .btn:hover {
   background: #2d2963;
+}
+
+.profile-rating-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.rating-score {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.rating-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.rating-out-of {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.rating-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.rating-star {
+  font-size: 16px;
+  color: #cbd5e1;
+}
+
+.rating-star.filled {
+  color: #f59e0b;
+}
+
+.rating-stat {
+  color: #6b7280;
 }
 
 /* Posts Section */
