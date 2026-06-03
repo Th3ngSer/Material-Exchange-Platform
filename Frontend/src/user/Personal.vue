@@ -39,14 +39,14 @@
                 @click="goToChat"
                 class="profile-action-button chat"
               >
-                {{ languageStore.t('message') || 'Message' }}
+                {{ languageStore.t('message' as any) || 'Message' }}
               </button>
 
               <button
                 type="button"
                 class="profile-action-button report"
               >
-                {{ languageStore.t('report') || 'Report' }}
+                {{ languageStore.t('report' as any) || 'Report' }}
               </button>
             </div>
           </div>
@@ -60,7 +60,7 @@
       </div>
 
       <div v-if="!isOwnProfile" class="posts-section">
-        <div class="posts-title">{{ languageStore.t('userPosts') || 'Posts' }}</div>
+        <div class="posts-title">{{ languageStore.t('userPosts' as any) || 'Posts' }}</div>
 
         <div v-if="isLoadingPosts" class="message-panel">{{ languageStore.t('loading') || 'Loading posts...' }}</div>
         <div v-else-if="postsError" class="message-panel error">{{ postsError }}</div>
@@ -84,7 +84,7 @@
           </section>
 
           <section v-if="postsByType.exchange.length > 0" class="post-category-section">
-            <div class="category-title"><span>🔄</span> {{ languageStore.t('forExchange') || 'For Exchange' }}</div>
+            <div class="category-title"><span>🔄</span> {{ languageStore.t('forExchange' as any) || 'For Exchange' }}</div>
             <div class="posts-grid">
               <article v-for="post in postsByType.exchange" :key="post._id" class="post-card">
                 <router-link :to="`/posts/${post._id}`" class="post-image-link">
@@ -100,7 +100,7 @@
           </section>
 
           <section v-if="postsByType.lend.length > 0" class="post-category-section">
-            <div class="category-title"><span>🤝</span> {{ languageStore.t('forLend') || 'For Lend' }}</div>
+            <div class="category-title"><span>🤝</span> {{ languageStore.t('forLend' as any) || 'For Lend' }}</div>
             <div class="posts-grid">
               <article v-for="post in postsByType.lend" :key="post._id" class="post-card">
                 <router-link :to="`/posts/${post._id}`" class="post-image-link">

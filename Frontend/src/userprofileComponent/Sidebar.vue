@@ -17,7 +17,7 @@
       </router-link>
 
       <router-link :to="{ name: 'profile-reviews', query: { user: authStore.user?.username || authStore.user?.name } }" class="nav-link" active-class="active-link">
-        <NavItem :label="languageStore.t('reviews') || 'Reviews'" icon="/userprofileImage/review.png" />
+        <NavItem :label="languageStore.t('reviews' as any) || 'Reviews'" icon="/userprofileImage/review.png" />
       </router-link>
 
 

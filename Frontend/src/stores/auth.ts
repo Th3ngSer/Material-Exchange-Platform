@@ -295,6 +295,7 @@ export const useAuthStore = defineStore('auth', () => {
     updateProfile,
     refreshUser,
     writeCachedAvatar,
+    writeStoredUser,
   }
 
 })

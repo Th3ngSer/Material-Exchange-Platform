@@ -158,7 +158,7 @@ onMounted(() => {
             listerName: username || p.listerName,
             // store avatar path as returned by backend
             // frontend will compute full URL where needed
-            listerAvatar: avatar || p['listerAvatar'],
+            listerAvatar: avatar || (p as any)['listerAvatar'],
           }
         }
         return p

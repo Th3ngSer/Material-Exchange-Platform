@@ -626,7 +626,10 @@ const moveUserToTop = (userId: string) => {
   if (index === -1) return
 
   const user = users.value.splice(index, 1)[0]
-  users.value.unshift(user)
+  // users.value.unshift(user)
+  if (user) {
+    users.value.unshift(user);
+  } 
 
   saveUsers()
 }

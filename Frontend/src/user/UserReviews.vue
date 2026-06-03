@@ -4,7 +4,7 @@
 
     <div class="content">
       <section class="page-header">
-        <h1>{{ languageStore.t('Reviews') || 'Reviews' }}</h1>
+        <h1>{{ languageStore.t('Reviews' as any) || 'Reviews' }}</h1>
         <p class="subtitle">View recent feedback from other users.</p>
       </section>
 
