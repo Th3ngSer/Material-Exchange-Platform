@@ -25,6 +25,7 @@ export interface MaterialItem {
   lng?: number
   seller?: string
   rating?: number
+  ownerId?: string
   avatar?: string
   images?: string[]
   postedTime?: string

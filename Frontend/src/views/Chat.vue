@@ -80,6 +80,8 @@ const loadUsers = () => {
           ? user.chat.map(normalizeChatMessage)
           : [],
       }))
+      // dedupe any accidental duplicates by id
+      users.value = dedupeUsers(users.value)
       restoreSelectedUser()
     } else {
       users.value = []
@@ -125,7 +127,7 @@ const fetchUsersFromBackend = async () => {
         }
       })
 
-      users.value = merged
+      users.value = dedupeUsers(merged)
       restoreSelectedUser()
       saveUsers()
     }
@@ -135,7 +137,23 @@ const fetchUsersFromBackend = async () => {
 }
 
 const saveUsers = () => {
-  localStorage.setItem(storageKey.value, JSON.stringify(users.value))
+  // ensure uniqueness before saving
+  const unique = dedupeUsers(users.value)
+  localStorage.setItem(storageKey.value, JSON.stringify(unique))
+}
+
+// Remove duplicate users by id (preserve first occurrence)
+const dedupeUsers = (arr: any[]) => {
+  const seen = new Set<string>()
+  const out: any[] = []
+  for (const u of arr) {
+    const id = String(u.id || u._id || '')
+    if (!id) continue
+    if (seen.has(id)) continue
+    seen.add(id)
+    out.push({ ...u, id })
+  }
+  return out
 }
 
 // LOAD CONVERSATION HISTORY
@@ -565,20 +583,36 @@ function handleIncomingMessage(msg: any) {
     imageUrl,
     audioUrl,
   }
+  // Attach server id (if present) and prevent duplicates using it first
+  if (msg._id) (chatEntry as any)._id = String(msg._id)
 
-  // PREVENT DUPLICATES
-  const messageExists = u.chat.some(
-    (m) => m.text === chatEntry.text &&
-           m.sender === chatEntry.sender &&
-           m.type === chatEntry.type &&
-           Math.abs(new Date(m.time).getTime() - new Date(chatEntry.time).getTime()) < 2000 // within 2 seconds
-  )
+  // If server-provided id exists, dedupe by id
+  let isDuplicate = false
+  if (msg._id) {
+    isDuplicate = u.chat.some((m: any) => m._id && String(m._id) === String(msg._id))
+  }
 
-  if (!messageExists) {
-    u.chat.push(chatEntry)
+  // Fallback heuristic for duplicates if no id provided
+  if (!isDuplicate) {
+    isDuplicate = u.chat.some((m: any) => {
+      try {
+        return (
+          m.text === chatEntry.text &&
+          m.sender === chatEntry.sender &&
+          m.type === chatEntry.type &&
+          Math.abs(new Date(m.time).getTime() - new Date(chatEntry.time).getTime()) < 2000
+        )
+      } catch {
+        return false
+      }
+    })
+  }
+
+  if (!isDuplicate) {
+    u.chat.push(chatEntry as any)
     u.message = chatEntry.type === 'voice' ? 'Sent a voice message' : chatEntry.text || (chatEntry.type === 'image' ? 'Sent an image' : '')
     u.time = chatEntry.time
-    
+
     saveUsers()
     moveUserToTop(otherId)
   }

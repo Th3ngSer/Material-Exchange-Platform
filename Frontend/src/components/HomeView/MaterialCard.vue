@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { useLanguageStore } from '@/stores/language'
 
 type Tone = 'gold' | 'orange' | 'rose'
 
-defineProps<{
+const props = defineProps<{
   item: {
     title: string
     price: string
@@ -15,15 +18,71 @@ defineProps<{
     seller?: string
     rating?: number
     avatar?: string
+    ownerId?: string
     images?: string[]
     postedTime?: string
   }
 }>()
 
-import { useLanguageStore } from '@/stores/language'
-
 const languageStore = useLanguageStore()
+const authStore = useAuthStore()
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
+const getAvatarUrl = (avatar?: string, name = 'User') => {
+  const normalized = String(avatar || '').trim()
+  if (!normalized || ['null', 'undefined'].includes(normalized.toLowerCase())) {
+    return '/userprofileImage/avatar.png'
+  }
+
+  if (/^https?:\/\//i.test(normalized)) {
+    // Add cache buster for http URLs
+    const separator = normalized.includes('?') ? '&' : '?'
+    return `${normalized}${separator}t=${Date.now()}`
+  }
+
+  const uploadBase = apiBaseUrl.replace(/\/api\/?$/, '')
+  const clean = normalized.replace(/^\/+/, '')
+  const basePath = clean.startsWith('uploads/') ? `${uploadBase}/${clean}` : `${uploadBase}/uploads/${clean}`
+  // Add cache buster
+  return `${basePath}?t=${Date.now()}`
+}
+
+const avatarUrl = computed(() => getAvatarUrl((isCurrentUserPost.value || isCurrentUserPostByName.value) ? authStore.user?.avatar : props.item.avatar))
+
+const handleAvatarError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.onerror = null
+  img.src = '/userprofileImage/avatar.png'
+}
+
+const isCurrentUserPost = computed(() => {
+  const currentUser = authStore.user
+  return currentUser != null && props.item.ownerId != null && String(currentUser.id) === String(props.item.ownerId)
+})
+
+const isCurrentUserPostByName = computed(() => {
+  const currentUser = authStore.user
+  if (!currentUser) return false
+  const identifiers = [currentUser.username, currentUser.name]
+    .filter(Boolean)
+    .map((value) => String(value).trim().toLowerCase())
+  const sellerName = String(props.item.seller || '').trim().toLowerCase()
+  return sellerName.length > 0 && identifiers.includes(sellerName)
+})
+
+const displaySellerName = computed(() => {
+  if ((isCurrentUserPost.value || isCurrentUserPostByName.value) && authStore.user) {
+    return authStore.user.username || authStore.user.name || props.item.seller || 'Unknown'
+  }
+  return props.item.seller || 'Unknown'
+})
+
+const displaySellerAvatar = computed(() => {
+  if ((isCurrentUserPost.value || isCurrentUserPostByName.value) && authStore.user?.avatar) {
+    return authStore.user.avatar
+  }
+  return props.item.avatar
+})
 
 // function getBadgeLabel(category: string): string {
 //   if (category === 'Sell') return languageStore.t('forSale')
@@ -63,6 +122,7 @@ function formatCardPrice(item: {
   return raw.startsWith('$') ? raw : '$' + raw
 }
 </script>
+ 
 
 <template>
   <div
@@ -132,16 +192,17 @@ function formatCardPrice(item: {
             class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm overflow-hidden"
           >
             <img
-              v-if="item.avatar"
-              :src="item.avatar"
+              v-if="displaySellerAvatar"
+              :src="avatarUrl"
               :alt="languageStore.t('sellerAlt')"
               class="w-full h-full object-cover"
+              @error="handleAvatarError"
             />
-            <span v-else>{{ item.seller?.[0]?.toUpperCase() || languageStore.t('unknownSeller') }}</span>
+            <span v-else>{{ displaySellerName?.[0]?.toUpperCase() || languageStore.t('unknownSeller') }}</span>
           </div>
 
           <!-- Seller Name -->
-          <span class="text-sm font-medium">{{ item.seller || 'Unknown' }}</span>
+          <span class="text-sm font-medium">{{ displaySellerName }}</span>
         </div>
 
         <!-- Rating -->

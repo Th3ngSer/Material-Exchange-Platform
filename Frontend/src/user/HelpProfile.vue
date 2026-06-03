@@ -22,6 +22,11 @@
           {{ languageStore.t('successSubmit') }} 
         </p>
 
+        <p v-if="reportedUser" class="report-target">
+          {{ languageStore.t('reportingUser') || 'Reporting user:' }}
+          <strong>{{ reportedUser }}</strong>
+        </p>
+
         <form v-if="!submitted" @submit.prevent="submitForm">
           <div class="form-row">
             <label>
@@ -68,13 +73,17 @@
 import { authFetch } from '@/utils/authFetch'
 import { getToken } from '@/utils/tokenStorage'
 import { reactive, ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
 import { useLanguageStore } from '../stores/language'
 import { useAuthStore } from '@/stores/auth'
 
+const route = useRoute()
 const languageStore = useLanguageStore()
 const authStore = useAuthStore()
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+
+const reportedUser = computed(() => String(route.query.reportedUser || '').trim())
 
 /* form */
 const form = reactive({
@@ -134,6 +143,7 @@ const submitForm = async () => {
         message: form.message.trim(),
         request: form.request.trim(),
         userId: authStore.user?.id,
+        reportedUser: reportedUser.value || undefined,
       }),
     })
 
@@ -176,6 +186,20 @@ const submitForm = async () => {
   margin-top: 24px;
   margin-bottom: 8px;
   color: rgb(44, 43, 43);
+}
+
+.report-target {
+  margin: 16px 0 0;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.report-target strong {
+  color: #0f172a;
 }
 
 /* success message */

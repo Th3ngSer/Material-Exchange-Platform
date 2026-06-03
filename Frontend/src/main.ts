@@ -18,8 +18,8 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 
-// Restore auth from localStorage cache synchronously before mounting
+// Initialize auth and wait for server refresh from MongoDB before mounting
 const authStore = useAuthStore(pinia)
-authStore.initializeAuth()
+await authStore.initializeAuth()
 
 app.mount('#app')
