@@ -82,11 +82,13 @@ const liveMaterials = ref<MaterialItem[]>(props.materials)
 
 let filterVisibilityObserver: IntersectionObserver | null = null
 let pagingObserver: IntersectionObserver | null = null
-let searchReloadTimer: ReturnType<typeof setTimeout> | null = null
 let isApplyingRouteSearch = false
 
 function imageUrl(image: string) {
-  if (/^https?:\/\//i.test(image)) return image
+  if (/^https?:\/\//i.test(image)) {
+    return image
+  }
+
   const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '')
   return `${uploadBaseUrl}/uploads/${image.replace(/^\/+/, '')}`
 }
@@ -117,72 +119,40 @@ function mapPostToMaterial(post: PostRecord): MaterialItem {
   }
 }
 
-async function loadSearchResults() {
-  const params: Record<string, string | number> = {
-    page: 1,
-    limit: 200,
-  }
+function mergeMaterials(staticMaterials: MaterialItem[], backendMaterials: MaterialItem[]) {
+  const merged = [...staticMaterials, ...backendMaterials]
+  const seen = new Set<string>()
 
-  const keyword = searchQuery.value.trim()
-  if (keyword.length > 0) {
-    params.q = keyword
-  }
+  return merged.filter((item) => {
+    const key = String(item.id)
+    if (seen.has(key)) {
+      return false
+    }
 
-  if (selectedCategory.value !== 'All') {
-    params.type =
-      selectedCategory.value === 'Sell'
-        ? 'sell'
-        : selectedCategory.value === 'Exchange'
-          ? 'exchange'
-          : 'lend'
-  }
-
-  if (selectedItemCategory.value !== 'All') {
-    params.category = selectedItemCategory.value
-  }
-
-  const hasNew = selectedConditions.value.includes('New')
-  const hasOnlyNew = selectedConditions.value.length === 1 && hasNew
-  const hasOnlyUsed = selectedConditions.value.length > 0 && !hasNew
-
-  if (hasOnlyNew) {
-    params.condition = 'new'
-  } else if (hasOnlyUsed) {
-    params.condition = 'used'
-  }
-
-  if (selectedSort.value === 'Price: Low to High') {
-    params.sort = 'price_asc'
-  } else if (selectedSort.value === 'Price: High to Low') {
-    params.sort = 'price_desc'
-  } else if (selectedSort.value === 'Newest') {
-    params.sort = 'newest'
-  }
-
-  try {
-    const { data } = await axios.get<{ data?: PostRecord[]; posts?: PostRecord[] }>(`${apiBaseUrl}/search`, {
-      params,
-    })
-    const searchResults = Array.isArray(data.data) ? data.data : Array.isArray(data.posts) ? data.posts : []
-    liveMaterials.value = searchResults.map(mapPostToMaterial)
-  } catch {
-    liveMaterials.value = defaultMaterials
-  }
+    seen.add(key)
+    return true
+  })
 }
 
-function scheduleSearchReload() {
-  if (isApplyingRouteSearch) {
+async function loadBrowseMaterials() {
+  const staticMaterials = props.materials.length > 0 ? props.materials : defaultMaterials
+
+  try {
+    const { data } = await axios.get<{ posts?: PostRecord[]; data?: PostRecord[] }>(`${apiBaseUrl}/posts`, {
+      params: {
+        page: 1,
+        limit: 1000,
+      },
+    })
+
+    const backendPosts = Array.isArray(data.posts) ? data.posts : Array.isArray(data.data) ? data.data : []
+    const backendMaterials = backendPosts.map(mapPostToMaterial)
+
+    liveMaterials.value = mergeMaterials(staticMaterials, backendMaterials)
     return
+  } catch {
+    liveMaterials.value = staticMaterials
   }
-
-  if (searchReloadTimer) {
-    clearTimeout(searchReloadTimer)
-  }
-
-  searchReloadTimer = setTimeout(() => {
-    searchReloadTimer = null
-    void loadSearchResults()
-  }, 250)
 }
 
 function observeFilterTriggerVisibility() {
@@ -524,12 +494,6 @@ watch(
 )
 
 watch(
-  [selectedCategory, selectedSort, selectedConditions, minPrice, maxPrice, searchQuery, selectedItemCategory],
-  scheduleSearchReload,
-  { deep: true },
-)
-
-watch(
   [filteredMaterials, filteredUsers],
   () => {
     if (browseType.value === 'items' && currentPage.value * pageSize > filteredMaterials.value.length) {
@@ -544,7 +508,7 @@ watch(
 
 onMounted(async () => {
   await applyHeaderSearchFromRoute()
-  await loadSearchResults()
+  await loadBrowseMaterials()
   await nextTick()
   observeFilterTriggerVisibility()
   observePagingSentinel()
@@ -555,16 +519,10 @@ watch(
   () => [route.query.q, route.query.type, route.query.category],
   async () => {
     await applyHeaderSearchFromRoute()
-    await loadSearchResults()
   },
 )
 
 onBeforeUnmount(() => {
-  if (searchReloadTimer) {
-    clearTimeout(searchReloadTimer)
-    searchReloadTimer = null
-  }
-
   if (filterVisibilityObserver) {
     filterVisibilityObserver.disconnect()
     filterVisibilityObserver = null
