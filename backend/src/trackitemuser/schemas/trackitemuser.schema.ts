@@ -24,6 +24,33 @@ export class TrackItemUser {
   @Prop({ default: 'Available' })
   status!: string;
 
+  @Prop()
+  buyerId?: string;
+
+  @Prop()
+  sellerId?: string;
+
+  @Prop()
+  itemId?: string;
+
+  @Prop()
+  ownerId?: string;
+
+  @Prop()
+  buyerName?: string;
+
+  @Prop()
+  sellerName?: string;
+
+  @Prop()
+  itemTitle?: string;
+
+  @Prop()
+  amount?: number;
+
+  @Prop()
+  type?: string;
+
   @Prop([
     {
       status: String,
