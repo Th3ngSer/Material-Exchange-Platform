@@ -1,46 +1,53 @@
 <template>
-  <div class="profile-page">
-    <Header />
+  <div class="personal-page">
+    <Header v-if="!isOwnProfile" />
 
     <div class="personal-info">
       <Sidebar v-if="isOwnProfile" />
 
       <div class="content">
       <div v-if="!isOwnProfile" class="back-button-container">
-        <button class="back-btn" @click="goBack">
-          ← {{ languageStore.t('back') || 'Back' }}
-        </button>
+        <button class="back-btn" @click="goBack">← {{ languageStore.t('back') || 'Back' }}</button>
       </div>
 
       <div v-if="displayUser && !isOwnProfile" class="profile-hero rounded-lg bg-white p-6 shadow-sm mb-6">
         <div class="hero-inner flex items-center gap-6">
           <div class="hero-avatar flex-shrink-0">
-            <img
-              :src="avatarUrl"
-              alt="profile photo"
-              class="w-36 h-36 rounded-full object-cover"
-              @error="onAvatarError"
-            />
+            <img :src="avatarUrl" alt="profile photo" class="w-36 h-36 rounded-full object-cover" @error="onAvatarError" />
           </div>
+
           <div class="hero-meta">
-            <h1 class="text-3xl font-extrabold text-slate-900">
-              {{ displayFirstName }} {{ displayLastName }}
-            </h1>
+            <h1 class="text-3xl font-extrabold text-slate-900">{{ displayFirstName }} {{ displayLastName }}</h1>
             <p class="mt-1 text-sm text-slate-600">@{{ displayUsername }}</p>
+
             <div class="profile-rating-summary mt-4 flex flex-wrap items-center gap-3">
               <div class="rating-score flex items-end gap-1">
                 <span class="rating-value">{{ ratingValue }}</span>
                 <span class="rating-out-of">/5</span>
               </div>
-              <div class="rating-stars">
-                <span
-                  v-for="star in 5"
-                  :key="star"
-                  class="rating-star"
-                  :class="{ filled: star <= Math.round(displayUser?.rating || 0) }"
-                >★</span>
-              </div>
+
+              <span v-for="star in 5" :key="star" class="rating-star" :class="{ filled: star <= Math.round(displayUser?.rating || 0) }">★</span>
+
               <div class="rating-stat text-sm text-slate-500">{{ ratingText }}</div>
+
+              <button v-if="!isOwnProfile" class="btn-rate-user" @click="handleRateClick">★ Rate this seller</button>
+            </div>
+
+            <div v-if="!isOwnProfile" class="profile-action-buttons mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                @click="goToChat"
+                class="profile-action-button chat"
+              >
+                {{ languageStore.t('message') || 'Message' }}
+              </button>
+
+              <button
+                type="button"
+                class="profile-action-button report"
+              >
+                {{ languageStore.t('report') || 'Report' }}
+              </button>
             </div>
           </div>
         </div>
@@ -52,105 +59,115 @@
         </div>
       </div>
 
-      
-      <div v-if="isOwnProfile" class="info-form">
-        <!-- Left column -->
-        <div class="form-column">
-          <div class="field">
-            <span>{{ languageStore.t('firstName') }}</span>
-            <p>{{ form.firstName }}</p>
-          </div>
+      <div v-if="!isOwnProfile" class="posts-section">
+        <div class="posts-title">{{ languageStore.t('userPosts') || 'Posts' }}</div>
 
-          <div class="field">
-            <span>{{ languageStore.t('birthDate') }}</span>
-            <p>{{ form.birthDate }}</p>
-          </div>
+        <div v-if="isLoadingPosts" class="message-panel">{{ languageStore.t('loading') || 'Loading posts...' }}</div>
+        <div v-else-if="postsError" class="message-panel error">{{ postsError }}</div>
+        <div v-else-if="!hasProfilePosts" class="message-panel empty">{{ languageStore.t('noPosts') || 'This user has no posts yet.' }}</div>
 
-          <div class="field">
-            <span>{{ languageStore.t('nationality') }}</span>
-            <p>{{ form.nationality }}</p>
-          </div>
-
-          <div class="field">
-            <span>{{ languageStore.t('username') }}</span>
-            <p>{{ form.username }}</p>
-          </div>
-        </div>
-
-        <!-- Right column -->
-        <div class="form-column">
-          <div class="field">
-            <span>{{ languageStore.t('lastName') }}</span>
-            <p>{{ form.lastName }}</p>
-          </div>
-
-          <div class="field">
-            <span>{{ languageStore.t('gender') }}</span>
-            <p>{{ form.gender }}</p>
-          </div>
-
-          <div class="field">
-            <span>{{ languageStore.t('phoneNumber') }}</span>
-            <p>{{ form.phone }}</p>
-          </div>
-
-          <div class="field">
-            <span>{{ languageStore.t('email') }}</span>
-            <p>{{ form.email }}</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-actions">
-        <button v-if="isOwnProfile" class="btn edit" type="button" @click="goToEdit">{{ languageStore.t('editProfile') }}</button>
-      </div>
-
-      <!-- User's Posts Section -->
-      <div v-if="userPosts.length > 0" class="posts-section">
-        <h3 class="posts-title">{{ isOwnProfile ? languageStore.t('myPosts') : `${profileUser?.name}'s Posts` }}</h3>
-        <div class="posts-grid">
-          <div v-for="post in userPosts" :key="post._id" class="post-card">
-            <router-link :to="`/posts/${post._id}`" class="post-image-link">
-              <img 
-                v-if="post.images?.[0]"
-                :src="imageUrl(post.images[0])"
-                :alt="post.title"
-                class="post-image"
-              />
-              <div v-else class="post-image-placeholder">📷</div>
-            </router-link>
-            <div class="post-info">
-              <router-link :to="`/posts/${post._id}`" class="post-title-link">
-                <h4>{{ post.title }}</h4>
-              </router-link>
-              <p class="post-category">{{ post.category }} · {{ post.location }}</p>
-              <p class="post-price">{{ formatPrice(post) }}</p>
+        <div v-else>
+          <section v-if="postsByType.sell.length > 0" class="post-category-section">
+            <div class="category-title"><span>📦</span> {{ languageStore.t('forSale') || 'For Sale' }}</div>
+            <div class="posts-grid">
+              <article v-for="post in postsByType.sell" :key="post._id" class="post-card">
+                <router-link :to="`/posts/${post._id}`" class="post-image-link">
+                  <img v-if="post.images?.[0]" :src="imageUrl(post.images[0])" :alt="post.title" class="post-image" />
+                </router-link>
+                <div class="post-meta p-4">
+                  <router-link :to="`/posts/${post._id}`" class="post-title">{{ post.title }}</router-link>
+                  <p class="post-detail">{{ post.category }} · {{ post.location }}</p>
+                  <p class="post-price">{{ formatPrice(post) }}</p>
+                </div>
+              </article>
             </div>
-          </div>
+          </section>
+
+          <section v-if="postsByType.exchange.length > 0" class="post-category-section">
+            <div class="category-title"><span>🔄</span> {{ languageStore.t('forExchange') || 'For Exchange' }}</div>
+            <div class="posts-grid">
+              <article v-for="post in postsByType.exchange" :key="post._id" class="post-card">
+                <router-link :to="`/posts/${post._id}`" class="post-image-link">
+                  <img v-if="post.images?.[0]" :src="imageUrl(post.images[0])" :alt="post.title" class="post-image" />
+                </router-link>
+                <div class="post-meta p-4">
+                  <router-link :to="`/posts/${post._id}`" class="post-title">{{ post.title }}</router-link>
+                  <p class="post-detail">{{ post.category }} · {{ post.location }}</p>
+                  <p class="post-price">{{ formatPrice(post) }}</p>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section v-if="postsByType.lend.length > 0" class="post-category-section">
+            <div class="category-title"><span>🤝</span> {{ languageStore.t('forLend') || 'For Lend' }}</div>
+            <div class="posts-grid">
+              <article v-for="post in postsByType.lend" :key="post._id" class="post-card">
+                <router-link :to="`/posts/${post._id}`" class="post-image-link">
+                  <img v-if="post.images?.[0]" :src="imageUrl(post.images[0])" :alt="post.title" class="post-image" />
+                </router-link>
+                <div class="post-meta p-4">
+                  <router-link :to="`/posts/${post._id}`" class="post-title">{{ post.title }}</router-link>
+                  <p class="post-detail">{{ post.category }} · {{ post.location }}</p>
+                  <p class="post-price">{{ formatPrice(post) }}</p>
+                </div>
+              </article>
+            </div>
+          </section>
         </div>
       </div>
-      <div v-else-if="!isLoadingPosts" class="no-posts">
-        <p>{{ isOwnProfile ? languageStore.t('noPosts') : `${profileUser?.name} has no posts yet.` }}</p>
-      </div>
-      <div v-if="isLoadingPosts" class="loading">
-        <p>{{ languageStore.t('loading') || 'Loading posts...' }}</p>
-      </div>
-    </div>
-    </div>
 
-    <Footer />
+      <section id="recent-reviews">
+        <RatingStats
+          v-if="!isOwnProfile && profileUser"
+          :stats="ratingStats"
+          :is-loading="isLoadingRatings"
+          :show-recent-reviews="true"
+          :expanded="showAllReviews"
+          class="mb-8"
+          @rate="handleRateClick"
+          @see-more="handleSeeMore"
+        />
+      </section>
+
+      <div v-if="isOwnProfile" class="info-form">
+        <div class="form-column">
+          <div class="field"><span>{{ languageStore.t('firstName') }}</span><p>{{ form.firstName }}</p></div>
+          <div class="field"><span>{{ languageStore.t('birthDate') }}</span><p>{{ form.birthDate }}</p></div>
+          <div class="field"><span>{{ languageStore.t('nationality') }}</span><p>{{ form.nationality }}</p></div>
+          <div class="field"><span>{{ languageStore.t('username') }}</span><p>{{ form.username }}</p></div>
+        </div>
+
+        <div class="form-column">
+          <div class="field"><span>{{ languageStore.t('lastName') }}</span><p>{{ form.lastName }}</p></div>
+          <div class="field"><span>{{ languageStore.t('gender') }}</span><p>{{ form.gender }}</p></div>
+          <div class="field"><span>{{ languageStore.t('phoneNumber') }}</span><p>{{ form.phone }}</p></div>
+          <div class="field"><span>{{ languageStore.t('email') }}</span><p>{{ form.email }}</p></div>
+        </div>
+      </div>
+
+      <div class="form-actions"><button v-if="isOwnProfile" class="btn edit" type="button" @click="goToEdit">{{ languageStore.t('editProfile') }}</button></div>
+
+      <RatingModal v-if="showRatingModal && profileUser" :user-id="profileUser.id" :user-name="profileUser.name" @submit="handleRatingSubmit" @close="showRatingModal = false" />
+    </div>
+  </div>
+
+    <Footer v-if="!isOwnProfile" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted, computed, ref, watch } from 'vue'
+import { reactive, onMounted, computed, ref, watch, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
+import Sidebar from '../userprofileComponent/Sidebar.vue'
 import Header from '@/components/layout/Header.vue'
 import Footer from '@/components/layout/Footer.vue'
-import Sidebar from '../userprofileComponent/Sidebar.vue'
+import RatingStats from '@/components/RatingStats.vue'
+import RatingModal from '@/components/RatingModal.vue'
 import { useLanguageStore } from '../stores/language'
 import { useAuthStore } from '@/stores/auth'
+import { ratingsApi } from '@/services/ratings'
 import type { User } from '@/types/auth'
 
 interface UserPost {
@@ -172,9 +189,47 @@ const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const DEFAULT_AVATAR = '/userprofileImage/avatar.png'
 
 const profileUser = ref<User | null>(null)
-const userPosts = ref<UserPost[]>([])
-const isLoadingPosts = ref(false)
 const viewedUsername = ref<string | null>(null)
+const showRatingModal = ref(false)
+const showAllReviews = ref(false)
+const allRatings = ref<any[] | null>(null)
+
+const handleSeeMore = async () => {
+  const userId = profileUser.value?.id || ''
+  if (!userId) return
+  isLoadingRatings.value = true
+  try {
+    const resp = await ratingsApi.getAllRatingsForUser(userId)
+    const fetched = resp.data || resp || []
+    console.log('handleSeeMore: fetched ratings count =', (fetched && fetched.length) || 0)
+    try { console.log('handleSeeMore: fetched ids =', (fetched || []).map((r: any) => r._id)) } catch (e) {}
+    // put fetched reviews into the recentRatings shown by RatingStats
+    if (!ratingStats.value) ratingStats.value = { averageScore: 0, totalRatings: fetched.length, distribution: {1:0,2:0,3:0,4:0,5:0}, recentRatings: [] }
+    ratingStats.value.recentRatings = fetched
+    console.log('handleSeeMore: ratingStats after set recentRatings, totalRatings=', ratingStats.value?.totalRatings, 'recentRatings.length=', (ratingStats.value?.recentRatings || []).length)
+    showAllReviews.value = true
+    console.log('handleSeeMore: populated recentRatings with', (fetched && fetched.length) || 0)
+    await nextTick()
+    const el = document.getElementById('recent-reviews')
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  } catch (err) {
+    console.error('Failed to load all ratings:', err)
+    ratingStats.value = ratingStats.value || { averageScore: 0, totalRatings: 0, distribution: {1:0,2:0,3:0,4:0,5:0}, recentRatings: [] }
+    ratingStats.value.recentRatings = []
+    showAllReviews.value = true
+    console.log('handleSeeMore: error fetching ratings')
+    await nextTick()
+    const el = document.getElementById('recent-reviews')
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  } finally {
+    isLoadingRatings.value = false
+  }
+}
+const ratingStats = ref<any>(null)
+const isLoadingRatings = ref(false)
+const profilePosts = ref<UserPost[]>([])
+const isLoadingPosts = ref(false)
+const postsError = ref('')
 
 const displayUser = computed<User | null>(() => profileUser.value || authStore.user || null)
 
@@ -193,6 +248,29 @@ const displayLastName = computed(() => {
 })
 
 const displayUsername = computed(() => displayUser.value?.username || '')
+const routeUserName = computed(() => {
+  const raw = route.query.user
+  if (Array.isArray(raw)) return raw[0] || ''
+  return String(raw || '').trim()
+})
+const profileIdentifier = computed(() => profileUser.value?.username || profileUser.value?.id || viewedUsername.value || routeUserName.value || '')
+const profileFullName = computed(() => profileUser.value?.name || displayUser.value?.name || displayUser.value?.username || profileIdentifier.value)
+
+const chatQuery = computed(() => ({
+  sellerId: profileUser.value?.id || profileIdentifier.value,
+  sellerName: profileFullName.value,
+  sellerAvatar: avatarUrl.value,
+  sellerLocation: (profileUser.value as any)?.location || '',
+}))
+
+const goToChat = () => {
+  const query = chatQuery.value
+  if (!query.sellerName || !query.sellerId) {
+    return
+  }
+  router.push({ name: 'chat', query })
+}
+
 const ratingValue = computed(() => {
   if (displayUser.value?.rating !== undefined && displayUser.value?.rating !== null) {
     return displayUser.value.rating.toFixed(1)
@@ -206,6 +284,24 @@ const ratingText = computed(() => {
   return 'No ratings yet'
 })
 
+const postsByType = computed<Record<'sell' | 'exchange' | 'lend', UserPost[]>>(() => {
+  const grouped: Record<'sell' | 'exchange' | 'lend', UserPost[]> = {
+    sell: [],
+    exchange: [],
+    lend: [],
+  }
+
+  for (const post of profilePosts.value) {
+    const type = ['sell', 'exchange', 'lend'].includes(String(post.type))
+      ? (post.type as 'sell' | 'exchange' | 'lend')
+      : 'sell'
+    grouped[type].push(post)
+  }
+
+  return grouped
+})
+
+const hasProfilePosts = computed(() => profilePosts.value.length > 0)
 const avatarUrl = ref<string>(DEFAULT_AVATAR)
 
 function normalizeAvatarPath(avatar?: string | null) {
@@ -224,6 +320,25 @@ watch(displayUser, (val) => {
 
 const onAvatarError = () => {
   avatarUrl.value = DEFAULT_AVATAR
+}
+
+async function loadProfilePosts(userId: string) {
+  profilePosts.value = []
+  postsError.value = ''
+  isLoadingPosts.value = true
+
+  try {
+    const response = await axios.get(`${apiBaseUrl}/posts`, {
+      params: { ownerId: userId, limit: '100' },
+    })
+    profilePosts.value = response.data.posts ?? []
+  } catch (error: unknown) {
+    console.error('Failed to load user posts:', error)
+    postsError.value =
+      languageStore.t('errorLoadingSavedPosts') || 'Failed to load posts for this user.'
+  } finally {
+    isLoadingPosts.value = false
+  }
 }
 
 const form = reactive({
@@ -310,20 +425,64 @@ const loadUserProfile = async (userName: string) => {
   }
 }
 
-const loadUserPosts = async (userId: string) => {
+const loadRatingStats = async (userId: string) => {
   if (!userId) return
-  isLoadingPosts.value = true
+  isLoadingRatings.value = true
+  // reset expanded view when reloading stats
+  showAllReviews.value = false
   try {
-    const response = await axios.get(`${apiBaseUrl}/posts`, {
-      params: { ownerId: userId, limit: 100 }
-    })
-    userPosts.value = response.data.posts || []
-    console.log(`Loaded ${userPosts.value.length} posts for user ${userId}`)
+    const response = await ratingsApi.getUserRatingStats(userId)
+    ratingStats.value = response.data || response
+
+    // If the stats endpoint doesn't already include recent ratings, populate them from the full ratings list.
+    if (ratingStats.value && !ratingStats.value.recentRatings) {
+      const recentResponse = await ratingsApi.getAllRatingsForUser(userId)
+      const recentRatings = recentResponse.data || recentResponse || []
+      ratingStats.value = {
+        ...ratingStats.value,
+        recentRatings,
+      }
+    }
   } catch (error) {
-    console.error('Failed to load user posts:', error)
-    userPosts.value = []
+    console.error('Failed to load rating stats:', error)
+    ratingStats.value = null
   } finally {
-    isLoadingPosts.value = false
+    isLoadingRatings.value = false
+  }
+}
+
+const handleRateClick = () => {
+  if (!authStore.isAuthenticated) {
+    alert('Please log in to rate this user')
+    router.push({ name: 'login', query: { redirect: route.fullPath } })
+    return
+  }
+  
+  if (isOwnProfile.value) {
+    alert("You can't rate your own profile")
+    return
+  }
+  
+  showRatingModal.value = true
+}
+
+const handleRatingSubmit = async (payload: {score: number; comment?: string; tags?: string[]}) => {
+  try {
+    const viewedUserId = profileUser.value?.id || ''
+    await ratingsApi.submitRating({
+      userId: viewedUserId,
+      score: payload.score,
+      comment: payload.comment,
+      tags: payload.tags,
+    })
+    
+    // Refresh rating stats
+    await loadRatingStats(viewedUserId)
+    showRatingModal.value = false
+    alert('Thank you for your rating!')
+  } catch (error) {
+    console.error('Failed to submit rating:', error)
+    alert('Failed to submit rating. Please try again.')
   }
 }
 
@@ -345,7 +504,8 @@ const loadProfile = async () => {
     viewedUsername.value = userName
     const userId = await loadUserProfile(userName)
     if (userId) {
-      await loadUserPosts(userId)
+      await loadRatingStats(userId)
+      await loadProfilePosts(userId)
     }
   } else {
     // Viewing own profile
@@ -354,10 +514,6 @@ const loadProfile = async () => {
       await authStore.refreshUser()
     }
     fillFromAuthUser()
-    // Load own posts by ID
-    if (authStore.user?.id) {
-      await loadUserPosts(authStore.user.id)
-    }
   }
 }
 
@@ -369,15 +525,72 @@ const goBack = () => {
   router.back()
 }
 
+watch(
+  () => authStore.user,
+  () => {
+    fillFromAuthUser()
+  },
+  { immediate: true, deep: true }
+)
+
+watch(
+  () => route.query.user,
+  async () => {
+    await loadProfile()
+  }
+)
+
 onMounted(async () => {
   await loadProfile()
+  // react to profile updates for this user and update avatar + posts
+  const handleProfileUpdated = async (e: Event) => {
+    try {
+      const detail = (e as CustomEvent).detail as { userId?: string; avatar?: string; username?: string }
+      if (!detail) return
+      const { userId, avatar, username } = detail
+      // if this profile belongs to the updated user, refresh avatar and posts + ratings
+      const isThisProfile = (() => {
+        if (!profileUser.value) return false
+        if (profileUser.value.id && userId) return String(profileUser.value.id) === String(userId)
+        if (profileUser.value.username && username) return String(profileUser.value.username).trim().toLowerCase() === String(username).trim().toLowerCase()
+        return false
+      })()
+      if (isThisProfile) {
+        if (avatar) profileUser.value = { ...(profileUser.value as any), avatar }
+        const id = profileUser.value?.id || ''
+        if (id) {
+          try {
+            await loadRatingStats(id)
+          } catch {}
+          try {
+            await loadProfilePosts(id)
+          } catch {}
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+  window.addEventListener('profileUpdated', handleProfileUpdated as EventListener)
+  ;(window as any).__personal_handleProfileUpdated = handleProfileUpdated
+})
+
+onBeforeUnmount(() => {
+  const h = (window as any).__personal_handleProfileUpdated
+  if (h) window.removeEventListener('profileUpdated', h as EventListener)
 })
 </script>
 
 <style scoped>
+.personal-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 .personal-info {
   display: flex;
-  min-height: 100vh;
+  flex: 1;
 }
 
 .content {
@@ -401,6 +614,49 @@ onMounted(async () => {
 
 .back-btn:hover {
   color: #ff4b42;
+}
+
+.profile-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.profile-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  padding: 0.75rem 1.25rem;
+  border-radius: 9999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.profile-action-button.chat {
+  background: #ff8c00;
+  color: white;
+}
+
+.profile-action-button.chat:hover {
+  background: #ff9d21;
+}
+
+.profile-action-button.report {
+  background: white;
+  color: #1e1b4b;
+  border: 1px solid #e0e2f3;
+}
+
+.profile-action-button.report:hover {
+  background: #f5f6ff;
+}
+
+.profile-action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .title {
@@ -496,6 +752,22 @@ onMounted(async () => {
   color: #6b7280;
 }
 
+.btn-rate-user {
+  padding: 8px 16px;
+  background: #fbbf24;
+  color: #1f2937;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-rate-user:hover {
+  background: #f59e0b;
+}
+
 /* Posts Section */
 .posts-section {
   margin-top: 48px;
@@ -508,6 +780,20 @@ onMounted(async () => {
   font-weight: bold;
   margin-bottom: 20px;
   color: #1e1b4b;
+}
+
+.post-category-section {
+  margin-bottom: 32px;
+}
+
+.category-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .posts-grid {

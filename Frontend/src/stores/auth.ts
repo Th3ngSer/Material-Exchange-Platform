@@ -6,11 +6,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authApi } from '@/services/auth'
+import { connectSocket, disconnectSocket } from '@/services/socket'
 import { getToken, setToken, clearToken } from '@/utils/tokenStorage'
 import type { AuthState, User, LoginCredentials, RegisterCredentials } from '@/types/auth'
 
 export const useAuthStore = defineStore('auth', () => {
-  const USER_STORAGE_KEY = 'authUser'
+  const USER_STORAGE_KEY = 'authUser' // Use localStorage for persistence across page reloads
 
   // State
   const user = ref<User | null>(null)
@@ -33,9 +34,30 @@ export const useAuthStore = defineStore('auth', () => {
 
   const getAvatarStorageKey = (userId: string) => `avatar_${userId}`
 
+  function readCachedAvatar(userId: string): string | null {
+    try {
+      return localStorage.getItem(getAvatarStorageKey(userId))
+    } catch {
+      return null
+    }
+  }
+
+  function writeCachedAvatar(value: User | null) {
+    try {
+      if (!value?.id) return
+      if (!value.avatar) {
+        localStorage.removeItem(getAvatarStorageKey(value.id))
+      } else {
+        localStorage.setItem(getAvatarStorageKey(value.id), value.avatar)
+      }
+    } catch {
+      // Silently ignore storage errors
+    }
+  }
+
   function readStoredUser(): User | null {
     try {
-      const raw = sessionStorage.getItem(USER_STORAGE_KEY)
+      const raw = localStorage.getItem(USER_STORAGE_KEY)
       if (!raw) return null
       return JSON.parse(raw) as User
     } catch {
@@ -46,11 +68,11 @@ export const useAuthStore = defineStore('auth', () => {
   function writeStoredUser(value: User | null) {
     try {
       if (!value) {
-        sessionStorage.removeItem(USER_STORAGE_KEY)
+        localStorage.removeItem(USER_STORAGE_KEY)
         return
       }
 
-      sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(value))
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(value))
     } catch {
       // Silently ignore storage errors (e.g., from tracking prevention)
     }
@@ -81,10 +103,14 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Store user data
       user.value = response.user
+      writeCachedAvatar(response.user)
       writeStoredUser(response.user)
 
       // Store token — tab-isolated + refresh-persistent
       setToken(response.accessToken)
+
+      // Ensure socket connects for real-time events
+      try { connectSocket() } catch {}
 
       return response
     } catch (err) {
@@ -109,7 +135,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (response.user && !response.user.avatar) {
         try {
-          const savedAvatar = sessionStorage.getItem(getAvatarStorageKey(response.user.id))
+          const savedAvatar = localStorage.getItem(getAvatarStorageKey(response.user.id))
           if (savedAvatar) {
             response.user.avatar = savedAvatar
           }
@@ -120,10 +146,14 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Store user data
       user.value = response.user
+      writeCachedAvatar(response.user)
       writeStoredUser(response.user)
 
       // Store token — tab-isolated + refresh-persistent
       setToken(response.accessToken)
+
+      // Ensure socket connects for real-time events
+      try { connectSocket() } catch {}
 
       return response
     } catch (err) {
@@ -145,6 +175,7 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
     clearToken()
     writeStoredUser(null)
+    try { disconnectSocket() } catch {}
   }
 
   /**
@@ -157,10 +188,9 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * Initialize auth state from local cache.
    * Restores user immediately from localStorage so the app mounts with the
-   * correct state. Token validation happens via the global 401 interceptor
-   * on the first real API call — NOT here, to avoid wiping valid sessions.
+   * correct state. Then refreshes from MongoDB to get the latest data.
    */
-  function initializeAuth() {
+  async function initializeAuth() {
     const token = getToken()
     if (!token) {
       user.value = null
@@ -169,6 +199,19 @@ export const useAuthStore = defineStore('auth', () => {
     // Restore user from cache — the app can render straight away
     const storedUser = readStoredUser()
     user.value = storedUser
+
+    // Refresh from MongoDB to ensure we have the latest avatar and profile
+    // This is the source of truth, not localStorage
+    try {
+      const profile = await refreshUser()
+      // connect socket after successful refresh so we have a valid token
+      if (profile) {
+        try { connectSocket() } catch {}
+      }
+    } catch {
+      // If refresh fails, we still have the cached user from localStorage
+      // Token will be validated on next API call
+    }
   }
 
   /**
@@ -188,6 +231,7 @@ export const useAuthStore = defineStore('auth', () => {
       const updatedUser = await authApi.updateProfile(token, profileData)
 
       user.value = updatedUser
+      writeCachedAvatar(updatedUser)
       writeStoredUser(updatedUser)
 
       return updatedUser
@@ -219,6 +263,10 @@ export const useAuthStore = defineStore('auth', () => {
 
       const profile = await authApi.getProfile(token)
       user.value = profile
+      writeCachedAvatar(profile)
+      writeStoredUser(profile)
+      // ensure socket is connected when we successfully refresh user
+      try { connectSocket() } catch {}
       return profile
     } catch (err) {
       const statusCode = (err as any)?.statusCode
@@ -246,6 +294,7 @@ export const useAuthStore = defineStore('auth', () => {
     initializeAuth,
     updateProfile,
     refreshUser,
+    writeCachedAvatar,
   }
 
 })

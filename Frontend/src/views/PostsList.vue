@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { getToken } from '@/utils/tokenStorage'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 import { useLanguageStore } from '@/stores/language'
 import { useAuthStore } from '@/stores/auth'
@@ -141,7 +141,41 @@ async function deletePost(postId: string, title: string) {
   }
 }
 
-onMounted(loadPosts)
+onMounted(() => {
+  loadPosts()
+
+  const handleProfileUpdated = (e: Event) => {
+    try {
+      const detail = (e as CustomEvent).detail as { userId?: string; avatar?: string; username?: string }
+      if (!detail) return
+      const { userId, avatar, username } = detail
+      posts.value = posts.value.map((p) => {
+        const ownedById = userId && p.ownerId && String(p.ownerId) === String(userId)
+        const ownedByName = username && String(p.listerName || '').trim().toLowerCase() === String(username).trim().toLowerCase()
+        if (ownedById || ownedByName) {
+          return {
+            ...p,
+            listerName: username || p.listerName,
+            // store avatar path as returned by backend
+            // frontend will compute full URL where needed
+            listerAvatar: avatar || p['listerAvatar'],
+          }
+        }
+        return p
+      })
+    } catch {
+      // ignore
+    }
+  }
+
+  window.addEventListener('profileUpdated', handleProfileUpdated as EventListener)
+  ;(window as any).__postsList_handleProfileUpdated = handleProfileUpdated
+})
+
+onBeforeUnmount(() => {
+  const h = (window as any).__postsList_handleProfileUpdated
+  if (h) window.removeEventListener('profileUpdated', h as EventListener)
+})
 </script>
 
 <template>

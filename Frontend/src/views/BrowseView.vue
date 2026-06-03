@@ -16,6 +16,7 @@ import { defaultMaterials, type MaterialCategory, type MaterialItem } from '@/da
 
 interface PostRecord {
   _id: string
+  ownerId?: string
   type: 'sell' | 'exchange' | 'lend'
   title: string
   description: string
@@ -114,6 +115,7 @@ function mapPostToMaterial(post: PostRecord): MaterialItem {
     description: post.description,
     condition: post.condition === 'new' ? 'New' : 'Used',
     exchangeFor: post.exchangeFor,
+    ownerId: post.ownerId,
     seller: post.listerName || 'Unknown',
     avatar: post.listerAvatar ? imageUrl(post.listerAvatar) : undefined,
   }

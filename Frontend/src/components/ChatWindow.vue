@@ -3,6 +3,8 @@ import { ref, computed, watch, nextTick } from "vue"
 import { useAuthStore } from "../stores/auth"
 import type { ChatMessage, ChatUser } from '@/types/chat'
 
+const API_URL = 'http://localhost:3000'
+
 const props = defineProps<{
   selectedUser: ChatUser | null
   messages: ChatMessage[]
@@ -37,7 +39,13 @@ const normalizeAvatarUrl = (value: string | undefined | null, fallbackName = 'Us
   if (!normalized || normalized.toLowerCase() === 'null' || normalized.toLowerCase() === 'undefined') {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(fallbackName)}&background=0D8ABC&color=fff`
   }
-  return normalized
+  if (normalized.startsWith('http')) {
+    return normalized
+  }
+  if (normalized.startsWith('/')) {
+    return `${API_URL}${normalized}`
+  }
+  return `${API_URL}/${normalized}`
 }
 
 const currentUserAvatar = computed(() => {
@@ -98,9 +106,7 @@ watch(
   }
 )
 
-// =========================
 // ATTACH FILE
-// =========================
 const handleAttachClick = () => {
   fileInput.value?.click()
 }

@@ -135,6 +135,7 @@ const saveProfile = async () => {
       birthDate: form.birthDate,
     })
 
+    await authStore.refreshUser()
     router.push('/profile')
   } catch (err) {
     const statusCode = err?.statusCode

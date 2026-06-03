@@ -12,6 +12,7 @@ const toggleFollow = () => {
 }
 
 const props = defineProps<{
+  sellerId?: string
   name: string
   rating: number
   responseTime: string
@@ -23,11 +24,22 @@ const isCurrentUserProfile = computed(() => {
   const currentUser = authStore.user
   if (!currentUser) return false
 
+  if (props.sellerId && String(props.sellerId) === String(currentUser.id)) {
+    return true
+  }
+
   const currentIdentities = [currentUser.username, currentUser.name]
     .filter(Boolean)
     .map((value) => String(value).trim().toLowerCase())
 
   return currentIdentities.includes(String(props.name).trim().toLowerCase())
+})
+
+const displayName = computed(() => {
+  if (isCurrentUserProfile.value && authStore.user) {
+    return authStore.user.username || authStore.user.name || props.name
+  }
+  return props.name
 })
 
 const profileLink = computed(() =>
@@ -42,15 +54,20 @@ const getAvatarUrl = (avatar?: string) => {
     return '/userprofileImage/avatar.png'
   }
 
-  if (/^https?:\/\//i.test(normalized)) return normalized
+  if (/^https?:\/\//i.test(normalized)) {
+    // Add cache buster for http URLs
+    const separator = normalized.includes('?') ? '&' : '?'
+    return `${normalized}${separator}t=${Date.now()}`
+  }
 
   const uploadBase = apiBaseUrl.replace(/\/api\/?$/, '')
   const clean = normalized.replace(/^\/+/, '')
-  if (clean.startsWith('uploads/')) return `${uploadBase}/${clean}`
-  return `${uploadBase}/uploads/${clean}`
+  const basePath = clean.startsWith('uploads/') ? `${uploadBase}/${clean}` : `${uploadBase}/uploads/${clean}`
+  // Add cache buster
+  return `${basePath}?t=${Date.now()}`
 }
 
-const avatarUrl = computed(() => getAvatarUrl(props.avatar))
+const avatarUrl = computed(() => getAvatarUrl(isCurrentUserProfile.value ? authStore.user?.avatar : props.avatar))
 
 const handleAvatarError = (event: Event) => {
   const img = event.target as HTMLImageElement
@@ -68,7 +85,7 @@ const handleAvatarError = (event: Event) => {
       <div class="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-[#23216e] text-sm font-bold text-white">
         <img
           :src="avatarUrl"
-          :alt="name"
+          :alt="displayName"
           class="h-full w-full object-cover"
           @error="handleAvatarError"
         />
@@ -77,7 +94,7 @@ const handleAvatarError = (event: Event) => {
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-2">
           <h3 class="truncate text-sm font-extrabold">
-            {{ name }}
+            {{ displayName }}
           </h3>
 
           <span class="rounded-full bg-[#ecfff3] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#069355]">
@@ -117,9 +134,9 @@ const handleAvatarError = (event: Event) => {
         :to="{
           name: 'chat',
           query: {
-            sellerId: props.name,
-            sellerName: props.name,
-            sellerAvatar: getAvatarUrl(props.avatar),
+            sellerId: props.sellerId || props.name,
+            sellerName: displayName,
+            sellerAvatar: avatarUrl,
             sellerLocation: props.location,
           },
         }"

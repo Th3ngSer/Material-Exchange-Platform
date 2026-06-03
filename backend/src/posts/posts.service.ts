@@ -351,6 +351,45 @@ export class PostsService {
     }
   }
 
+  // ─── UPDATE USER POSTS ─────────────────────────────────────────────────────
+  /**
+   * Update all posts owned by a user with new avatar/name
+   * Called when user updates their profile
+   */
+  async updateUserPostsAvatar(
+    ownerId: string,
+    listerName: string,
+    listerAvatar?: string,
+  ): Promise<{ modifiedCount: number }> {
+    try {
+      this.assertValidId(ownerId, 'owner');
+      
+      // Update posts by ownerId (newer posts)
+      const result = await this.postModel.updateMany(
+        { ownerId },
+        { listerName, listerAvatar },
+      );
+      
+      // Also update by listerName as fallback for old posts without ownerId
+      const resultByName = await this.postModel.updateMany(
+        { listerName: { $exists: true }, ownerId: { $exists: false } },
+        { listerName, listerAvatar },
+      );
+      
+      const totalModified = result.modifiedCount + resultByName.modifiedCount;
+      this.logger.log(
+        `✅ Updated posts for user ${ownerId}: ${result.modifiedCount} by ID + ${resultByName.modifiedCount} by name = ${totalModified} total`,
+      );
+      return { modifiedCount: totalModified };
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      this.logger.error(
+        `❌ Failed to update user posts: ${err?.message || String(error)}`,
+      );
+      throw error;
+    }
+  }
+
   // ─── Helper ───────────────────────────────────────────────────────────────
   private deleteImageFiles(images: string[]) {
     const dir = process.env.UPLOAD_DIR ?? 'uploads';

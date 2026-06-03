@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { ChatUser } from '@/types/chat'
 
+const API_URL = 'http://localhost:3000'
+
 const { users, selectedUser } = defineProps<{
   users: ChatUser[]
   selectedUser: ChatUser | null
@@ -10,15 +12,29 @@ const emit = defineEmits<{
   (e: 'select-user', user: ChatUser): void
 }>()
 
+const normalizeAvatarUrl = (value: string | undefined | null, name = 'User') => {
+  const avatarValue = String(value || '').trim()
+  if (!avatarValue || ['null', 'undefined'].includes(avatarValue.toLowerCase())) {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff`
+  }
+  if (avatarValue.startsWith('http')) {
+    return avatarValue
+  }
+  if (avatarValue.startsWith('/')) {
+    return `${API_URL}${avatarValue}`
+  }
+  return `${API_URL}/${avatarValue}`
+}
+
 const getAvatarUrl = (user: ChatUser) => {
   const avatarValue = user.avatar?.trim()
   if (avatarValue) {
-    return avatarValue
+    return normalizeAvatarUrl(avatarValue, user.name || 'User')
   }
 
   const stored = localStorage.getItem(`avatar_${String(user.id)}`)
   if (stored) {
-    return stored
+    return normalizeAvatarUrl(stored, user.name || 'User')
   }
 
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=0D8ABC&color=fff`
@@ -37,7 +53,7 @@ const handleAvatarError = (event: Event) => {
       <h3>ប្រអប់សារ</h3>
     </div>
 
-    <!-- ❗ FIX 1: empty state -->
+    <!--empty state -->
     <div v-if="!users || users.length === 0" class="empty">
       No users found
     </div>
@@ -64,7 +80,12 @@ const handleAvatarError = (event: Event) => {
         <div class="content">
           <div class="user-header">
             <p class="name">{{ user.name }}</p>
-            <span class="time">{{ user.time }}</span>
+            <div class="user-meta">
+              <span class="time">{{ user.time }}</span>
+              <span v-if="user.unreadCount && user.unreadCount > 0" class="unread-badge">
+                {{ user.unreadCount > 99 ? '99+' : user.unreadCount }}
+              </span>
+            </div>
           </div>
           <p class="message">{{ user.message }}</p>
         </div>
@@ -153,6 +174,26 @@ const handleAvatarError = (event: Event) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 4px;
+}
+
+.user-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.unread-badge {
+  min-width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .name {
