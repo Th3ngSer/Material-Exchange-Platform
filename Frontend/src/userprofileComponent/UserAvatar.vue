@@ -72,12 +72,17 @@ const DEFAULT_AVATAR = '/userprofileImage/avatar.png'
 const previewImage = ref<string>(DEFAULT_AVATAR)
 
 /**
- * Convert backend avatar to full URL
+ * Convert backend avatar to full URL with cache buster
  */
 const normalizeAvatar = (avatar?: string | null) => {
   if (!avatar) return DEFAULT_AVATAR
-  if (avatar.startsWith('http')) return avatar
-  return `${API_URL}/${avatar}`
+  if (avatar.startsWith('http')) {
+    // Add cache buster to avoid browser caching old image
+    const separator = avatar.includes('?') ? '&' : '?'
+    return `${avatar}${separator}t=${Date.now()}`
+  }
+  // Add cache buster to avoid browser caching old image
+  return `${API_URL}/${avatar}?t=${Date.now()}`
 }
 
 /**
@@ -155,6 +160,16 @@ const onFileChange = async (event: Event) => {
     authStore.user = {
       ...authStore.user,
       avatar: avatarPath
+    }
+    authStore.writeCachedAvatar(authStore.user)
+    authStore.writeStoredUser(authStore.user)
+
+    // Refresh user from server to ensure avatar persists across reloads
+    try {
+      await authStore.refreshUser()
+    } catch {
+      // Avatar was uploaded successfully, just couldn't refresh from server
+      // Store is already updated locally
     }
 
   } catch (error) {

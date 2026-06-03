@@ -38,6 +38,21 @@ export class UsersService {
     return this.userModel.findById(id).exec();
   }
 
+  private escapeRegex(text: string) {
+    return text.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')
+  }
+
+  findByName(name: string): Promise<UserDocument | null> {
+    const safe = this.escapeRegex(name)
+    const nameRegex = new RegExp(`^${safe}$`, 'i')
+    return this.userModel.findOne({
+      $or: [
+        { name: nameRegex },
+        { username: nameRegex },
+      ],
+    }).exec();
+  }
+
   updateUser(
     userId: string,
     update: UpdateUserInput,
@@ -128,5 +143,15 @@ export class UsersService {
     }
 
     return { message: 'User deleted successfully' };
+  }
+
+  async findAllExcept(userId: string): Promise<Array<{ _id: string; name?: string; username?: string; avatar?: string }>> {
+    const users = await this.userModel
+      .find({ _id: { $ne: userId } })
+      .select('name username avatar')
+      .lean()
+      .exec();
+
+    return users.map((u: any) => ({ _id: String(u._id), name: u.name, username: u.username, avatar: u.avatar }));
   }
 }

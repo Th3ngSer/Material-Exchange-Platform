@@ -29,6 +29,7 @@ import LangaugeInformation from '../user/LangaugeInformation.vue'
 import LogoutInformation from '@/user/LogoutInformation.vue'
 import PaymentInformation from '@/user/PaymentInformation.vue'
 import TrackingInformation from '@/user/TrackingInformation.vue'
+import MyPostsProfile from '../user/MyPostsProfile.vue'
 // Notifications
 import NotificationsView from '../components/Notificationsview.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -62,6 +63,8 @@ const router = createRouter({
 
     // Profile
     { path: '/profile', name: 'profile', component: Profile },
+    { path: '/profile/reviews', name: 'profile-reviews', component: () => import('@/user/UserReviews.vue') },
+    { path: '/profile/posts', name: 'profile-posts', component: MyPostsProfile, meta: { requiresAuth: true } },
     { path: '/profile/edit', name: 'edit-profile', component: EditProfile },
     { path: '/profile/help', name: 'help-profile', component: HelpProfile },
     { path: '/profile/language', name: 'language-information', component: LangaugeInformation },

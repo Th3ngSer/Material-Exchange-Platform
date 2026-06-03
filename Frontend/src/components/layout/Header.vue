@@ -56,7 +56,7 @@ const goToNotifications = () => {
     >
       <RouterLink
         class="inline-flex items-center gap-3 text-[32px] font-extrabold tracking-[-0.04em] no-underline cursor-pointer hover:opacity-80 transition-opacity duration-200"
-        to="/"
+        :to="{ name: 'home' }"
         aria-label="Material Exchange Platform home"
       >
         <img :src="Logo" alt="Material Exchange logo" class="h-6 w-auto" />
@@ -218,9 +218,9 @@ const goToNotifications = () => {
         </RouterLink>
         <RouterLink
           v-else
-          class="grid h-[34px] w-[34px] place-items-center rounded-full border border-[#201f62] text-[#201f62]"
-          to="/profile"
-          aria-label="Profile"
+            class="grid h-[34px] w-[34px] place-items-center rounded-full border border-[#201f62] text-[#201f62]"
+            :to="{ name: 'profile' }"
+            aria-label="Profile"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" class="h-[20px] w-[20px] fill-current">
             <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.33 0-8 1.67-8 5v1h16v-1c0-3.33-4.67-5-8-5Z" />

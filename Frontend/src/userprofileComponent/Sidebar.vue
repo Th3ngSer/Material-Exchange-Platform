@@ -11,8 +11,13 @@
         <NavItem :label="languageStore.t('trackingItem')" icon="/userprofileImage/tracker.png" />
       </router-link>
 
+
       <router-link to="/profile/payment" class="nav-link" active-class="active-link">
         <NavItem :label="languageStore.t('payments')" icon="/userprofileImage/wallet.png" />
+      </router-link>
+
+      <router-link :to="{ name: 'profile-reviews', query: { user: authStore.user?.username || authStore.user?.name } }" class="nav-link" active-class="active-link">
+        <NavItem :label="languageStore.t('reviews' as any) || 'Reviews'" icon="/userprofileImage/review.png" />
       </router-link>
 
 
@@ -52,6 +57,7 @@ export default defineComponent({
     return {
       languageStore,
       user,
+      authStore,
     }
   },
 })

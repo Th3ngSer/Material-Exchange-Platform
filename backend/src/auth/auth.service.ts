@@ -104,6 +104,21 @@ export class AuthService {
     return this.serializeUser(user);
   }
 
+  async getUserByName(name: string) {
+    try {
+      const user = await this.usersService.findByName(name);
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      return this.serializeUser(user);
+    } catch (err) {
+      console.error('Error in getUserByName:', err);
+      throw err;
+    }
+  }
+
   private buildAuthResponse(user: UserDocument) {
     const payload: JwtPayload = {
       sub: user.id,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 
@@ -9,10 +9,12 @@ import CategoryMarquee from '../components/HomeView/CategoryMarquee.vue'
 import MaterialCard from '@/components/materialDetail/MaterialCard.vue'
 import Footer from '@/components/layout/Footer.vue'
 import Header from '@/components/layout/Header.vue'
+import { useAuthStore } from '@/stores/auth'
 import { defaultMaterials, type MaterialItem, type MaterialCategory } from '@/data/materials'
 
 interface PostRecord {
   _id: string
+  ownerId?: string
   type: 'sell' | 'exchange' | 'lend'
   title: string
   description: string
@@ -52,7 +54,12 @@ const liveMaterials = ref<MaterialItem[]>(props.materials)
 function imageUrl(image: string) {
   if (/^https?:\/\//i.test(image)) return image
   const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '')
-  return `${uploadBaseUrl}/uploads/${image.replace(/^\/+/, '')}`
+  const clean = image.replace(/^\/+/, '')
+  if (clean.startsWith('uploads/')) return `${uploadBaseUrl}/${clean}`
+  // Add cache-buster timestamp so updated avatars show immediately
+  const url = `${uploadBaseUrl}/uploads/${clean}`
+  const sep = url.includes('?') ? '&' : '?'
+  return `${url}${sep}t=${Date.now()}`
 }
 
 function mapPostToMaterial(post: PostRecord): MaterialItem {
@@ -76,6 +83,7 @@ function mapPostToMaterial(post: PostRecord): MaterialItem {
     description: post.description,
     condition: post.condition === 'new' ? 'New' : 'Used',
     exchangeFor: post.exchangeFor,
+    ownerId: post.ownerId,
     seller: post.listerName || 'Unknown',
     avatar: post.listerAvatar ? imageUrl(post.listerAvatar) : undefined,
   }
@@ -144,7 +152,71 @@ const displayedMaterials = computed(() => filteredMaterials.value.slice(0, 20))
 
 onMounted(() => {
   void loadPosts()
+  // Listen for profile updates and patch liveMaterials accordingly
+  const handleProfileUpdated = (e: Event) => {
+    try {
+      const detail = (e as CustomEvent).detail as { userId?: string; avatar?: string; username?: string }
+      if (!detail) return
+      const { userId, avatar, username } = detail
+      liveMaterials.value = liveMaterials.value.map((item) => {
+        const ownedById = userId && item.ownerId && String(item.ownerId) === String(userId)
+        const ownedByName = username && String(item.seller || '').trim().toLowerCase() === String(username).trim().toLowerCase()
+        if (ownedById || ownedByName) {
+          return {
+            ...item,
+            avatar: avatar ? (avatar.startsWith('http') ? avatar : imageUrl(avatar)) : item.avatar,
+          }
+        }
+        return item
+      })
+    } catch {
+      // ignore
+    }
+  }
+  window.addEventListener('profileUpdated', handleProfileUpdated as EventListener)
+  ;(window as any).__handleProfileUpdated = handleProfileUpdated
 })
+
+onBeforeUnmount(() => {
+  const h = (window as any).__handleProfileUpdated
+  if (h) window.removeEventListener('profileUpdated', h as EventListener)
+})
+
+// Watch auth changes and update liveMaterials for posts owned by the current user
+const authStore = useAuthStore()
+watch(
+  () => authStore.user,
+  (newUser) => {
+    if (!newUser) return
+    liveMaterials.value = liveMaterials.value.map((item) => {
+      try {
+        const ownedById = item.ownerId && String(item.ownerId) === String(newUser.id)
+        const ownedByName = [newUser.username, newUser.name]
+          .filter(Boolean)
+          .map((v) => String(v).trim().toLowerCase())
+          .includes(String(item.seller || '').trim().toLowerCase())
+
+        if (ownedById || ownedByName) {
+          const avatar = newUser.avatar
+            ? /^https?:\/\//i.test(String(newUser.avatar))
+              ? String(newUser.avatar)
+              : imageUrl(String(newUser.avatar))
+            : item.avatar
+
+          return {
+            ...item,
+            seller: newUser.username || newUser.name || item.seller,
+            avatar,
+          }
+        }
+      } catch {
+        // ignore mapping errors
+      }
+      return item
+    })
+  },
+  { deep: true },
+)
 
 </script>
 

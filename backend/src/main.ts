@@ -5,6 +5,8 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { getModelToken } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import mongoose from 'mongoose';
+import * as bodyParser from 'body-parser';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument, UserRole } from './users/schemas/user.schema';
 
@@ -55,6 +57,9 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
+  app.use(bodyParser.json({ limit: '10mb' }));
+  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+
   // Global validation pipe -- auto-validates all DTOs
   app.useGlobalPipes(
     new ValidationPipe({
@@ -64,37 +69,54 @@ async function bootstrap() {
     }),
   );
 
-  const explicitOrigin = process.env.FRONTEND_ORIGIN;
-  const allowedOrigins = [
-    'https://material-exchange-platform.pages.dev',
-    'http://localhost:5173',
-    'http://localhost:3000',
-  ];
+  const allowedOriginsEnv = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+    : [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:3000',
+      ];
+
+  if (process.env.FRONTEND_ORIGIN) {
+    allowedOriginsEnv.push(process.env.FRONTEND_ORIGIN.trim());
+  }
 
   app.enableCors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      const isCloudflarePages =
-        origin.endsWith('.material-exchange-platform.pages.dev') ||
-        origin === 'https://material-exchange-platform.pages.dev';
-      const isLocal = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
-      if (
-        isCloudflarePages ||
-        isLocal ||
-        allowedOrigins.includes(origin) ||
-        (explicitOrigin && origin === explicitOrigin)
-      ) {
+
+      const isAllowed = allowedOriginsEnv.some((pattern) => {
+        if (pattern === origin) return true;
+        if (pattern.includes('*')) {
+          const regexPattern =
+            '^' +
+            pattern.replace(/\./g, '\\.').replace(/\*/g, '[a-zA-Z0-9-]+') +
+            '$';
+          return new RegExp(regexPattern).test(origin);
+        }
+        return false;
+      });
+
+      if (isAllowed) {
         return callback(null, true);
       }
       return callback(new Error(`CORS blocked: ${origin}`));
     },
-    methods: 'GET,POST,PUT,PATCH,DELETE',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
+  });
+
+  mongoose.connection.on('connected', () => {
+    console.log('✅ MongoDB connected successfully');
+  });
+
+  mongoose.connection.on('error', (err) => {
+    console.error('❌ MongoDB connection error:', err);
   });
 
   // Static uploads
   // Prefix all routes with /api so frontend can call /api/auth/login and /api/auth/register
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', { exclude: ['db-status'] });
 
   // Serve uploaded images as static: GET /uploads/filename.jpg
   app.useStaticAssets(

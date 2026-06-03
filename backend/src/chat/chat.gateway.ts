@@ -3,29 +3,50 @@ import {
   OnGatewayDisconnect,
   WebSocketGateway,
   WebSocketServer,
+  SubscribeMessage,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
+import { ChatService } from './chat.service';
+import { MessageType } from './schemas/message.schema';
 
 @WebSocketGateway({
+  transports: ['websocket'],
+  maxHttpBufferSize: 10 * 1024 * 1024,
   cors: {
     origin: (
       origin: string,
       callback: (err: Error | null, allow?: boolean) => void,
     ) => {
-      const allowedOrigins = [
-        'https://material-exchange-platform.pages.dev',
-        'http://localhost:5173',
-        'http://localhost:3000',
-      ];
+      const allowedOriginsEnv = process.env.ALLOWED_ORIGINS
+        ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+        : [
+            'http://localhost:5173',
+            'http://127.0.0.1:5173',
+            'http://localhost:3000',
+          ];
+
+      if (process.env.FRONTEND_ORIGIN) {
+        allowedOriginsEnv.push(process.env.FRONTEND_ORIGIN.trim());
+      }
+
       if (!origin) return callback(null, true);
-      const isCloudflarePages =
-        origin.endsWith('.material-exchange-platform.pages.dev') ||
-        origin === 'https://material-exchange-platform.pages.dev';
-      const isLocal = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
-      if (isCloudflarePages || isLocal || allowedOrigins.includes(origin)) {
+
+      const isAllowed = allowedOriginsEnv.some((pattern) => {
+        if (pattern === origin) return true;
+        if (pattern.includes('*')) {
+          const regexPattern =
+            '^' +
+            pattern.replace(/\./g, '\\.').replace(/\*/g, '[a-zA-Z0-9-]+') +
+            '$';
+          return new RegExp(regexPattern).test(origin);
+        }
+        return false;
+      });
+
+      if (isAllowed) {
         return callback(null, true);
       }
       return callback(new Error('Not allowed by CORS'));
@@ -44,7 +65,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   // userId -> set of socket ids
   private clients = new Map<string, Set<string>>();
 
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly chatService: ChatService,
+  ) {}
 
   handleConnection(socket: Socket) {
     try {
@@ -93,6 +117,50 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         else this.clients.set(userId, set);
         this.logger.log(`User ${userId} disconnected (socket ${socket.id})`);
         break;
+      }
+    }
+  }
+
+  @SubscribeMessage('sendMessage')
+  async handleSendMessage(
+    socket: Socket,
+    data: { receiverId: string; content: string; type: string },
+  ) {
+    try {
+      const token = socket.handshake.auth?.token as string | undefined;
+      if (!token) {
+        this.logger.warn('No token for sendMessage');
+        return;
+      }
+
+      const payload = this.jwtService.verify<JwtPayload>(String(token));
+      const senderId = payload?.sub;
+
+      if (!senderId) {
+        this.logger.warn('No userId in token');
+        return;
+      }
+
+      // Save message to database via service
+      const message = await this.chatService.sendMessage(
+        senderId,
+        data.receiverId,
+        data.content,
+        data.type as MessageType,
+      );
+
+      // Emit the message to both sender and receiver
+      this.sendToUser(String(senderId), 'message', message);
+      this.sendToUser(String(data.receiverId), 'message', message);
+
+      this.logger.log(
+        `Message from ${senderId} to ${data.receiverId}: ${message._id?.toString()}`,
+      );
+    } catch (err) {
+      if (err instanceof Error) {
+        this.logger.error(`Error handling sendMessage: ${err.message}`);
+      } else {
+        this.logger.error('Error handling sendMessage');
       }
     }
   }

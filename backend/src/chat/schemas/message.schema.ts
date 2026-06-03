@@ -2,7 +2,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
 export type MessageDocument = HydratedDocument<Message>;
-
 export type MessageType = 'text' | 'image' | 'voice';
 
 @Schema({ timestamps: true })
