@@ -41,13 +41,6 @@
               >
                 {{ languageStore.t('message' as any) || 'Message' }}
               </button>
-
-              <button
-                type="button"
-                class="profile-action-button report"
-              >
-                {{ languageStore.t('report' as any) || 'Report' }}
-              </button>
             </div>
           </div>
         </div>
