@@ -8,6 +8,7 @@ export class SearchController {
 
   @Get()
   async search(@Query() query: SearchQueryDto) {
+    console.log('Searching for:', query);
     return this.searchService.searchPosts(query);
   }
 }
