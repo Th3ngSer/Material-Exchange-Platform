@@ -11,7 +11,7 @@ import { getToken, setToken, clearToken } from '@/utils/tokenStorage'
 import type { AuthState, User, LoginCredentials, RegisterCredentials } from '@/types/auth'
 
 export const useAuthStore = defineStore('auth', () => {
-  const USER_STORAGE_KEY = 'authUser' // Use localStorage for persistence across page reloads
+  const USER_STORAGE_KEY = 'authUser' // Use sessionStorage for tab isolation
 
   // State
   const user = ref<User | null>(null)
@@ -57,7 +57,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   function readStoredUser(): User | null {
     try {
-      const raw = localStorage.getItem(USER_STORAGE_KEY)
+      const raw = sessionStorage.getItem(USER_STORAGE_KEY)
       if (!raw) return null
       return JSON.parse(raw) as User
     } catch {
@@ -68,15 +68,16 @@ export const useAuthStore = defineStore('auth', () => {
   function writeStoredUser(value: User | null) {
     try {
       if (!value) {
-        localStorage.removeItem(USER_STORAGE_KEY)
+        sessionStorage.removeItem(USER_STORAGE_KEY)
         return
       }
 
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(value))
+      sessionStorage.setItem(USER_STORAGE_KEY, JSON.stringify(value))
     } catch {
       // Silently ignore storage errors (e.g., from tracking prevention)
     }
   }
+
 
 
   /**

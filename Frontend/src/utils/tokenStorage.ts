@@ -1,6 +1,6 @@
 /**
  * Token Storage
- * Uses localStorage so the token persists across page reloads and browser restarts.
+ * Uses sessionStorage so the token is isolated per tab and persists across page reloads.
  * Token validation happens on first API call via the global interceptor.
  */
 
@@ -8,7 +8,7 @@ const TOKEN_KEY = 'authToken'
 
 export function getToken(): string | null {
   try {
-    return localStorage.getItem(TOKEN_KEY)
+    return sessionStorage.getItem(TOKEN_KEY)
   } catch {
     return null
   }
@@ -16,16 +16,17 @@ export function getToken(): string | null {
 
 export function setToken(token: string): void {
   try {
-    localStorage.setItem(TOKEN_KEY, token)
+    sessionStorage.setItem(TOKEN_KEY, token)
   } catch {
-    // ignore localStorage errors
+    // ignore sessionStorage errors
   }
 }
 
 export function clearToken(): void {
   try {
-    localStorage.removeItem(TOKEN_KEY)
+    sessionStorage.removeItem(TOKEN_KEY)
   } catch {
-    // ignore localStorage errors
+    // ignore sessionStorage errors
   }
 }
+
