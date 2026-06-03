@@ -657,43 +657,40 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 1024px) {
-  .admin-shell {
-    grid-template-columns: 1fr;
-    height: auto;
-    overflow: visible;
-  }
+.table {
+  display: grid;
+  gap: 10px;
+  overflow-x: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
 
-  .admin-sidebar {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .nav {
-    grid-auto-flow: column;
-    grid-template-columns: repeat(4, auto);
-    overflow-x: auto;
-    padding-bottom: 8px;
-  }
-
-  .logout {
-    margin-top: 0;
-  }
-
-  .admin-main {
-    overflow: visible;
-  }
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 8px;
+  font-size: 13px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e2e8f0;
+  min-width: 500px;
 }
 
 @media (max-width: 720px) {
   .admin-topbar {
     flex-direction: column;
     align-items: flex-start;
+    gap: 16px;
   }
 
-  .table-row {
-    grid-template-columns: 1fr;
+  .header-actions {
+    width: 100%;
+    display: flex;
+    gap: 12px;
+  }
+
+  .header-actions button {
+    flex: 1;
+    text-align: center;
   }
 }
 </style>

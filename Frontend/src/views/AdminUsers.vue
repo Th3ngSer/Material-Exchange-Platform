@@ -635,6 +635,9 @@ select:focus {
 .table {
   display: grid;
   gap: 10px;
+  overflow-x: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table-note {
@@ -655,6 +658,7 @@ select:focus {
   padding: 10px 0;
   align-items: center;
   border-bottom: 1px solid #e2e8f0;
+  min-width: 850px;
 }
 
 .table-row.header {
@@ -967,50 +971,58 @@ select:focus {
   }
 }
 
-@media (max-width: 1024px) {
-  .admin-shell {
-    grid-template-columns: 1fr;
-    height: auto;
-    overflow: visible;
-  }
-
-  .admin-sidebar {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-  }
-
-  .nav {
-    grid-auto-flow: column;
-    grid-template-columns: repeat(4, auto);
-    overflow-x: auto;
-    padding-bottom: 8px;
-  }
-
-  .logout {
-    margin-top: 0;
-  }
-
-  .admin-main {
-    overflow: visible;
-  }
-}
-
 @media (max-width: 720px) {
   .admin-topbar {
     flex-direction: column;
     align-items: flex-start;
+    gap: 16px;
+  }
+
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .header-actions {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+  }
+
+  .header-actions button {
+    flex: 1;
+    text-align: center;
   }
 
   .filters {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 14px;
   }
 
-  .table-row {
-    grid-template-columns: 1fr;
-    gap: 6px;
+  .search {
+    width: 100%;
+  }
+
+  .search input {
+    width: 100%;
+  }
+
+  .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .filter {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .filter-group :deep(.dropdown-menu),
+  select {
+    width: 100%;
   }
 }
 </style>

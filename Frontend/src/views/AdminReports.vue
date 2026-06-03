@@ -710,6 +710,9 @@ select {
 .table {
   display: grid;
   gap: 10px;
+  overflow-x: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table-note {
@@ -731,12 +734,13 @@ select {
 
 .table-row {
   display: grid;
-  grid-template-columns: 0.9fr 0.9fr 1.6fr 2fr 1fr 1fr 0.5fr;
+  grid-template-columns: 0.9fr 0.9fr 1.6fr 2fr 1fr 1fr 1.2fr;
   gap: 8px;
   font-size: 13px;
   padding: 10px 0;
   align-items: center;
   border-bottom: 1px solid #e2e8f0;
+  min-width: 850px;
 }
 
 .table-row.header {
@@ -835,50 +839,57 @@ select {
   }
 }
 
-@media (max-width: 1024px) {
-  .admin-shell {
-    grid-template-columns: 1fr;
-    height: auto;
-    overflow: visible;
-  }
-
-  .admin-sidebar {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-  }
-
-  .nav {
-    grid-auto-flow: column;
-    grid-template-columns: repeat(4, auto);
-    overflow-x: auto;
-    padding-bottom: 8px;
-  }
-
-  .logout {
-    margin-top: 0;
-  }
-
-  .admin-main {
-    overflow: visible;
-  }
-}
-
 @media (max-width: 720px) {
   .admin-topbar {
     flex-direction: column;
     align-items: flex-start;
+    gap: 16px;
+  }
+
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .header-actions {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+  }
+
+  .header-actions button {
+    flex: 1;
+    text-align: center;
+  }
+
+  .card-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
 
   .filters {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 14px;
   }
 
-  .table-row {
-    grid-template-columns: 1fr;
-    gap: 6px;
+  .search {
+    width: 100%;
+  }
+
+  .search input {
+    width: 100%;
+  }
+
+  .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  select {
+    width: 100%;
   }
 }
 

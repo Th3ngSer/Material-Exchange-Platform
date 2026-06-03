@@ -29,9 +29,19 @@ const router = useRouter()
 
 const showLogoutModal = ref(false)
 const runtimeError = ref<string | null>(null)
+const isSidebarOpen = ref(false)
+
+const toggleSidebar = () => {
+  isSidebarOpen.value = !isSidebarOpen.value
+}
+
+const closeSidebar = () => {
+  isSidebarOpen.value = false
+}
 
 const handleLogout = () => {
   showLogoutModal.value = true
+  closeSidebar()
 }
 
 const confirmLogout = () => {
@@ -51,8 +61,28 @@ onErrorCaptured((error) => {
 
 <template>
   <div class="admin-shell">
-    <aside class="admin-sidebar">
-      <div class="brand-logo">
+    <!-- Sticky Mobile Header -->
+    <header class="admin-mobile-header">
+      <div class="brand-logo mobile-logo">
+        <span class="logo-text">Do<span>O</span>rt</span>
+      </div>
+      <button class="menu-toggle" @click="toggleSidebar" aria-label="Toggle Navigation">
+        <svg v-if="!isSidebarOpen" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="toggle-icon">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+        <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="toggle-icon">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </header>
+
+    <!-- Overlay backdrop for mobile menu drawer -->
+    <Transition name="fade">
+      <div v-if="isSidebarOpen" class="sidebar-overlay" @click="closeSidebar"></div>
+    </Transition>
+
+    <aside class="admin-sidebar" :class="{ 'is-open': isSidebarOpen }">
+      <div class="brand-logo desktop-logo">
         <span class="logo-text">Do<span>O</span>rt</span>
       </div>
       <nav class="nav">
@@ -62,6 +92,7 @@ onErrorCaptured((error) => {
           class="nav-item"
           :class="{ active: isActive(item.to) }"
           :to="item.to"
+          @click="closeSidebar"
         >
           {{ item.label }}
           <span v-if="item.badge" class="nav-badge">{{ item.badge }}</span>
@@ -104,6 +135,46 @@ onErrorCaptured((error) => {
   overflow: hidden;
 }
 
+/* Mobile Header CSS */
+.admin-mobile-header {
+  display: none;
+  background: linear-gradient(135deg, #0b1026 0%, #1c1f46 100%);
+  color: #f8fafc;
+  padding: 0 20px;
+  align-items: center;
+  justify-content: space-between;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  z-index: 99;
+  box-shadow: 0 4px 20px rgba(11, 16, 38, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.menu-toggle {
+  background: transparent;
+  border: none;
+  color: #f8fafc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.menu-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.toggle-icon {
+  width: 24px;
+  height: 24px;
+}
+
 .admin-sidebar {
   background: linear-gradient(180deg, #0b1026 0%, #1c1f46 50%, #15142d 100%);
   color: #f8fafc;
@@ -117,7 +188,8 @@ onErrorCaptured((error) => {
   bottom: 0;
   width: 260px;
   overflow-y: auto;
-  z-index: 1;
+  z-index: 100;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .brand-logo {
@@ -127,20 +199,11 @@ onErrorCaptured((error) => {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.logo-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: #f8fafc;
-}
-
 .logo-text {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 55px;
+  font-size: 38px;
   font-weight: 700;
   letter-spacing: -0.5px;
-  margin-left: 10px;
   cursor: pointer;
 }
 
@@ -190,6 +253,12 @@ onErrorCaptured((error) => {
   background: transparent;
   color: #f8fafc;
   cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.logout:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .admin-main {
@@ -262,6 +331,14 @@ onErrorCaptured((error) => {
   animation-delay: -4s;
 }
 
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 98;
+}
+
 @keyframes float {
   0%,
   100% {
@@ -272,45 +349,49 @@ onErrorCaptured((error) => {
   }
 }
 
+/* Vue Transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
 @media (max-width: 1024px) {
-  .admin-shell {
-    height: auto;
-    overflow: visible;
+  .admin-mobile-header {
+    display: flex;
   }
 
-  .admin-sidebar {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    height: auto;
-    position: relative;
-    width: 100%;
-    left: auto;
-    bottom: auto;
+  .desktop-logo {
+    display: none;
   }
 
-  .brand-logo {
+  .mobile-logo {
     padding-bottom: 0;
     border-bottom: none;
   }
 
-  .nav {
-    grid-auto-flow: column;
-    grid-template-columns: repeat(4, auto);
-    overflow-x: auto;
-    padding-bottom: 8px;
+  .logo-text {
+    font-size: 28px;
   }
 
-  .logout {
-    margin-top: 0;
+  .admin-sidebar {
+    transform: translateX(-100%);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.25);
+  }
+
+  .admin-sidebar.is-open {
+    transform: translateX(0);
   }
 
   .admin-main {
-    overflow: visible;
-    height: auto;
     margin-left: 0;
     width: 100%;
+    padding-top: 88px; /* 64px header + 24px gap */
+    height: auto;
   }
 }
 </style>

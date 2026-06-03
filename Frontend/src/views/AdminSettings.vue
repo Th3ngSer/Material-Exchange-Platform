@@ -317,6 +317,7 @@ onMounted(fetchSettings)
   background: #fff;
   outline: none;
   transition: border-color 0.2s;
+  width: 100%;
   max-width: 360px;
 }
 
@@ -404,4 +405,42 @@ onMounted(fetchSettings)
 }
 
 .danger-btn:hover { background: #fee2e2; }
+
+@media (max-width: 720px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .save-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .card {
+    padding: 20px 16px;
+  }
+
+  .field input,
+  .field select {
+    max-width: 100%;
+  }
+
+  .toggle-row,
+  .danger-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .toggle {
+    align-self: flex-end;
+  }
+
+  .danger-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
 </style>

@@ -444,44 +444,39 @@ onBeforeRouteLeave(() => {
   }
 }
 
-@media (max-width: 1024px) {
-  .admin-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-sidebar {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-  }
-
-  .nav {
-    grid-auto-flow: column;
-    grid-template-columns: repeat(4, auto);
-    overflow-x: auto;
-    padding-bottom: 8px;
-  }
-
-  .logout {
-    margin-top: 0;
-  }
-}
-
 @media (max-width: 720px) {
   .admin-topbar {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
   }
 
-  .activity-row {
-    grid-template-columns: 1fr;
+  .topbar-user {
+    width: 100%;
+    justify-content: flex-start;
   }
 
-  .activity-content,
+  .activity-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+  }
+
   .activity-main {
     flex-direction: column;
     align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .activity-category {
+    align-self: flex-start;
+  }
+
+  .activity-time {
+    align-self: flex-end;
+    font-size: 11px;
   }
 }
 
