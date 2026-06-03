@@ -20,17 +20,33 @@ import { MessageType } from './schemas/message.schema';
       origin: string,
       callback: (err: Error | null, allow?: boolean) => void,
     ) => {
-      const allowedOrigins = [
-        'https://material-exchange-platform.pages.dev',
-        'http://localhost:5173',
-        'http://localhost:3000',
-      ];
+      const allowedOriginsEnv = process.env.ALLOWED_ORIGINS
+        ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+        : [
+            'http://localhost:5173',
+            'http://127.0.0.1:5173',
+            'http://localhost:3000',
+          ];
+
+      if (process.env.FRONTEND_ORIGIN) {
+        allowedOriginsEnv.push(process.env.FRONTEND_ORIGIN.trim());
+      }
+
       if (!origin) return callback(null, true);
-      const isCloudflarePages =
-        origin.endsWith('.material-exchange-platform.pages.dev') ||
-        origin === 'https://material-exchange-platform.pages.dev';
-      const isLocal = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
-      if (isCloudflarePages || isLocal || allowedOrigins.includes(origin)) {
+
+      const isAllowed = allowedOriginsEnv.some((pattern) => {
+        if (pattern === origin) return true;
+        if (pattern.includes('*')) {
+          const regexPattern =
+            '^' +
+            pattern.replace(/\./g, '\\.').replace(/\*/g, '[a-zA-Z0-9-]+') +
+            '$';
+          return new RegExp(regexPattern).test(origin);
+        }
+        return false;
+      });
+
+      if (isAllowed) {
         return callback(null, true);
       }
       return callback(new Error('Not allowed by CORS'));

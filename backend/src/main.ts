@@ -69,31 +69,40 @@ async function bootstrap() {
     }),
   );
 
-  const explicitOrigin = process.env.FRONTEND_ORIGIN;
-  const allowedOrigins = [
-    'https://material-exchange-platform.pages.dev',
-    'http://localhost:5173',
-    'http://localhost:3000',
-  ];
+  const allowedOriginsEnv = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+    : [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:3000',
+      ];
+
+  if (process.env.FRONTEND_ORIGIN) {
+    allowedOriginsEnv.push(process.env.FRONTEND_ORIGIN.trim());
+  }
 
   app.enableCors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      const isCloudflarePages =
-        origin.endsWith('.material-exchange-platform.pages.dev') ||
-        origin === 'https://material-exchange-platform.pages.dev';
-      const isLocal = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
-      if (
-        isCloudflarePages ||
-        isLocal ||
-        allowedOrigins.includes(origin) ||
-        (explicitOrigin && origin === explicitOrigin)
-      ) {
+
+      const isAllowed = allowedOriginsEnv.some((pattern) => {
+        if (pattern === origin) return true;
+        if (pattern.includes('*')) {
+          const regexPattern =
+            '^' +
+            pattern.replace(/\./g, '\\.').replace(/\*/g, '[a-zA-Z0-9-]+') +
+            '$';
+          return new RegExp(regexPattern).test(origin);
+        }
+        return false;
+      });
+
+      if (isAllowed) {
         return callback(null, true);
       }
       return callback(new Error(`CORS blocked: ${origin}`));
     },
-    methods: 'GET,POST,PUT,PATCH,DELETE',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
 

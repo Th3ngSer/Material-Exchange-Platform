@@ -6,12 +6,20 @@ import { SearchQueryDto } from './dto/search-query.dto';
 
 @Injectable()
 export class SearchService {
-  constructor(
-    @InjectModel(Post.name) private postModel: Model<PostDocument>,
-  ) {}
+  constructor(@InjectModel(Post.name) private postModel: Model<PostDocument>) {}
 
   async searchPosts(query: SearchQueryDto) {
-    const { q, category, type, condition, minPrice, maxPrice, page, limit, sort } = query;
+    const {
+      q,
+      category,
+      type,
+      condition,
+      minPrice,
+      maxPrice,
+      page,
+      limit,
+      sort,
+    } = query;
 
     // Filters for active posts
     const filters: any = { status: 'active' };
@@ -51,7 +59,7 @@ export class SearchService {
     }
 
     const skip = (page - 1) * limit;
-    
+
     const [data, total] = await Promise.all([
       this.postModel
         .find(filters)
