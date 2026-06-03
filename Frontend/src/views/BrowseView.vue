@@ -16,6 +16,7 @@ import { defaultMaterials, type MaterialCategory, type MaterialItem } from '@/da
 
 interface PostRecord {
   _id: string
+  ownerId?: string
   type: 'sell' | 'exchange' | 'lend'
   title: string
   description: string
@@ -90,7 +91,9 @@ function imageUrl(image: string) {
   }
 
   const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '')
-  return `${uploadBaseUrl}/uploads/${image.replace(/^\/+/, '')}`
+  const clean = image.replace(/^\/+/, '')
+  if (clean.startsWith('uploads/')) return `${uploadBaseUrl}/${clean}`
+  return `${uploadBaseUrl}/uploads/${clean}`
 }
 
 function mapPostToMaterial(post: PostRecord): MaterialItem {
@@ -114,6 +117,7 @@ function mapPostToMaterial(post: PostRecord): MaterialItem {
     description: post.description,
     condition: post.condition === 'new' ? 'New' : 'Used',
     exchangeFor: post.exchangeFor,
+    ownerId: post.ownerId,
     seller: post.listerName || 'Unknown',
     avatar: post.listerAvatar ? imageUrl(post.listerAvatar) : undefined,
   }

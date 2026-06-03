@@ -415,10 +415,13 @@ async function submit() {
     clearDraft()
     await router.push('/browse')
   } catch (err: any) {
-    const message = err?.response?.data?.message
+    console.error('Post creation error:', err)
+    const message = err?.response?.data?.message || err?.message
     submitError.value = Array.isArray(message)
       ? message.join(', ')
       : (message ?? 'Something went wrong. Please try again.')
+    console.log('Auth token:', sessionStorage.getItem('authToken'))
+    console.log('API Base URL:', apiBaseUrl)
   } finally {
     isLoading.value = false
   }
