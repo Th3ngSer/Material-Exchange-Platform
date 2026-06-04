@@ -74,10 +74,7 @@ export class RatingsService {
 
   // GET ALL RATINGS FOR A USER
   async getRatingsForUser(userId: string): Promise<RatingDocument[]> {
-    return this.ratingModel
-      .find({ userId })
-      .sort({ createdAt: -1 })
-      .exec();
+    return this.ratingModel.find({ userId }).sort({ createdAt: -1 }).exec();
   }
 
   // GET RATING STATISTICS FOR A USER
@@ -98,7 +95,13 @@ export class RatingsService {
     const averageScore = parseFloat((totalScore / ratings.length).toFixed(2));
 
     // Build distribution
-    const distribution: { [key: number]: number } = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const distribution: { [key: number]: number } = {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+    };
     ratings.forEach((r) => {
       distribution[r.score]++;
     });
@@ -118,16 +121,19 @@ export class RatingsService {
   private async updateUserAverageRating(userId: string) {
     const ratings = await this.getRatingsForUser(userId);
 
-    const averageScore = ratings.length === 0 
-      ? 0 
-      : parseFloat((ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length).toFixed(2));
+    const averageScore =
+      ratings.length === 0
+        ? 0
+        : parseFloat(
+            (
+              ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length
+            ).toFixed(2),
+          );
 
     // Use User model to update rating field
-    await this.userModel.findByIdAndUpdate(
-      userId,
-      { rating: averageScore },
-      { new: true },
-    ).exec();
+    await this.userModel
+      .findByIdAndUpdate(userId, { rating: averageScore }, { new: true })
+      .exec();
   }
 
   // UPDATE RATER AVATAR IN EXISTING RATINGS
@@ -143,7 +149,7 @@ export class RatingsService {
   }
 
   // CHECK IF USER CAN RATE ANOTHER USER
-  async canUserRate(userId: string, targetUserId: string): Promise<boolean> {
+  canUserRate(userId: string, targetUserId: string): boolean {
     if (userId === targetUserId) {
       return false; // Can't rate yourself
     }
@@ -154,7 +160,9 @@ export class RatingsService {
   }
 
   // GET RATER INFO (name, avatar) FOR STORING IN RATING
-  async getRaterInfo(userId: string): Promise<{ name?: string; avatar?: string } | null> {
+  async getRaterInfo(
+    userId: string,
+  ): Promise<{ name?: string; avatar?: string } | null> {
     const user = await this.usersService.findById(userId);
     if (!user) {
       return null;

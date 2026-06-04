@@ -18,7 +18,6 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -86,7 +85,11 @@ export class AuthController {
     });
 
     // Update all user's posts with new avatar
-    const listerName = updatedUser.username || updatedUser.name || updatedUser.email || 'Unknown';
+    const listerName =
+      updatedUser.username ||
+      updatedUser.name ||
+      updatedUser.email ||
+      'Unknown';
     const updateResult = await this.postsService.updateUserPostsAvatar(
       req.user.id,
       listerName,
@@ -99,22 +102,26 @@ export class AuthController {
     );
 
     console.log(`✅ Avatar upload complete for user ${req.user.id}`);
-    console.log(`   Updated ${updateResult.modifiedCount} posts with new avatar`);
-    console.log(`   Updated ${ratingUpdateResult.modifiedCount} ratings with new avatar`);
+    console.log(
+      `   Updated ${updateResult.modifiedCount} posts with new avatar`,
+    );
+    console.log(
+      `   Updated ${ratingUpdateResult.modifiedCount} ratings with new avatar`,
+    );
     console.log(`   User: ${listerName}, Avatar: ${avatarPath}`);
 
     // Broadcast profile update to connected clients so they can refresh caches
     try {
-      console.log(`Emitting profileUpdated for ${req.user.id}`)
+      console.log(`Emitting profileUpdated for ${req.user.id}`);
       if (!this.chatGateway?.server) {
-        console.warn('ChatGateway.server is not initialized yet')
+        console.warn('ChatGateway.server is not initialized yet');
       }
       this.chatGateway.server.emit('profileUpdated', {
         userId: req.user.id,
         avatar: avatarPath,
         username: listerName,
       });
-      console.log('profileUpdated emitted')
+      console.log('profileUpdated emitted');
     } catch (err) {
       console.warn('Failed to emit profileUpdated event', err);
     }

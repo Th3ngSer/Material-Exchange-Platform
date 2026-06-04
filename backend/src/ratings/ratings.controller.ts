@@ -55,7 +55,7 @@ export class RatingsController {
 
       // Fetch rater's info from database to store in rating
       const raterInfo = await this.ratingsService.getRaterInfo(raterId);
-      
+
       const result = await this.ratingsService.createOrUpdateRating({
         userId: body.userId,
         raterId,
@@ -93,7 +93,9 @@ export class RatingsController {
   async getAllRatingsForUser(@Param('userId') userId: string) {
     try {
       const ratings = await this.ratingsService.getRatingsForUser(userId);
-      this.logger.log(`getAllRatingsForUser: returning ${ratings.length} ratings for user ${userId}`);
+      this.logger.log(
+        `getAllRatingsForUser: returning ${ratings.length} ratings for user ${userId}`,
+      );
       return ratings;
     } catch (err) {
       const message =

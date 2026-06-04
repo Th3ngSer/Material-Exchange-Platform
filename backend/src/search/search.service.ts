@@ -6,7 +6,7 @@ import { SearchQueryDto } from './dto/search-query.dto';
 
 @Injectable()
 export class SearchService {
-  constructor(@InjectModel(Post.name) private postModel: Model<PostDocument>) {}
+  constructor(@InjectModel(Post.name) private postModel: Model<PostDocument>) { }
 
   async searchPosts(query: SearchQueryDto) {
     const {
@@ -22,7 +22,14 @@ export class SearchService {
     } = query;
 
     // Filters for active posts
-    const filters: any = { status: 'active' };
+    const filters: {
+      status: string;
+      $or?: Array<Record<string, unknown>>;
+      category?: string;
+      type?: string;
+      condition?: string;
+      price?: { $gte?: number; $lte?: number };
+    } = { status: 'active' };
 
     // Keyword search using $or and $regex
     if (q) {

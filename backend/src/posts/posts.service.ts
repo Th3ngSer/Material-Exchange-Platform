@@ -146,7 +146,14 @@ export class PostsService {
   }) {
     try {
       this.logger.log(`Fetching posts with filters: ${JSON.stringify(query)}`);
-      const { type, category, condition, ownerId, page = '1', limit = '20' } = query;
+      const {
+        type,
+        category,
+        condition,
+        ownerId,
+        page = '1',
+        limit = '20',
+      } = query;
 
       const filter: Record<string, any> = {};
       if (type) filter.type = type;
@@ -363,19 +370,19 @@ export class PostsService {
   ): Promise<{ modifiedCount: number }> {
     try {
       this.assertValidId(ownerId, 'owner');
-      
+
       // Update posts by ownerId (newer posts)
       const result = await this.postModel.updateMany(
         { ownerId },
         { listerName, listerAvatar },
       );
-      
+
       // Also update by listerName as fallback for old posts without ownerId
       const resultByName = await this.postModel.updateMany(
         { listerName: { $exists: true }, ownerId: { $exists: false } },
         { listerName, listerAvatar },
       );
-      
+
       const totalModified = result.modifiedCount + resultByName.modifiedCount;
       this.logger.log(
         `✅ Updated posts for user ${ownerId}: ${result.modifiedCount} by ID + ${resultByName.modifiedCount} by name = ${totalModified} total`,

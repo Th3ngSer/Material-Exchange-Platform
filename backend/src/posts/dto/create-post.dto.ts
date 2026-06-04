@@ -28,8 +28,9 @@ export class CreatePostDto {
   @IsIn(['new', 'used'])
   condition!: string;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-  @Transform(({ value }) => parseFloat(value)) // FormData sends strings
+  @Transform(({ value }: { value: string | number }) =>
+    typeof value === 'number' ? value : parseFloat(String(value)),
+  ) // FormData sends strings
   @IsNumber()
   @Min(0)
   price!: number;
@@ -51,19 +52,23 @@ export class CreatePostDto {
   listerName?: string;
 
   @IsOptional()
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value?: string | number | null }) =>
     value === undefined || value === null || value === ''
       ? undefined
-      : parseFloat(value),
+      : typeof value === 'number'
+        ? value
+        : parseFloat(String(value)),
   )
   @IsNumber()
   lat?: number;
 
   @IsOptional()
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value?: string | number | null }) =>
     value === undefined || value === null || value === ''
       ? undefined
-      : parseFloat(value),
+      : typeof value === 'number'
+        ? value
+        : parseFloat(String(value)),
   )
   @IsNumber()
   lng?: number;

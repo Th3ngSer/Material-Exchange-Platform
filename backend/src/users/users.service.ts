@@ -23,7 +23,7 @@ export class UsersService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(Post.name) private readonly postModel: Model<PostDocument>,
-  ) {}
+  ) { }
 
   createUser(input: CreateUserInput): Promise<UserDocument> {
     const created = new this.userModel(input);
@@ -39,18 +39,17 @@ export class UsersService {
   }
 
   private escapeRegex(text: string) {
-    return text.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')
+    return text.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
   }
 
   findByName(name: string): Promise<UserDocument | null> {
-    const safe = this.escapeRegex(name)
-    const nameRegex = new RegExp(`^${safe}$`, 'i')
-    return this.userModel.findOne({
-      $or: [
-        { name: nameRegex },
-        { username: nameRegex },
-      ],
-    }).exec();
+    const safe = this.escapeRegex(name);
+    const nameRegex = new RegExp(`^${safe}$`, 'i');
+    return this.userModel
+      .findOne({
+        $or: [{ name: nameRegex }, { username: nameRegex }],
+      })
+      .exec();
   }
 
   updateUser(
@@ -83,11 +82,11 @@ export class UsersService {
     const safeLimit = Math.min(Math.max(1, limit), 100);
     const filter = search
       ? {
-          $or: [
-            { name: { $regex: search, $options: 'i' } },
-            { email: { $regex: search, $options: 'i' } },
-          ],
-        }
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+        ],
+      }
       : {};
 
     const total = await this.userModel.countDocuments(filter).exec();
@@ -145,13 +144,27 @@ export class UsersService {
     return { message: 'User deleted successfully' };
   }
 
-  async findAllExcept(userId: string): Promise<Array<{ _id: string; name?: string; username?: string; avatar?: string }>> {
+  async findAllExcept(
+    userId: string,
+  ): Promise<
+    Array<{ _id: string; name?: string; username?: string; avatar?: string }>
+  > {
     const users = await this.userModel
       .find({ _id: { $ne: userId } })
       .select('name username avatar')
-      .lean()
+      .lean<Array<{
+        _id: string;
+        name?: string;
+        username?: string;
+        avatar?: string;
+      }>>()
       .exec();
 
-    return users.map((u: any) => ({ _id: String(u._id), name: u.name, username: u.username, avatar: u.avatar }));
+    return users.map((u) => ({
+      _id: String(u._id),
+      name: u.name,
+      username: u.username,
+      avatar: u.avatar,
+    }));
   }
 }
