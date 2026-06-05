@@ -1,88 +1,101 @@
-import { Types } from 'mongoose';
-import { Notification, NotifType, INotifAction } from '../models/notifications';
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { InjectModel }                   from '@nestjs/mongoose'
+import { Model, Types }                  from 'mongoose'
+import { Notification, NotificationDocument } from '../schemas/notification.schema'
+import { CreateNotificationDto }         from '../dto/create-notification.dto'
 
-interface CreateNotifOptions {
-  recipient: Types.ObjectId;
-  sender?: Types.ObjectId;
-  type: NotifType;
-  title: string;
-  body: string;
-  richBody?: string;
-  actions?: INotifAction[];
-  orderId?: string;
+@Injectable()
+export class NotificationService {
+
+  constructor(
+    @InjectModel(Notification.name)
+    private readonly notificationModel: Model<NotificationDocument>,
+  ) {}
+
+  // ── Create ───────────────────────────────────────────────
+
+  async create(dto: CreateNotificationDto): Promise<NotificationDocument> {
+    return this.notificationModel.create({
+      userId:        dto.userId,
+      title:         dto.title,
+      message:       dto.message,
+      type:          dto.type ?? 'alert',
+      unread:        dto.unread ?? true,      // default true — new notifications are unread
+      relatedPostId: dto.relatedPostId,
+      relatedUserId: dto.relatedUserId,
+      action:        dto.action,
+      actionUrl:     dto.actionUrl,
+      imageUrl:      dto.imageUrl,
+    })
+  }
+
+  // ── Find all for user (paginated) ────────────────────────
+
+  async findAllForUser(
+    userId: string,
+    page  = 1,
+    limit = 20,
+  ): Promise<{ data: NotificationDocument[]; total: number }> {
+    const filter = { userId: new Types.ObjectId(userId) }
+    const skip   = (page - 1) * limit
+
+    const [data, total] = await Promise.all([
+      this.notificationModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      this.notificationModel.countDocuments(filter),
+    ])
+
+    return { data, total }
+  }
+
+  // ── Unread count ─────────────────────────────────────────
+
+  async getUnreadCount(userId: string): Promise<number> {
+    return this.notificationModel.countDocuments({
+      userId: new Types.ObjectId(userId),
+      unread: true,
+    })
+  }
+
+  // ── Mark one as read ─────────────────────────────────────
+
+  async markRead(id: string, userId: string): Promise<NotificationDocument> {
+    const notif = await this.notificationModel.findOneAndUpdate(
+      { _id: id, userId: new Types.ObjectId(userId) },
+      { unread: false },
+      { new: true },
+    )
+    if (!notif) throw new NotFoundException('Notification not found.')
+    return notif
+  }
+
+  // ── Mark all as read ─────────────────────────────────────
+
+  async markAllRead(userId: string): Promise<void> {
+    await this.notificationModel.updateMany(
+      { userId: new Types.ObjectId(userId), unread: true },
+      { unread: false },
+    )
+  }
+
+  // ── Delete one ───────────────────────────────────────────
+
+  async delete(id: string, userId: string): Promise<void> {
+    const result = await this.notificationModel.findOneAndDelete({
+      _id:    id,
+      userId: new Types.ObjectId(userId),
+    })
+    if (!result) throw new NotFoundException('Notification not found.')
+  }
+
+  // ── Delete all ───────────────────────────────────────────
+
+  async deleteAll(userId: string): Promise<void> {
+    await this.notificationModel.deleteMany({
+      userId: new Types.ObjectId(userId),
+    })
+  }
 }
-
-// Central helper — call this from any controller that needs to fire a notification
-export async function createNotification(opts: CreateNotifOptions) {
-  return Notification.create({
-    recipient: opts.recipient,
-    sender: opts.sender,
-    type: opts.type,
-    title: opts.title,
-    body: opts.body,
-    richBody: opts.richBody,
-    actions: opts.actions ?? [],
-    orderId: opts.orderId,
-  });
-}
-
-// Pre-built notification factory helpers
-export const NotifFactory = {
-  newMessage(
-    recipient: Types.ObjectId,
-    sender: Types.ObjectId,
-    preview: string,
-  ) {
-    return createNotification({
-      recipient,
-      sender,
-      type: 'message',
-      title: 'New message',
-      body: preview,
-      actions: [
-        { label: 'Reply', variant: 'primary' },
-        { label: 'View Thread', variant: 'outline' },
-      ],
-    });
-  },
-
-  exchangeCompleted(
-    recipient: Types.ObjectId,
-    orderId: string,
-    itemName: string,
-  ) {
-    return createNotification({
-      recipient,
-      type: 'exchange',
-      title: 'Exchange Completed',
-      body: `Your transaction for ${itemName} has been finalized.`,
-      richBody: `The transaction for <a href="/orders/${orderId}">${itemName}</a> has been successfully finalized.`,
-      actions: [
-        { label: 'Leave Review', variant: 'outline' },
-        { label: 'Invoice', variant: 'primary' },
-      ],
-      orderId,
-    });
-  },
-
-  borrowRequest(
-    recipient: Types.ObjectId,
-    sender: Types.ObjectId,
-    itemName: string,
-    days: number,
-    orderId: string,
-  ) {
-    return createNotification({
-      recipient,
-      sender,
-      type: 'borrow',
-      title: 'Borrow Request',
-      body: `Requested: ${itemName} for ${days} days.`,
-      actions: [
-        { label: 'Leave Review', variant: 'outline' },
-        { label: 'Invoice', variant: 'green' },
-      ],
-      orderId,
-    });
-  },
-};

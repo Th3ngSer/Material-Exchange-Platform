@@ -99,12 +99,15 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import Header from './layout/Header.vue'
 import NotifSidebar from './Notifsidebar.vue'
 import NotifCard from './Notifcard.vue'
 import NotificationDetailModal from './NotificationDetailModal.vue'
 import type { Notification } from '../types/notification'
-import { useNotifications } from '../composable/useNotifications'
+import { useNotifications, fetchNotificationById } from '../composable/useNotifications'
+
+const router = useRouter()
 
 const {
   activeTab,
@@ -121,11 +124,20 @@ const selectedNotification = ref<Notification | null>(null)
 const isModalOpen = ref(false)
 const openReview = ref(false)
 
-function openNotification(notif: Notification, review = false): void {
-  selectedNotification.value = notif
-  isModalOpen.value = true
+async function openNotification(notif: Notification, review = false): Promise<void> {
   openReview.value = review
   markRead(notif.id)
+  dismiss(notif.id)   //delete after read
+
+  try {
+    const loaded = await fetchNotificationById(notif.id)
+    selectedNotification.value = loaded
+  } catch (err) {
+    console.warn('Failed to load notification details from API:', err)
+    selectedNotification.value = notif
+  }
+
+  isModalOpen.value = true
 }
 
 function closeNotification(): void {
@@ -137,15 +149,36 @@ function closeNotification(): void {
 function handleAction(notif: Notification, payload: { notifId: string | number; label: string }): void {
   console.log(`Action "${payload.label}" on notification #${payload.notifId}`)
   const action = payload.label.toLowerCase()
-  if (action.includes('reply') || action === 'reply' || action.includes('view')) {
-    openNotification(notif)
+
+  if (action.includes('view profile')) {
+    const profileKey = notif.relatedUserId || notif.sender || notif.title || ''
+    if (profileKey) {
+      dismiss(notif.id)
+      void router.push({ path: '/profile', query: { user: String(profileKey) } })
+      return
+    }
   }
+
   if (action.includes('leave review')) {
-    openNotification(notif, true)
+    void openNotification(notif, true)
+    return
   }
-  if (action.includes('invoice')) {
-    openNotification(notif)
+
+  if (
+    action.includes('view details') ||
+    action.includes('view review') ||
+    action.includes('view thread') ||
+    action.includes('view order') ||
+    action.includes('invoice') ||
+    action.includes('reply') ||
+    action === 'reply'
+  ) {
+    void openNotification(notif)
+    return
   }
+
+  // Fallback: open details for any action that doesn't have a dedicated route.
+  void openNotification(notif)
 }
 
 function handleReply(message: string): void {
@@ -158,6 +191,15 @@ function handleReply(message: string): void {
 
 function handleModalAction(label: string): void {
   console.log(`Modal action: ${label}`)
+  if (label.toLowerCase().includes('view profile')) {
+    const profileIdentifier = selectedNotification.value?.relatedUserId || selectedNotification.value?.sender || ''
+    if (profileIdentifier) {
+      closeNotification()
+      void router.push({ path: '/profile', query: { user: String(profileIdentifier) } })
+      return
+    }
+  }
+
   if (label.toLowerCase().includes('review')) {
     if (selectedNotification.value) {
       dismiss(selectedNotification.value.id)

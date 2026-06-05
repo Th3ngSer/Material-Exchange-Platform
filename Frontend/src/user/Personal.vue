@@ -413,7 +413,13 @@ const fillFromUser = (user: User | null) => {
 
 const loadUserProfile = async (userName: string) => {
   try {
-    const response = await axios.get(`${apiBaseUrl}/auth/user/${encodeURIComponent(userName)}`)
+    const objectIdPattern = /^[0-9a-fA-F]{24}$/
+    const isObjectId = objectIdPattern.test(userName)
+    const url = isObjectId
+      ? `${apiBaseUrl}/auth/user/id/${encodeURIComponent(userName)}`
+      : `${apiBaseUrl}/auth/user/${encodeURIComponent(userName)}`
+
+    const response = await axios.get(url)
     profileUser.value = response.data
     fillFromUser(response.data)
     return response.data.id

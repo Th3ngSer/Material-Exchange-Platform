@@ -1,4 +1,5 @@
-import { Router } from 'express';
+import { Router }       from 'express'
+import { protect }      from '../middleware/auth'
 import {
   getNotifications,
   getUnreadCount,
@@ -6,19 +7,29 @@ import {
   markAllAsRead,
   deleteNotification,
   deleteAllNotifications,
-} from '../controller/notificationController';
-import { protect } from '../middleware/auth';
+} from '../controller/notificationController'
 
-const router = Router();
+const router = Router()
 
-// All notification routes require auth
-router.use(protect);
+// All routes require a valid JWT
+router.use(protect)
 
-router.get('/', getNotifications);
-router.get('/unread-count', getUnreadCount);
-router.patch('/read-all', markAllAsRead);
-router.delete('/', deleteAllNotifications);
-router.patch('/:id/read', markAsRead);
-router.delete('/:id', deleteNotification);
+// GET    /api/notifications              → paginated list (?page=1&limit=20&type=&read=)
+router.get('/',               getNotifications)
 
-export default router;
+// GET    /api/notifications/unread-count → { count: number }
+router.get('/unread-count',   getUnreadCount)
+
+// PATCH  /api/notifications/read-all    → mark every notification as read
+router.patch('/read-all',     markAllAsRead)
+
+// PATCH  /api/notifications/:id/read   → mark one as read
+router.patch('/:id/read',     markAsRead)
+
+// DELETE /api/notifications/:id        → delete one
+router.delete('/:id',         deleteNotification)
+
+// DELETE /api/notifications            → delete all
+router.delete('/',            deleteAllNotifications)
+
+export default router

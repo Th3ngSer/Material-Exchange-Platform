@@ -23,6 +23,7 @@ export function connectSocket() {
 
   if (!(socket as any).__initialized) {
     socket.on('connect', () => {
+      if (!socket.id) return 
       console.log('Socket connected', socket?.id)
       try { window.dispatchEvent(new CustomEvent('socketConnected', { detail: { id: socket?.id } })) } catch {}
     })

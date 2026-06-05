@@ -130,4 +130,9 @@ export class AuthController {
   getUserByName(@Param('name') name: string) {
     return this.authService.getUserByName(name);
   }
+
+  @Get('user/id/:id')
+  getUserById(@Param('id') id: string) {
+    return this.authService.getUserById(id);
+  }
 }

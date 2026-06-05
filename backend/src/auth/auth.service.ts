@@ -3,6 +3,7 @@ import {
   Injectable,
   UnauthorizedException,
   ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -109,7 +110,7 @@ export class AuthService {
       const user = await this.usersService.findByName(name);
 
       if (!user) {
-        throw new UnauthorizedException('User not found');
+        throw new NotFoundException('User not found');
       }
 
       return this.serializeUser(user);
@@ -117,6 +118,14 @@ export class AuthService {
       console.error('Error in getUserByName:', err);
       throw err;
     }
+  }
+
+  async getUserById(id: string) {
+    const user = await this.usersService.findById(id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return this.serializeUser(user);
   }
 
   private buildAuthResponse(user: UserDocument) {

@@ -11,11 +11,18 @@ export interface Notification {
   type: NotifType
   sender: string
   text: string
-  richText?: string        // HTML with <a> tags
+  richText?: string       
   time: string
   unread?: boolean
   actions: NotifAction[]
   isMock?: boolean
+  relatedUserId?: string
+  relatedPostId?: string
+  actionUrl?: string
+  title?: string
+  message?: string
+  imageUrl?: string
+  relatedUsername?: string
 }
 
 export interface DateGroup {
