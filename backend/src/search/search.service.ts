@@ -6,7 +6,7 @@ import { SearchQueryDto } from './dto/search-query.dto';
 
 @Injectable()
 export class SearchService {
-  constructor(@InjectModel(Post.name) private postModel: Model<PostDocument>) { }
+  constructor(@InjectModel(Post.name) private postModel: Model<PostDocument>) {}
 
   async searchPosts(query: SearchQueryDto) {
     const {

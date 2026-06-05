@@ -42,10 +42,7 @@ export class RatingsController {
       const raterId = req.user.id;
 
       // Check if user can rate
-      const canRate = await this.ratingsService.canUserRate(
-        raterId,
-        body.userId,
-      );
+      const canRate = this.ratingsService.canUserRate(raterId, body.userId);
       if (!canRate) {
         throw new HttpException(
           'You cannot rate yourself',

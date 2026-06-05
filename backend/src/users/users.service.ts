@@ -23,7 +23,7 @@ export class UsersService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(Post.name) private readonly postModel: Model<PostDocument>,
-  ) { }
+  ) {}
 
   createUser(input: CreateUserInput): Promise<UserDocument> {
     const created = new this.userModel(input);
@@ -82,11 +82,11 @@ export class UsersService {
     const safeLimit = Math.min(Math.max(1, limit), 100);
     const filter = search
       ? {
-        $or: [
-          { name: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } },
-        ],
-      }
+          $or: [
+            { name: { $regex: search, $options: 'i' } },
+            { email: { $regex: search, $options: 'i' } },
+          ],
+        }
       : {};
 
     const total = await this.userModel.countDocuments(filter).exec();
@@ -152,12 +152,14 @@ export class UsersService {
     const users = await this.userModel
       .find({ _id: { $ne: userId } })
       .select('name username avatar')
-      .lean<Array<{
-        _id: string;
-        name?: string;
-        username?: string;
-        avatar?: string;
-      }>>()
+      .lean<
+        Array<{
+          _id: string;
+          name?: string;
+          username?: string;
+          avatar?: string;
+        }>
+      >()
       .exec();
 
     return users.map((u) => ({
