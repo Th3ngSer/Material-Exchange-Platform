@@ -1,4 +1,5 @@
-export type NotifType = 'message' | 'exchange' | 'borrow' | 'review' | 'following'
+export type NotifType = 'message' | 'exchange' | 'borrow' | 'review' | 'following' | 'alert' | 'order'
+export type NotifId = string | number
 
 export interface NotifAction {
   label: string
@@ -6,14 +7,22 @@ export interface NotifAction {
 }
 
 export interface Notification {
-  id: number
+  id: NotifId
   type: NotifType
   sender: string
   text: string
-  richText?: string        // HTML with <a> tags
+  richText?: string       
   time: string
   unread?: boolean
   actions: NotifAction[]
+  isMock?: boolean
+  relatedUserId?: string
+  relatedPostId?: string
+  actionUrl?: string
+  title?: string
+  message?: string
+  imageUrl?: string
+  relatedUsername?: string
 }
 
 export interface DateGroup {

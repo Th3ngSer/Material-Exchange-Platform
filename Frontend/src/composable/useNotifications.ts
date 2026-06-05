@@ -1,90 +1,97 @@
-import { ref, computed, onMounted } from 'vue'
-import type { DateGroup, SidebarItem, SidebarKey } from '../types/notification'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import type { DateGroup, Notification, NotifType, SidebarItem, SidebarKey } from '../types/notification'
 import { notificationService } from '../services/notification'
+
+// ── Helpers ───────────────────────────────────────────────
+
+const defaultActions = (type: string) => {
+  const map: Record<string, { label: string; variant: string }[]> = {
+    message:   [{ label: 'Reply', variant: 'primary' }, { label: 'View Thread', variant: 'outline' }],
+    exchange:  [{ label: 'Leave Review', variant: 'outline' }, { label: 'Invoice', variant: 'primary' }],
+    borrow:    [{ label: 'Accept Request', variant: 'primary' }, { label: 'View Details', variant: 'outline' }],
+    review:    [{ label: 'View Review', variant: 'outline' }],
+    following: [{ label: 'View Profile', variant: 'outline' }],
+    order:     [{ label: 'View Order', variant: 'outline' }, { label: 'Invoice', variant: 'primary' }],
+    alert:     [{ label: 'View Details', variant: 'outline' }],
+  }
+  return map[type] ?? [{ label: 'View Details', variant: 'outline' }]
+}
+
+const toDateLabel = (createdAt: string | number | undefined): string => {
+  const date      = new Date(createdAt || Date.now())
+  const today     = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  if (date.toDateString() === today.toDateString())     return 'Today'
+  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday'
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day:   'numeric',
+    year:  date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined,
+  })
+}
+
+const isValidObjectId = (id: string | number): boolean =>
+  typeof id === 'string' && /^[0-9a-fA-F]{24}$/.test(id)
+
+// ── Normalize raw API notification → Notification shape ───
+
+export function normalizeNotification(raw: any): Notification {
+  return {
+    id:              raw.id ?? raw._id?.toString(),
+    type:            (raw.type || 'alert') as NotifType,
+    // Use username if available, fall back to name, then title — never a generic label
+    sender:          raw.sender?.username ?? raw.sender?.name ?? raw.sender ?? raw.title ?? 'Notification',
+    text:            raw.text ?? raw.message ?? '',
+    richText:        raw.richText ?? undefined,
+    time:            raw.time ?? toDateLabel(raw.createdAt ?? raw.timestamp),
+    unread:          raw.unread ?? raw.read === false,
+    actions:         Array.isArray(raw.actions) && raw.actions.length > 0
+                       ? raw.actions
+                       : defaultActions(raw.type || 'alert'),
+    isMock:          raw.isMock === true,
+    // Store real IDs so other pages can look up the correct user/post
+    relatedUserId:   raw.relatedUserId?.toString?.()
+                       ?? raw.sender?._id?.toString?.()
+                       ?? undefined,
+    relatedUsername: raw.sender?.username ?? raw.senderUsername ?? undefined,
+    relatedPostId:   raw.relatedPostId?.toString?.() ?? undefined,
+    actionUrl:       raw.actionUrl ?? undefined,
+    title:           raw.title ?? undefined,
+    message:         raw.message ?? undefined,
+    imageUrl:        raw.imageUrl ?? undefined,
+  }
+}
+
+export async function fetchNotificationById(id: string | number): Promise<Notification> {
+  const response = await notificationService.getOne(id)
+  return normalizeNotification(response?.data ?? response)
+}
+
+// ── Composable ────────────────────────────────────────────
 
 export function useNotifications() {
   const activeTab = ref<SidebarKey>('all')
   const isLoading = ref(false)
-  const error = ref<string | null>(null)
+  const error     = ref<string | null>(null)
 
-  const sidebarItems: SidebarItem[] = [
-    { key: 'all',       label: 'All Notification', icon: '🔔', count: 4 },
-    { key: 'borrow',    label: 'Borrow Request',   icon: '📦' },
-    { key: 'exchanges', label: 'Exchanges',         icon: '🔄' },
-    { key: 'reviews',   label: 'Reviews',           icon: '⭐' },
-    { key: 'followed',  label: 'Followed Activity', icon: '📌' },
-    { key: 'following', label: 'Following',         icon: '👥' },
-  ]
+  const sidebarItems = ref<SidebarItem[]>([
+    { key: 'all',       label: 'All Notification', icon: '🔔', count: 0 },
+    { key: 'borrow',    label: 'Borrow Request',   icon: '📦', count: 0 },
+    { key: 'exchanges', label: 'Exchanges',         icon: '🔄', count: 0 },
+    { key: 'reviews',   label: 'Reviews',           icon: '⭐', count: 0 },
+    { key: 'followed',  label: 'Followed Activity', icon: '📌', count: 0 },
+    { key: 'following', label: 'Following',         icon: '👥', count: 0 },
+  ])
 
-  // Mock data as fallback
-  const mockNotifications: DateGroup[] = [
-    {
-      label: 'Today',
-      items: [
-        {
-          id: 1,
-          type: 'message',
-          sender: 'New message from Alex Rivet',
-          text: '"Hey, I\'m interested in the polished aluminum sheets. Are they still available for pickup tomorrow?"',
-          time: '2h ago',
-          unread: true,
-          actions: [
-            { label: 'Reply',       variant: 'primary' },
-            { label: 'View Thread', variant: 'outline' },
-          ],
-        },
-        {
-          id: 2,
-          type: 'exchange',
-          sender: 'Exchange Completed',
-          richText: 'The transaction for <a href="#">Structural Steel Beam (H-Section)</a> has been successfully finalized.',
-          text: '',
-          time: '4h ago',
-          actions: [
-            { label: 'Leave Review', variant: 'outline' },
-            { label: 'Invoice',      variant: 'primary' },
-          ],
-        },
-      ],
-    },
-    {
-      label: 'Yesterday',
-      items: [
-        {
-          id: 3,
-          type: 'message',
-          sender: 'New message from Alex Rivet',
-          text: '"Hey, I\'m interested in the polished aluminum sheets. Are they still available for pickup tomorrow?"',
-          time: '01/4/25',
-          actions: [
-            { label: 'Reply',       variant: 'primary' },
-            { label: 'View Thread', variant: 'outline' },
-          ],
-        },
-        {
-          id: 4,
-          type: 'borrow',
-          sender: 'Alice sent a borrow request',
-          text: 'Requested: Oscilloscope Rig for 3 days.',
-          time: '01/4/25',
-          actions: [
-            { label: 'Leave Review', variant: 'outline' },
-            { label: 'Invoice',      variant: 'green' },
-          ],
-        },
-      ],
-    },
-  ]
+  const allGroups = ref<DateGroup[]>([])
 
-  const allGroups = ref<DateGroup[]>(mockNotifications)
+  // ── Computed ────────────────────────────────────────────
 
   const typeMap: Record<SidebarKey, string> = {
-    all:       '',
-    borrow:    'borrow',
-    exchanges: 'exchange',
-    reviews:   'review',
-    followed:  'following',
-    following: 'following',
+    all: '', borrow: 'borrow', exchanges: 'exchange',
+    reviews: 'review', followed: 'following', following: 'following',
   }
 
   const filteredGroups = computed<DateGroup[]>(() => {
@@ -99,53 +106,108 @@ export function useNotifications() {
     allGroups.value.flatMap(g => g.items).filter(n => n.unread).length
   )
 
-  // Fetch notifications from API
-  const fetchNotifications = async () => {
+  // ── Internal helpers ────────────────────────────────────
+
+  function parseResponse(response: any): any[] {
+    if (Array.isArray(response))                          return response
+    if (Array.isArray(response?.data))                   return response.data
+    if (Array.isArray(response?.data?.data))             return response.data.data
+    if (Array.isArray(response?.notifications))          return response.notifications
+    return []
+  }
+
+  function groupNotifications(notifications: any[]): DateGroup[] {
+    const grouped: Record<string, Notification[]> = {}
+    for (const raw of notifications) {
+      const label = toDateLabel(raw.createdAt ?? raw.timestamp)
+      if (!grouped[label]) grouped[label] = []
+      grouped[label]!.push(normalizeNotification(raw))
+    }
+    return Object.entries(grouped).map(([label, items]) => ({ label, items }))
+  }
+
+  function updateSidebarCounts(): void {
+    const all = allGroups.value.flatMap(g => g.items)
+    sidebarItems.value = sidebarItems.value.map(item => ({
+      ...item,
+      count: item.key === 'all'
+        ? all.length
+        : all.filter(n => n.type === typeMap[item.key]).length,
+    }))
+  }
+
+  // ── Actions ─────────────────────────────────────────────
+
+  const fetchNotifications = async (): Promise<void> => {
+    if (isLoading.value) return   // ← guard against duplicate calls
     isLoading.value = true
-    error.value = null
+    error.value     = null
     try {
-      const response = await notificationService.getAll()
-      // Transform API response to the expected format
-      if (Array.isArray(response)) {
-        allGroups.value = response as DateGroup[]
-      } else if (response.data) {
-        allGroups.value = response.data
-      }
+      const response      = await notificationService.getAll()
+      const notifications = parseResponse(response)
+      allGroups.value     = notifications.length > 0 ? groupNotifications(notifications) : []
+      updateSidebarCounts()
     } catch (err) {
-      console.warn('Failed to fetch notifications from API, using mock data:', err)
-      // Fall back to mock data if API fails
-      allGroups.value = mockNotifications
+      console.warn('Failed to fetch notifications:', err)
+      error.value     = 'Unable to load notifications.'
+      allGroups.value = []
     } finally {
       isLoading.value = false
     }
   }
 
-  function markRead(id: number): void {
+  function markRead(id: string | number): void {
+    // Optimistic update
     allGroups.value.forEach(g => {
       const item = g.items.find(n => n.id === id)
       if (item) item.unread = false
     })
-    // Also mark as read in backend
-    notificationService.markAsRead(id).catch(err => 
-      console.warn('Failed to mark notification as read:', err)
-    )
+    // Sync to backend only for real (non-mock) notifications
+    if (isValidObjectId(id)) {
+      notificationService.markAsRead(id).catch(err =>
+        console.warn('Failed to mark as read:', err)
+      )
+    }
   }
 
-  function dismiss(id: number): void {
+  function dismiss(id: string | number): void {
+    // Optimistic update
     allGroups.value.forEach(g => {
       const idx = g.items.findIndex(n => n.id === id)
       if (idx !== -1) g.items.splice(idx, 1)
     })
-    // Also delete from backend
-    notificationService.delete(id).catch(err => 
-      console.warn('Failed to delete notification:', err)
-    )
+    updateSidebarCounts()
+    // Sync to backend only for real notifications
+    if (isValidObjectId(id)) {
+      notificationService.delete(id).catch(err =>
+        console.warn('Failed to delete notification:', err)
+      )
+    }
   }
 
-  // Load notifications on mount
+  // ── Lifecycle ────────────────────────────────────────────
+
+  let refreshInterval: ReturnType<typeof setInterval> | null = null
+
   onMounted(() => {
     fetchNotifications()
+    // Refresh every 30s — guard prevents overlapping calls
+    refreshInterval = setInterval(fetchNotifications, 30_000)
   })
 
-  return { activeTab, sidebarItems, filteredGroups, unreadCount, markRead, dismiss, isLoading, error, fetchNotifications }
+  onBeforeUnmount(() => {
+    if (refreshInterval) clearInterval(refreshInterval)
+  })
+
+  return {
+    activeTab,
+    sidebarItems,
+    filteredGroups,
+    unreadCount,
+    isLoading,
+    error,
+    markRead,
+    dismiss,
+    fetchNotifications,
+  }
 }

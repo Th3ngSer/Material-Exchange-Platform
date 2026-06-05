@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import ThreadViewerModal from './ThreadViewerModal.vue'
 import LeaveReviewModal from './LeaveReviewModal.vue'
 import InvoiceModal from './InvoiceModal.vue'
 import type { Notification } from '../types/notification'
 
-defineProps<{
+const props = defineProps<{
   notification: Notification | null
   isOpen: boolean
+  openReview?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -21,6 +22,15 @@ const isReplying = ref(false)
 const showThreadViewer = ref(false)
 const showLeaveReview = ref(false)
 const showInvoice = ref(false)
+
+watch(
+  () => [props.isOpen, props.openReview],
+  ([isOpen, openReview]) => {
+    if (isOpen && openReview) {
+      showLeaveReview.value = true
+    }
+  }
+)
 
 const handleReply = () => {
   if (replyMessage.value.trim()) {
@@ -51,6 +61,7 @@ const handleReview = (review: { rating: number; title: string; content: string }
 const closeModal = () => {
   replyMessage.value = ''
   isReplying.value = false
+  showLeaveReview.value = false
   emit('close')
 }
 </script>
@@ -61,7 +72,7 @@ const closeModal = () => {
       <div class="modal-content">
         <!-- Header -->
         <div class="modal-header">
-          <h2 class="modal-title">{{ notification.sender }}</h2>
+          <h2 class="modal-title">{{ notification.title ?? notification.sender }}</h2>
           <button class="close-btn" @click="closeModal" aria-label="Close">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
@@ -73,7 +84,7 @@ const closeModal = () => {
         <div class="modal-body">
           <div class="message-content">
             <p v-if="notification.richText" v-html="notification.richText" />
-            <p v-else>{{ notification.text }}</p>
+            <p v-else>{{ notification.message ?? notification.text }}</p>
           </div>
 
           <!-- Quick Actions -->
@@ -145,28 +156,30 @@ const closeModal = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  backdrop-filter: blur(4px);
+  padding: 16px;
 }
 
 .modal-content {
   background: white;
   border-radius: 12px;
-  width: 90%;
+  width: 100%;
   max-width: 600px;
-  max-height: 80vh;
+  max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: slideUp 0.3s ease;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(24px);
   }
   to {
     opacity: 1;
@@ -178,34 +191,40 @@ const closeModal = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #eee;
+  padding: 22px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .modal-title {
   margin: 0;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   color: #1a1f3c;
+  letter-spacing: -0.3px;
 }
 
 .close-btn {
   background: none;
   border: none;
   cursor: pointer;
-  color: #8b90a7;
-  width: 32px;
-  height: 32px;
+  color: #9ca3af;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .close-btn:hover {
-  background: #f4f5fb;
-  color: #1a1f3c;
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 .close-btn svg {
@@ -214,7 +233,7 @@ const closeModal = () => {
 }
 
 .modal-body {
-  padding: 24px;
+  padding: 28px 24px;
 }
 
 .message-content {
@@ -223,13 +242,13 @@ const closeModal = () => {
 
 .message-content p {
   margin: 0;
-  color: #1a1f3c;
+  color: #374151;
   line-height: 1.6;
   font-size: 15px;
 }
 
 .message-content :deep(a) {
-  color: #ff6b35;
+  color: #f97316;
   text-decoration: none;
   font-weight: 600;
 }
@@ -241,8 +260,8 @@ const closeModal = () => {
 /* Quick Actions */
 .quick-actions {
   display: flex;
-  gap: 8px;
-  margin-bottom: 24px;
+  gap: 10px;
+  margin-bottom: 28px;
   flex-wrap: wrap;
 }
 
@@ -251,47 +270,54 @@ const closeModal = () => {
   align-items: center;
   font-size: 13px;
   font-weight: 600;
-  padding: 8px 16px;
+  padding: 9px 16px;
   border-radius: 8px;
   border: none;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .btn-primary {
-  background: #ff6b35;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
   color: white;
 }
 
 .btn-primary:hover {
-  background: #ff5722;
-  transform: translateY(-2px);
+  background: linear-gradient(135deg, #ea580c 0%, #dc4a0d 100%);
 }
 
 .btn-outline {
-  background: #f4f5fb;
-  color: #1a1f3c;
-  border: 1px solid #ddd;
+  background: white;
+  color: #6b7280;
+  border: 1.5px solid #d1d5db;
 }
 
 .btn-outline:hover {
-  background: #e8eaf0;
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #4b5563;
 }
 
 .btn-green {
-  background: #22c55e;
-  color: white;
+  background: #d1fae5;
+  color: #065f46;
+  border: none;
 }
 
 .btn-green:hover {
-  background: #16a34a;
-  transform: translateY(-2px);
+  background: #a7f3d0;
 }
 
 /* Reply Section */
 .reply-section {
-  border-top: 1px solid #eee;
-  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 24px;
+  margin-top: 24px;
 }
 
 .reply-toggle {
@@ -300,15 +326,16 @@ const closeModal = () => {
   gap: 8px;
   background: none;
   border: none;
-  color: #ff6b35;
+  color: #f97316;
   font-weight: 600;
   cursor: pointer;
   padding: 8px 0;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  font-size: 14px;
 }
 
 .reply-toggle:hover {
-  color: #ff5722;
+  color: #ea580c;
 }
 
 .icon {
@@ -319,62 +346,70 @@ const closeModal = () => {
 .reply-input-group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .reply-input {
   width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
+  padding: 12px 14px;
+  border: 1.5px solid #e5e7eb;
   border-radius: 8px;
   font-family: inherit;
   font-size: 14px;
   color: #1a1f3c;
   resize: vertical;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .reply-input:focus {
   outline: none;
-  border-color: #ff6b35;
-  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+.reply-input::placeholder {
+  color: #d1d5db;
 }
 
 .reply-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
 .btn-send {
   flex: 1;
-  padding: 10px 16px;
-  background: #ff6b35;
+  padding: 11px 16px;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
   color: white;
   border: none;
   border-radius: 8px;
   font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .btn-send:hover {
-  background: #ff5722;
+  background: linear-gradient(135deg, #ea580c 0%, #dc4a0d 100%);
+  transform: translateY(-1px);
 }
 
 .btn-cancel {
   flex: 1;
-  padding: 10px 16px;
-  background: #f4f5fb;
-  color: #1a1f3c;
+  padding: 11px 16px;
+  background: #f3f4f6;
+  color: #6b7280;
   border: none;
   border-radius: 8px;
   font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .btn-cancel:hover {
-  background: #e8eaf0;
+  background: #e5e7eb;
+  color: #4b5563;
 }
 
 /* Modal transition */
@@ -390,11 +425,39 @@ const closeModal = () => {
 
 .modal-enter-active .modal-content,
 .modal-leave-active .modal-content {
-  transition: transform 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .modal-enter-from .modal-content,
 .modal-leave-to .modal-content {
-  transform: translateY(20px);
+  transform: translateY(24px);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal-header {
+    padding: 18px 20px;
+  }
+
+  .modal-title {
+    font-size: 16px;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .quick-actions {
+    gap: 8px;
+  }
+
+  .action-btn {
+    font-size: 12px;
+    padding: 8px 14px;
+  }
 }
 </style>

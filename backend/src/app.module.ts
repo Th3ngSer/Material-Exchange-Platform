@@ -11,7 +11,7 @@ import { AdminDashboardModule } from './admin/admin-dashboard.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { PostsModule } from './posts/posts.module';
 import { ReportsModule } from './reports/reports.module';
-import { NotificationsModule } from './notifications/notifications.module';
+import { NotificationModule } from './notifications/module/notificationModule'
 import { ActivityLogModule } from './activity-log/activity-log.module';
 import { SearchModule } from './search/search.module';
 import { RatingsModule } from './ratings/ratings.module';
@@ -54,7 +54,7 @@ import { RatingsModule } from './ratings/ratings.module';
     AdminDashboardModule,
     TransactionsModule,
     ReportsModule,
-    NotificationsModule,
+    NotificationModule,
     ActivityLogModule,
     SearchModule,
     RatingsModule,
