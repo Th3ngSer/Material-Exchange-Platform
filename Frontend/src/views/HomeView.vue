@@ -51,6 +51,7 @@ const selectedSort = ref<SortOption>(props.sortOptions?.[0] ?? 'All')
 const liveMaterials = ref<MaterialItem[]>(props.materials)
 
 function imageUrl(image: string) {
+  if (!image) return 'https://via.placeholder.com/600x400?text=No+Image+Available'
   if (/^https?:\/\//i.test(image)) return image
   const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '')
   const clean = image.replace(/^\/+/, '')
@@ -77,7 +78,9 @@ function mapPostToMaterial(post: PostRecord): MaterialItem {
     type,
     tone: type === 'Sell' ? 'orange' : type === 'Exchange' ? 'gold' : 'rose',
     category: post.category as MaterialItem['category'],
-    images: post.images.map(imageUrl),
+    images: Array.isArray(post.images) && post.images.length > 0
+      ? post.images.map(imageUrl)
+      : ['https://via.placeholder.com/600x400?text=No+Image+Available'],
     postedTime: post.createdAt,
     description: post.description,
     condition: post.condition === 'new' ? 'New' : 'Used',

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useLanguageStore } from './stores/language'
-
 const languageStore = useLanguageStore()
 
 // NOTE: initializeAuth() is already awaited in main.ts before the app mounts.
@@ -13,10 +12,6 @@ onMounted(() => {
 
 <template>
   <div :class="languageStore.language === 'Khmer' ? 'font-khmer' : ''">
-    <router-view v-slot="{ Component }">
-      <transition name="fade" mode="out-in">
-        <component :is="Component" />
-      </transition>
-    </router-view>
+    <router-view />
   </div>
 </template>

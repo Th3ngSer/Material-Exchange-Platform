@@ -80,12 +80,16 @@ const filterTriggerRef = ref<HTMLButtonElement | null>(null)
 const pagingSentinelRef = ref<HTMLDivElement | null>(null)
 const isFilterTriggerVisible = ref(true)
 const liveMaterials = ref<MaterialItem[]>(props.materials)
+const apiError = ref<string | null>(null)
 
 let filterVisibilityObserver: IntersectionObserver | null = null
 let pagingObserver: IntersectionObserver | null = null
 let isApplyingRouteSearch = false
 
 function imageUrl(image: string) {
+  if (!image) {
+    return 'https://via.placeholder.com/600x400?text=No+Image+Available'
+  }
   if (/^https?:\/\//i.test(image)) {
     return image
   }
@@ -112,7 +116,9 @@ function mapPostToMaterial(post: PostRecord): MaterialItem {
     type,
     tone: type === 'Sell' ? 'orange' : type === 'Exchange' ? 'gold' : 'rose',
     category: post.category as MaterialItem['category'],
-    images: post.images.map(imageUrl),
+    images: Array.isArray(post.images) && post.images.length > 0
+      ? post.images.map(imageUrl)
+      : ['https://via.placeholder.com/600x400?text=No+Image+Available'],
     postedTime: post.createdAt,
     description: post.description,
     condition: post.condition === 'new' ? 'New' : 'Used',
@@ -154,8 +160,12 @@ async function loadBrowseMaterials() {
 
     liveMaterials.value = mergeMaterials(staticMaterials, backendMaterials)
     return
-  } catch {
+  } catch (err) {
     liveMaterials.value = staticMaterials
+    apiError.value = 'Failed to load live data from server. Showing demo data.'
+    setTimeout(() => {
+      apiError.value = null
+    }, 6000)
   }
 }
 
@@ -548,6 +558,17 @@ watch(browseType, async () => {
   <div class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.92),_rgba(247,247,250,0.96)_32%,_#f2f2f7_70%),linear-gradient(180deg,_#f5f5f9_0%,_#ffffff_22%,_#ffffff_100%)] text-[#15152d]">
     <Header />
 
+    <!-- Toast notification for API connection error -->
+    <Transition name="fade">
+      <div v-if="apiError" class="fixed top-24 left-1/2 -translate-x-1/2 z-[9999] bg-[#dc2626] text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 font-semibold text-sm transition-all duration-300">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>{{ apiError }}</span>
+        <button @click="apiError = null" class="ml-2 hover:opacity-80 transition-opacity">✕</button>
+      </div>
+    </Transition>
+
     <main class="mx-auto w-[min(1500px,calc(100%-32px))] max-[768px]:w-[min(100%-20px,100%)]">
       <section class="px-2 pt-8 sm:px-0">
         <!-- Search Bar & Filter Button -->
@@ -647,4 +668,15 @@ watch(browseType, async () => {
 
 /* ensure arrow buttons sit above the content */
 .category-scroll ~ button, .category-scroll + button { z-index: 20 }
+
+/* Fade animation for toast */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -20px);
+}
 </style>

@@ -674,7 +674,7 @@ watch(() => auth.isAuthenticated, async (val) => {
 <style scoped>
 .layout {
   display: flex;
-  height: calc(100vh - 100px);
+  height: calc(100vh - 60px);
   font-family: 'Inter', system-ui, sans-serif;
 }
-</style>
+</style>  

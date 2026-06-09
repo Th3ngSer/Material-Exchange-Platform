@@ -30,7 +30,8 @@ watch(
   },
 )
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const apiError = ref<string | null>(null)
 
 const post = ref<any>({
   id: 0,
@@ -59,11 +60,14 @@ async function loadPostById(id: string | number | undefined) {
     const { data } = await api.get(`/posts/${id}`)
     const p = data as any
     const uploadBase = apiBaseUrl.replace(/\/api\/?$/, '')
-    const images = Array.isArray(p.images)
+    let images = Array.isArray(p.images)
       ? p.images.map((f: string) => (/^https?:\/\//i.test(f) ? f : `${uploadBase}/uploads/${String(f).replace(/^\/+/, '')}`))
       : []
+    if (images.length === 0) {
+      images = ['https://via.placeholder.com/600x400?text=No+Image+Available']
+    }
 
-      post.value = {
+    post.value = {
       id: p._id,
       _id: p._id,
       title: p.title,
@@ -76,7 +80,9 @@ async function loadPostById(id: string | number | undefined) {
       category: p.category,
       condition: p.condition === 'new' ? 'New' : 'Used',
       seller: p.listerName ?? 'Marketplace seller',
-      avatar: p.listerAvatar,
+      avatar: p.listerAvatar
+        ? (/^https?:\/\//i.test(p.listerAvatar) ? p.listerAvatar : `${uploadBase}/uploads/${String(p.listerAvatar).replace(/^\/+/, '')}`)
+        : undefined,
       postedTime: p.createdAt ?? p.updatedAt,
       exchangeFor: p.exchangeFor,
       lat: p.lat !== undefined && p.lat !== null ? Number(p.lat) : undefined,
@@ -88,6 +94,10 @@ async function loadPostById(id: string | number | undefined) {
   } catch (err) {
     // fallback to default
     post.value = defaultMaterials[0]
+    apiError.value = 'Failed to load details from server. Showing demo data.'
+    setTimeout(() => {
+      apiError.value = null
+    }, 6000)
   }
 }
 
@@ -354,6 +364,17 @@ async function processCheckout() {
 <template>
   <div class="min-h-screen bg-white text-[#17173d]">
     <Header />
+
+    <!-- Toast notification for API connection error -->
+    <Transition name="fade">
+      <div v-if="apiError" class="fixed top-24 left-1/2 -translate-x-1/2 z-[9999] bg-[#dc2626] text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 font-semibold text-sm transition-all duration-300">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>{{ apiError }}</span>
+        <button @click="apiError = null" class="ml-2 hover:opacity-80 transition-opacity">✕</button>
+      </div>
+    </Transition>
 
     <main class="mx-auto w-[min(1440px,calc(100%-32px))] px-0 pb-16 pt-8 sm:px-2 lg:px-4">
       <!-- Back Button -->
@@ -760,3 +781,16 @@ async function processCheckout() {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Fade animation for toast */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -20px);
+}
+</style>
