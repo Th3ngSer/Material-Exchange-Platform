@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { getToken } from '@/utils/tokenStorage'
 import { reactive, ref, computed, onMounted, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
-import axios from 'axios'
+import api from '@/services/api'
 import { useRouter } from 'vue-router'
 import { useLanguageStore } from '@/stores/language'
 import { useAuthStore } from '@/stores/auth'
@@ -406,11 +405,7 @@ async function submit() {
     if (typeof form.lng === 'number') fd.append('lng', String(form.lng))
     form.images.forEach((file) => fd.append('images', file))
 
-    await axios.post(`${apiBaseUrl}/posts`, fd, {
-      headers: {
-        Authorization: `Bearer ${getToken() ?? ''}`,
-      },
-    })
+    await api.post('/posts', fd)
     submitted.value = true
     clearDraft()
     await router.push('/browse')
@@ -432,7 +427,7 @@ onMounted(() => {
 })
 
 // Clear draft when leaving CreatePost, except when navigating to the preview page
-onBeforeRouteLeave((to, from) => {
+onBeforeRouteLeave((to, _from) => {
   if (to && to.name === 'material-detail-preview') {
     return
   }

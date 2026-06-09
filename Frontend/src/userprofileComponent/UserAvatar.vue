@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
@@ -66,7 +66,8 @@ const welcomeName = computed(() => {
   return authStore.user?.email?.split('@')[0] || 'Guest'
 })
 
-const API_URL = 'http://localhost:3000'
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const API_URL = apiBaseUrl.replace(/\/api\/?$/, '')
 const DEFAULT_AVATAR = '/userprofileImage/avatar.png'
 
 const previewImage = ref<string>(DEFAULT_AVATAR)
@@ -132,13 +133,12 @@ const onFileChange = async (event: Event) => {
   formData.append('avatar', file)
 
   try {
-    const response = await axios.post(
-      `${API_URL}/api/auth/upload-avatar`,
+    const response = await api.post(
+      '/auth/upload-avatar',
       formData,
       {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${authStore.token || ''}`
+          'Content-Type': 'multipart/form-data'
         }
       }
     )

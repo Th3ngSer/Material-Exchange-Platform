@@ -148,7 +148,7 @@
 <script setup lang="ts">
 import { reactive, onMounted, computed, ref, watch, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import axios from 'axios'
+import api from '@/services/api'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
 import Footer from '@/components/layout/Footer.vue'
 import RatingStats from '@/components/RatingStats.vue'
@@ -316,7 +316,7 @@ async function loadProfilePosts(userId: string) {
   isLoadingPosts.value = true
 
   try {
-    const response = await axios.get(`${apiBaseUrl}/posts`, {
+    const response = await api.get('/posts', {
       params: { ownerId: userId, limit: '100' },
     })
     profilePosts.value = response.data.posts ?? []
@@ -404,10 +404,10 @@ const loadUserProfile = async (userName: string) => {
     const objectIdPattern = /^[0-9a-fA-F]{24}$/
     const isObjectId = objectIdPattern.test(userName)
     const url = isObjectId
-      ? `${apiBaseUrl}/auth/user/id/${encodeURIComponent(userName)}`
-      : `${apiBaseUrl}/auth/user/${encodeURIComponent(userName)}`
+      ? `/auth/user/id/${encodeURIComponent(userName)}`
+      : `/auth/user/${encodeURIComponent(userName)}`
 
-    const response = await axios.get(url)
+    const response = await api.get(url)
     profileUser.value = response.data
     fillFromUser(response.data)
     return response.data.id

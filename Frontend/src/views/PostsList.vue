@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { getToken } from '@/utils/tokenStorage'
 import { computed, onMounted, ref, onBeforeUnmount } from 'vue'
 import axios from 'axios'
+import api from '@/services/api'
 import { useLanguageStore } from '@/stores/language'
 import { useAuthStore } from '@/stores/auth'
 import Header from '@/components/layout/Header.vue'
@@ -109,7 +109,7 @@ async function loadPosts() {
   }
 
   try {
-    const { data } = await axios.get<PostsResponse>(`${apiBaseUrl}/posts`, {
+    const { data } = await api.get<PostsResponse>('/posts', {
       params: { ownerId: authStore.user.id, limit: '100' },
     })
     posts.value = data.posts ?? []
@@ -126,14 +126,10 @@ async function deletePost(postId: string, title: string) {
   }
 
   const isAdmin = authStore.user?.role === 'admin'
-  const endpoint = isAdmin ? `${apiBaseUrl}/posts/admin/${postId}` : `${apiBaseUrl}/posts/${postId}`
+  const endpoint = isAdmin ? `/posts/admin/${postId}` : `/posts/${postId}`
 
   try {
-    await axios.delete(endpoint, {
-      headers: {
-        Authorization: `Bearer ${getToken() ?? ''}`,
-      },
-    })
+    await api.delete(endpoint)
     posts.value = posts.value.filter((p) => p._id !== postId)
   } catch (error: unknown) {
     const msg = getErrorMessage(error, languageStore.t('failedToDeletePost'))

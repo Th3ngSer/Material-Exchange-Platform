@@ -55,7 +55,7 @@ import RatingStats from '@/components/RatingStats.vue'
 import { useLanguageStore } from '@/stores/language'
 import { useAuthStore } from '@/stores/auth'
 import { ratingsApi } from '@/services/ratings'
-import axios from 'axios'
+import api from '@/services/api'
 
 const route = useRoute()
 const languageStore = useLanguageStore()
@@ -114,8 +114,8 @@ const loadAllRatings = async (id: string) => {
 const resolveUserId = async (): Promise<string | null> => {
   if (usernameFromQuery.value) {
     try {
-      const response = await axios.get(
-        `${apiRoot}/api/auth/user/${encodeURIComponent(usernameFromQuery.value)}`,
+      const response = await api.get(
+        `/auth/user/${encodeURIComponent(usernameFromQuery.value)}`,
       )
       return response.data?.id || response.data?._id || null
     } catch {

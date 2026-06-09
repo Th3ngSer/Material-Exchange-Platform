@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import axios from 'axios'
+import api from '@/services/api'
 import { useRoute } from 'vue-router'
 
 import Footer from '@/components/layout/Footer.vue'
@@ -142,7 +142,7 @@ async function loadBrowseMaterials() {
   const staticMaterials = props.materials.length > 0 ? props.materials : defaultMaterials
 
   try {
-    const { data } = await axios.get<{ posts?: PostRecord[]; data?: PostRecord[] }>(`${apiBaseUrl}/posts`, {
+    const { data } = await api.get<{ posts?: PostRecord[]; data?: PostRecord[] }>('/posts', {
       params: {
         page: 1,
         limit: 1000,

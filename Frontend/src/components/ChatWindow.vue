@@ -3,7 +3,8 @@ import { ref, computed, watch, nextTick } from "vue"
 import { useAuthStore } from "../stores/auth"
 import type { ChatMessage, ChatUser } from '@/types/chat'
 
-const API_URL = 'http://localhost:3000'
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const API_URL = apiBaseUrl.replace(/\/api\/?$/, '')
 
 const props = defineProps<{
   selectedUser: ChatUser | null

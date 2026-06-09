@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { ChatUser } from '@/types/chat'
 
-const API_URL = 'http://localhost:3000'
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const API_URL = apiBaseUrl.replace(/\/api\/?$/, '')
 
 const { users, selectedUser } = defineProps<{
   users: ChatUser[]

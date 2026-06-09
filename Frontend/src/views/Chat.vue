@@ -26,7 +26,8 @@ const showLoginPrompt = ref(false)
 // LOAD USERS 
 const storageKey = computed(() => `chat_users_${auth.user?.id ?? 'guest'}`)
 
-const API_URL = 'http://localhost:3000'
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const API_URL = apiBaseUrl.replace(/\/api\/?$/, '')
 
 const normalizeAvatarUrl = (value: string | undefined | null) => {
   const normalized = String(value || '').trim()

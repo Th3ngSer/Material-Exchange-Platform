@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { getToken } from '@/utils/tokenStorage'
 import { computed, ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
+import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 
 import Footer from '@/components/layout/Footer.vue'
@@ -56,7 +56,7 @@ async function loadPostById(id: string | number | undefined) {
   }
 
   try {
-    const { data } = await axios.get(`${apiBaseUrl}/posts/${id}`)
+    const { data } = await api.get(`/posts/${id}`)
     const p = data as any
     const uploadBase = apiBaseUrl.replace(/\/api\/?$/, '')
     const images = Array.isArray(p.images)
@@ -117,14 +117,10 @@ async function confirmDeletePost() {
 
   try {
     const endpoint = isAdmin.value
-      ? `${apiBaseUrl}/posts/admin/${currentPost.value._id}`
-      : `${apiBaseUrl}/posts/${currentPost.value._id}`
+      ? `/posts/admin/${currentPost.value._id}`
+      : `/posts/${currentPost.value._id}`
 
-    await axios.delete(endpoint, {
-      headers: {
-        Authorization: `Bearer ${getToken() ?? ''}`,
-      },
-    })
+    await api.delete(endpoint)
     showDeleteModal.value = false
     await router.push('/posts')
   } catch (error: unknown) {
@@ -324,7 +320,6 @@ async function processCheckout() {
   }
 
   try {
-    const token = getToken()
     const payload = {
       name: currentPost.value.title,
       status: paymentMethod.value === 'card' ? 'Accepted' : 'Pending',
@@ -341,12 +336,7 @@ async function processCheckout() {
       paymentSlip: slipPreview.value || undefined
     }
 
-    await axios.post(`${apiBaseUrl}/trackitemuser`, payload, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    })
+    await api.post('/trackitemuser', payload)
 
     showCheckoutModal.value = false
     void router.push({ name: 'trackItem' })

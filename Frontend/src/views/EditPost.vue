@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { getToken } from '@/utils/tokenStorage'
 import { reactive, ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import axios from 'axios'
+import api from '@/services/api'
 import { useRouter, useRoute } from 'vue-router'
 import { useLanguageStore } from '@/stores/language'
 
@@ -236,7 +235,7 @@ function removeExistingImage(index: number) {
 async function loadPost() {
   isLoadingPost.value = true
   try {
-    const { data } = await axios.get(`${apiBaseUrl}/posts/${postId}`)
+    const { data } = await api.get(`/posts/${postId}`)
     const [phone, email] = data.contact
       ? data.contact.split(' | ').map((s: string) => s.trim())
       : ['', '']
@@ -284,11 +283,7 @@ async function submit() {
     fd.append('retainImages', JSON.stringify(existingImages.value))
     form.images.forEach((file) => fd.append('images', file))
 
-    await axios.patch(`${apiBaseUrl}/posts/${postId}`, fd, {
-      headers: {
-        Authorization: `Bearer ${getToken() ?? ''}`,
-      },
-    })
+    await api.patch(`/posts/${postId}`, fd)
     submitted.value = true
     await router.push('/home')
   } catch (err: any) {

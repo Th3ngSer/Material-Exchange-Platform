@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch, onBeforeUnmount } from 'vue'
-import axios from 'axios'
+import api from '@/services/api'  
 import { useRouter } from 'vue-router'
-
 import HomeCategories from '../components/HomeView/HomeCategories.vue'
 import HomeHero from '../components/HomeView/HomeHero.vue'
 import CategoryMarquee from '../components/HomeView/CategoryMarquee.vue'
@@ -91,7 +90,7 @@ function mapPostToMaterial(post: PostRecord): MaterialItem {
 
 async function loadPosts() {
   try {
-    const { data } = await axios.get<{ posts: PostRecord[] }>(`${apiBaseUrl}/posts`)
+    const { data } = await api.get<{ posts: PostRecord[] }>(`${apiBaseUrl}/posts`)
     const mappedPosts = (data.posts ?? []).map(mapPostToMaterial)
     liveMaterials.value = [...mappedPosts, ...defaultMaterials]
   } catch {

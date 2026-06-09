@@ -90,10 +90,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import axios from 'axios'
+import api from '@/services/api'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
 import { useLanguageStore } from '../stores/language'
 import { useAuthStore } from '@/stores/auth'
-import { getToken } from '@/utils/tokenStorage'
 
 interface UserPost {
   _id: string
@@ -156,14 +156,10 @@ async function deletePost(postId: string, title: string) {
   }
 
   const isAdmin = authStore.user?.role === 'admin'
-  const endpoint = isAdmin ? `${apiBaseUrl}/posts/admin/${postId}` : `${apiBaseUrl}/posts/${postId}`
+  const endpoint = isAdmin ? `/posts/admin/${postId}` : `/posts/${postId}`
 
   try {
-    await axios.delete(endpoint, {
-      headers: {
-        Authorization: `Bearer ${getToken() ?? ''}`,
-      },
-    })
+    await api.delete(endpoint)
     await loadPosts()
   } catch (error: unknown) {
     const msg = getErrorMessage(error, languageStore.t('failedToDeletePost'))
@@ -187,7 +183,7 @@ async function loadPosts() {
   errorMessage.value = ''
 
   try {
-    const response = await axios.get(`${apiBaseUrl}/posts`, {
+    const response = await api.get('/posts', {
       params: { ownerId: authStore.user.id, limit: 100 },
     })
     posts.value = response.data.posts || []
