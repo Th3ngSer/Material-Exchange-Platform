@@ -146,10 +146,10 @@ function formatCardPrice(item: {
       </div>
 
       <!-- Product Image -->
-      <img
-        :src="item.images?.[0] || ''"
-        :alt="languageStore.t('productItemAlt')"
+      <img 
+        :src="item.images?.[0] || 'https://via.placeholder.com/300?text=No+Image'" 
         class="h-full w-full object-contain"
+        alt="Product"
       />
     </div>
 

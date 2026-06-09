@@ -17,14 +17,14 @@ import {
   Req,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { createPostUploadOptions } from './posts-upload.config';
-import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { ActivityLogService } from '../activity-log/activity-log.service';
+import { CloudinaryService } from './cloudinary.service';
+
 
 @Controller('posts')
 export class PostsController {
@@ -33,6 +33,7 @@ export class PostsController {
   constructor(
     private readonly postsService: PostsService,
     private readonly activityLogService: ActivityLogService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   @UseGuards(JwtAuthGuard, AdminGuard)
@@ -72,13 +73,16 @@ export class PostsController {
   // ─── POST /posts ───────────────────────────────────────────────────────────
   @UseGuards(JwtAuthGuard)
   @Post()
-  @UseInterceptors(FilesInterceptor('images', 10, createPostUploadOptions() as MulterOptions))
-  create(
+  @UseInterceptors(FilesInterceptor('images', 10))
+  async create(
     @Req() req: { user: { id: string } },
     @UploadedFiles() files: Express.Multer.File[] = [],
     @Body() dto: CreatePostDto,
   ) {
-    return this.postsService.create(dto, files ?? [], req.user.id);
+    const imageUrls = files && files.length > 0
+      ? await Promise.all(files.map((file) => this.cloudinaryService.uploadImage(file)))
+      : [];
+    return this.postsService.create(dto, imageUrls, req.user.id);
   }
 
   // ─── GET /posts ────────────────────────────────────────────────────────────
@@ -106,14 +110,17 @@ export class PostsController {
   // ─── PATCH /posts/:id ──────────────────────────────────────────────────────
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  @UseInterceptors(FilesInterceptor('images', 10, createPostUploadOptions() as MulterOptions))
-  update(
+  @UseInterceptors(FilesInterceptor('images', 10))
+  async update(
     @Param('id') id: string,
     @Req() req: { user: { id: string } },
     @Body() dto: UpdatePostDto,
     @UploadedFiles() files: Express.Multer.File[] = [],
   ) {
-    return this.postsService.update(id, dto, files ?? [], req.user.id);
+    const imageUrls = files && files.length > 0
+      ? await Promise.all(files.map((file) => this.cloudinaryService.uploadImage(file)))
+      : [];
+    return this.postsService.update(id, dto, imageUrls, req.user.id);
   }
 
   // ─── DELETE /posts/:id ─────────────────────────────────────────────────────

@@ -47,13 +47,13 @@ export class PostsService {
   // ─── CREATE ───────────────────────────────────────────────────────────────
   async create(
     dto: CreatePostDto,
-    files: Express.Multer.File[],
+    filesOrUrls: Express.Multer.File[] | string[],
     ownerId: string,
   ): Promise<Post> {
     try {
       this.assertValidId(ownerId, 'owner');
       this.logger.log(`Creating post: ${dto.title}`);
-      if (files.length === 0) {
+      if (filesOrUrls.length === 0) {
         throw new BadRequestException('At least one image is required.');
       }
 
@@ -80,7 +80,7 @@ export class PostsService {
         owner?.username || owner?.name || owner?.email || 'Unknown';
       const listerAvatar = owner?.avatar || undefined;
 
-      const images = files.map((f) => f.filename);
+      const images = filesOrUrls.map((f) => typeof f === 'string' ? f : f.filename);
       const post = await this.postModel.create({
         ...dto,
         ownerId,
@@ -210,7 +210,7 @@ export class PostsService {
   async update(
     id: string,
     dto: UpdatePostDto,
-    files: Express.Multer.File[],
+    filesOrUrls: Express.Multer.File[] | string[],
     ownerId: string,
   ): Promise<Post> {
     try {
@@ -227,7 +227,7 @@ export class PostsService {
         throw new ForbiddenException('You can only update your own post.');
       }
 
-      const newImages = files.map((f) => f.filename);
+      const newImages = filesOrUrls.map((f) => typeof f === 'string' ? f : f.filename);
       const keepImages = this.parseRetainedImages(
         dto.retainImages,
         post.images,
