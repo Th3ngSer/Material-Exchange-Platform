@@ -149,20 +149,20 @@ export class UsersService {
   ): Promise<
     Array<{ _id: string; name?: string; username?: string; avatar?: string }>
   > {
+    // Load current user's hiddenChatUsers to filter out hidden entries
+    const current = await this.userModel.findById(userId).select('hiddenChatUsers').lean().exec();
+    const hidden = Array.isArray(current?.hiddenChatUsers) ? current!.hiddenChatUsers.map(String) : [];
+
+    // Fetch all other users, then filter hidden by stringified id to avoid ObjectId mismatch
     const users = await this.userModel
       .find({ _id: { $ne: userId } })
       .select('name username avatar')
-      .lean<
-        Array<{
-          _id: string;
-          name?: string;
-          username?: string;
-          avatar?: string;
-        }>
-      >()
+      .lean()
       .exec();
 
-    return users.map((u) => ({
+    const visible = (users as any[]).filter((u) => !hidden.includes(String(u._id)));
+
+    return visible.map((u) => ({
       _id: String(u._id),
       name: u.name,
       username: u.username,

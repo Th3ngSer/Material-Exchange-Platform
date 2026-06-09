@@ -11,6 +11,7 @@ import {
 import { ChatService } from './chat.service';
 import { ChatGateway } from './chat.gateway';
 import { UsersService } from '../users/users.service';
+import { Delete } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SendMessageDto } from './dto/send-message.dto';
 import { GetConversationDto } from './dto/get-conversation.dto';
@@ -68,5 +69,30 @@ export class ChatController {
     const currentUserId = req.user.id;
 
     return this.chatService.getHistory(currentUserId, query.userId);
+  }
+
+  @Delete('conversation')
+  async deleteConversation(
+    @Query('userId') userId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const currentUserId = req.user.id;
+    const result = await this.chatService.deleteConversation(currentUserId, userId);
+    // Add the other user to current user's hiddenChatUsers so they don't reappear after refresh
+    try {
+      const currentUser = await this.usersService.findById(currentUserId);
+      const existing: string[] = Array.isArray(currentUser?.hiddenChatUsers)
+        ? currentUser!.hiddenChatUsers.map(String)
+        : [];
+      if (!existing.includes(String(userId))) {
+        existing.push(String(userId));
+        await this.usersService.updateUser(currentUserId, { hiddenChatUsers: existing });
+      }
+    } catch (err) {
+      // ignore failures to update hidden list — still return deletion result
+      this.logger.warn(`Failed to update hiddenChatUsers for ${currentUserId}: ${err}`);
+    }
+
+    return { deletedCount: result.deletedCount ?? 0 };
   }
 }

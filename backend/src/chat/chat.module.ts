@@ -5,7 +5,6 @@ import { ChatService } from './chat.service';
 import { ChatGateway } from './chat.gateway';
 import { Message, MessageSchema } from './schemas/message.schema';
 import { AuthModule } from '../auth/auth.module';
-import { JwtModule } from '@nestjs/jwt';
 import { UsersModule } from '../users/users.module';
 
 @Module({
@@ -17,9 +16,6 @@ import { UsersModule } from '../users/users.module';
     forwardRef(() => AuthModule),
 
     UsersModule,
-
-    // CRITICAL FIX FOR GATEWAY DI
-    JwtModule.register({}),
   ],
   controllers: [ChatController],
   providers: [ChatService, ChatGateway],

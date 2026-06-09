@@ -44,6 +44,9 @@ export class User {
   @Prop({ trim: true })
   avatar?: string;
 
+  @Prop({ type: [String], default: [] })
+  hiddenChatUsers?: string[];
+
   @Prop({ type: String, enum: UserRole, default: UserRole.USER })
   role!: UserRole;
 

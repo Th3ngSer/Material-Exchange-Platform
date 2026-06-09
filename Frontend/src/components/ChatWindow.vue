@@ -326,10 +326,6 @@ const playVoice = (msg: ChatMessage, index: number) => {
                     />
                   </div>
                   <div class="voice-meta">
-                    <!-- LEFT: total duration -->
-                    <!-- <span class="voice-duration-left">
-                      {{ formatSeconds(voiceDuration) }}
-                    </span> -->
 
                     <!-- RIGHT: current playing time -->
                     <span class="voice-duration-right">
@@ -381,11 +377,6 @@ const playVoice = (msg: ChatMessage, index: number) => {
                     />
                   </div>
                   <div class="voice-meta">
-                    <!-- LEFT: total duration -->
-                    <!-- <span class="voice-duration-left">
-                      {{ formatSeconds(voiceDuration) }}
-                    </span> -->
-
                     <!-- RIGHT: current playing time -->
                     <span class="voice-duration-right">
                       {{ activeVoiceIndex === index
@@ -809,9 +800,9 @@ const playVoice = (msg: ChatMessage, index: number) => {
   border-radius: 16px;
   font-size: 14px;
   line-height: 1.5;
-  color: #1e293b;
+  color: white;
   word-break: break-word;
-  background: #f1f5f9;
+  background: #2a9df4;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
