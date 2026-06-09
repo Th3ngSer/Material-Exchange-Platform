@@ -405,7 +405,11 @@ async function submit() {
     if (typeof form.lng === 'number') fd.append('lng', String(form.lng))
     form.images.forEach((file) => fd.append('images', file))
 
-    await api.post('/posts', fd)
+    await api.post('/posts', fd, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
     submitted.value = true
     clearDraft()
     await router.push('/browse')

@@ -283,7 +283,11 @@ async function submit() {
     fd.append('retainImages', JSON.stringify(existingImages.value))
     form.images.forEach((file) => fd.append('images', file))
 
-    await api.patch(`/posts/${postId}`, fd)
+    await api.patch(`/posts/${postId}`, fd, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
     submitted.value = true
     await router.push('/home')
   } catch (err: any) {
