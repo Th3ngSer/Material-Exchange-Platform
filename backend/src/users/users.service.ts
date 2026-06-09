@@ -169,4 +169,28 @@ export class UsersService {
       avatar: u.avatar,
     }));
   }
+
+  async findManyByIds(
+    userId: string,
+    ids: string[],
+  ): Promise<
+    Array<{ _id: string; name?: string; username?: string; avatar?: string }>
+  > {
+    if (ids.length === 0) return [];
+    const current = await this.userModel.findById(userId).select('hiddenChatUsers').lean().exec();
+    const hidden = Array.isArray(current?.hiddenChatUsers) ? current!.hiddenChatUsers.map(String) : [];
+
+    const users = await this.userModel
+      .find({ _id: { $in: ids, $nin: hidden } })
+      .select('name username avatar')
+      .lean()
+      .exec();
+
+    return (users as any[]).map((u) => ({
+      _id: String(u._id),
+      name: u.name,
+      username: u.username,
+      avatar: u.avatar,
+    }));
+  }
 }

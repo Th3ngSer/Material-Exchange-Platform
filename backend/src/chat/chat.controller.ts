@@ -57,10 +57,11 @@ export class ChatController {
     return message;
   }
 
-  // ✅ Get users (exclude current user)
+  // ✅ Get users with active chat history
   @Get('users')
   async getUsers(@Req() req: AuthenticatedRequest): Promise<any[]> {
-    return this.usersService.findAllExcept(req.user.id);
+    const partnerIds = await this.chatService.getChatPartners(req.user.id);
+    return this.usersService.findManyByIds(req.user.id, partnerIds);
   }
 
   // ✅ Get chat history

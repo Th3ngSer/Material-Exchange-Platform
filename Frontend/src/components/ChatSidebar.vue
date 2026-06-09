@@ -139,7 +139,7 @@ const deleteSpecificUser = (user: ChatUser) => {
 
     <!--empty state -->
     <div v-if="!users || users.length === 0" class="empty">
-      No users found
+      None
     </div>
 
     <div v-else class="conversation-list">

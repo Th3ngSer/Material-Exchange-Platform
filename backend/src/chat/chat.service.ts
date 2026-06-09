@@ -54,4 +54,23 @@ export class ChatService {
       ],
     }).exec();
   }
+
+  async getChatPartners(userId: string): Promise<string[]> {
+    const messages = await this.messageModel
+      .find({
+        $or: [{ senderId: userId }, { receiverId: userId }],
+      })
+      .select('senderId receiverId')
+      .exec();
+
+    const partners = new Set<string>();
+    messages.forEach((msg) => {
+      const s = String(msg.senderId);
+      const r = String(msg.receiverId);
+      if (s !== String(userId)) partners.add(s);
+      if (r !== String(userId)) partners.add(r);
+    });
+
+    return Array.from(partners);
+  }
 }
