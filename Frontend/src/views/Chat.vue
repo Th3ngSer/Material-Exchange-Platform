@@ -21,7 +21,8 @@ const selectedUser = ref<ChatUser | null>(null)
 const newMessage = ref("")
 const showLoginPrompt = ref(false)
 
-const API_URL = 'http://localhost:3000/api'
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const API_URL = apiBaseUrl.replace(/\/api\/?$/, '')
 
 /* ---------------- STORAGE KEYS ---------------- */
 const storageKey = computed(() => `chat_users_${auth.user?.id ?? 'guest'}`)
