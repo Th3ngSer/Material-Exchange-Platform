@@ -141,6 +141,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
+      // Ensure this socket still belongs to the sender room before broadcasting
+      void socket.join(this.roomFor(String(senderId)));
+
       // Save message to database via service
       const message = await this.chatService.sendMessage(
         senderId,
@@ -152,6 +155,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Emit the message to both sender and receiver
       this.sendToUser(String(senderId), 'message', message);
       this.sendToUser(String(data.receiverId), 'message', message);
+      socket.emit('message', message);
 
       this.logger.log(
         `Message from ${senderId} to ${data.receiverId}: ${message._id?.toString()}`,

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { ChatUser } from '@/types/chat'
+import { ref, computed } from 'vue'
+import type { ChatUser } from '../types/chat'
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const API_URL = apiBaseUrl.replace(/\/api\/?$/, '')
@@ -11,7 +12,14 @@ const { users, selectedUser } = defineProps<{
 
 const emit = defineEmits<{
   (e: 'select-user', user: ChatUser): void
+  (e: 'delete-users', userIds: string[]): void
 }>()
+
+const selectedUserIds = ref<string[]>([])
+const selectedUserCount = computed(() => selectedUserIds.value.length)
+const isSelectMode = ref(false)
+const showDeleteConfirm = ref(false)
+const actionLabel = computed(() => 'Select')
 
 const normalizeAvatarUrl = (value: string | undefined | null, name = 'User') => {
   const avatarValue = String(value || '').trim()
@@ -45,6 +53,55 @@ const handleAvatarError = (event: Event) => {
   const img = event.target as HTMLImageElement
   img.src = 'https://via.placeholder.com/48'
 }
+
+const toggleSelectMode = () => {
+  isSelectMode.value = !isSelectMode.value
+  if (!isSelectMode.value) {
+    selectedUserIds.value = []
+    showDeleteConfirm.value = false
+  }
+}
+
+const requestDeleteUsers = () => {
+  if (selectedUserCount.value === 0) return
+  showDeleteConfirm.value = true
+}
+
+const cancelDelete = () => {
+  showDeleteConfirm.value = false
+}
+
+const confirmDelete = () => {
+  if (selectedUserCount.value === 0) {
+    showDeleteConfirm.value = false
+    return
+  }
+
+  emit('delete-users', [...selectedUserIds.value])
+  selectedUserIds.value = []
+  isSelectMode.value = false
+  showDeleteConfirm.value = false
+}
+
+const toggleUserSelection = (event: Event, user: ChatUser) => {
+  event.stopPropagation()
+  const userId = String(user.id)
+  const index = selectedUserIds.value.indexOf(userId)
+  if (index !== -1) {
+    selectedUserIds.value.splice(index, 1)
+  } else {
+    selectedUserIds.value.push(userId)
+  }
+}
+
+const isUserSelected = (user: ChatUser) => {
+  return selectedUserIds.value.includes(String(user.id))
+}
+
+const deleteSpecificUser = (user: ChatUser) => {
+  emit('delete-users', [String(user.id)])
+  selectedUserIds.value = selectedUserIds.value.filter(id => id !== String(user.id))
+}
 </script>
 
 <template>
@@ -52,6 +109,32 @@ const handleAvatarError = (event: Event) => {
 
     <div class="sidebar-header">
       <h3>ប្រអប់សារ</h3>
+
+      <div class="header-controls">
+        <template v-if="isSelectMode">
+          <button
+            :disabled="selectedUserCount === 0"
+            class="remove-selected-btn"
+            @click="confirmDelete"
+            title="Remove selected chats"
+          >
+            Remove
+          </button>
+          <button class="header-cancel-btn" @click="toggleSelectMode">
+            Cancel
+          </button>
+        </template>
+
+        <template v-else>
+          <button 
+            class="select-btn"
+            @click="toggleSelectMode"
+            title="Select"
+          >
+            {{ actionLabel }}
+          </button>
+        </template>
+      </div>
     </div>
 
     <!--empty state -->
@@ -67,15 +150,24 @@ const handleAvatarError = (event: Event) => {
         :class="['user', { active: selectedUser?.id === user.id }]"
         @click="emit('select-user', user)"
       >
-        <div class="avatar-wrapper" :class="{ online: user.online }">
+        <div v-if="isSelectMode" class="checkbox-wrapper">
+          <button
+            class="checkbox-btn"
+            :class="{ checked: isUserSelected(user) }"
+            @click="toggleUserSelection($event, user)"
+            :title="`${isUserSelected(user) ? 'Deselect' : 'Select'} ${user.name}`"
+          >
+            <span v-if="isUserSelected(user)" class="checkmark">✓</span>
+          </button>
+        </div>
 
+        <div class="avatar-wrapper" :class="{ online: user.online }">
           <img
             :src="getAvatarUrl(user)"
             :alt="user.name"
             class="avatar-img"
             @error="handleAvatarError"
           />
-
         </div>
 
         <div class="content">
@@ -115,12 +207,193 @@ const handleAvatarError = (event: Event) => {
   align-items: center;
   padding: 20px;
   border-bottom: 1px solid #1e293b;
+  gap: 10px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.header-cancel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.remove-selected-btn {
+  background: #dc2626;
+  color: white;
+  border: 1px solid #dc2626;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.remove-selected-btn:hover {
+  background: #b91c1c;
+}
+
+.remove-selected-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #7f1d1d;
+  border-color: #7f1d1d;
+}
+
+.header-cancel-btn {
+  background: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #334155;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.header-cancel-btn:hover {
+  background: #334155;
+  color: #cbd5e1;
+}
+
+.delete-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #111827;
+  padding: 6px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.delete-confirm button {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.delete-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.cancel-btn {
+  background: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #334155;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.cancel-btn:hover {
+  background: #334155;
+  color: white;
+}
+
+.confirm-delete-btn {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.confirm-delete-btn:hover {
+  background: #b91c1c;
+}
+
+.cancel-btn,
+.confirm-delete-btn {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cancel-btn {
+  background: #1e293b;
+  color: #94a3b8;
+  border-color: #334155;
+}
+
+.cancel-btn:hover {
+  background: #334155;
+}
+
+.confirm-delete-btn {
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
+}
+
+.confirm-delete-btn:hover {
+  background: #b91c1c;
 }
 
 .sidebar-header h3 {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
+  flex: 1;
+}
+
+.select-btn,
+.delete-header-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.select-btn {
+  color: #0f172a;
+  border: 2px solid white;
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  background: white;
+}
+
+.select-btn:hover {
+  background: #e2e8f0;
+  color: #6a6e74;
+  border-color: #6a6e74;
+}
+
+.select-btn.active {
+  background: #0d9488;
+  color: white;
+  border-color: #0d9488;
+}
+
+.delete-header-btn {
+  color: #ef4444;
+}
+
+.delete-header-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .user {
@@ -136,6 +409,42 @@ const handleAvatarError = (event: Event) => {
 .user.active {
   background: #1e293b;
   border-left-color: #ef4444;
+}
+
+.checkbox-wrapper {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-btn {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #64748b;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.checkbox-btn:hover {
+  border-color: #0d9488;
+}
+
+.checkbox-btn.checked {
+  background: #0d9488;
+  border-color: #0d9488;
+}
+
+.checkmark {
+  font-size: 14px;
+  font-weight: bold;
 }
 
 .avatar-wrapper {
@@ -218,7 +527,6 @@ const handleAvatarError = (event: Event) => {
   white-space: nowrap;
 }
 
-/* ❗ FIX 3: empty state style */
 .empty {
   padding: 20px;
   text-align: center;

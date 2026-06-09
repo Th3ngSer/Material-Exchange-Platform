@@ -7,6 +7,7 @@ import {
   Req,
   UseGuards,
   Logger,
+  Delete,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { ChatGateway } from './chat.gateway';
@@ -21,7 +22,7 @@ interface AuthenticatedRequest {
 }
 
 @Controller('chat')
-@UseGuards(JwtAuthGuard) // Protect all routes in this controller
+@UseGuards(JwtAuthGuard)
 export class ChatController {
   private readonly logger = new Logger(ChatController.name);
 
@@ -31,6 +32,7 @@ export class ChatController {
     private readonly usersService: UsersService,
   ) {}
 
+  // ✅ Send message
   @Post('send')
   async sendMessage(
     @Body() body: SendMessageDto,
@@ -42,11 +44,11 @@ export class ChatController {
       senderId,
       body.receiverId,
       body.content,
-      body.type, // supports text, image, voice
+      body.type,
     );
 
     this.logger.log(
-      `Stored message from ${senderId} to ${body.receiverId} type=${body.type}`,
+      `Message from ${senderId} to ${body.receiverId} type=${body.type}`,
     );
 
     this.chatGateway.sendToUser(String(senderId), 'message', message);
@@ -55,18 +57,42 @@ export class ChatController {
     return message;
   }
 
+  // ✅ Get users (exclude current user)
   @Get('users')
   async getUsers(@Req() req: AuthenticatedRequest): Promise<any[]> {
-    return await this.usersService.findAllExcept(req.user.id);
+    return this.usersService.findAllExcept(req.user.id);
   }
 
+  // ✅ Get chat history
   @Get('history')
   async getHistory(
     @Query() query: GetConversationDto,
     @Req() req: AuthenticatedRequest,
   ) {
+    return this.chatService.getHistory(req.user.id, query.userId);
+  }
+
+  @Delete('conversation')
+  async deleteConversation(
+    @Query('userId') userId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
     const currentUserId = req.user.id;
 
-    return this.chatService.getHistory(currentUserId, query.userId);
+    // 1. Delete chat messages
+    const result = await this.chatService.deleteConversation(
+      currentUserId,
+      userId,
+    );
+
+    this.logger.log(
+      `Deleted conversation between ${currentUserId} and ${userId}`,
+    );
+
+
+
+    return {
+      deletedCount: result.deletedCount ?? 0,
+    };
   }
 }

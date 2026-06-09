@@ -21,4 +21,9 @@ export const chatApi = {
       params: { userId },
     })
   },
+  deleteConversation(userId: string) {
+    return api.delete('/chat/conversation', {
+      params: { userId },
+    })
+  },
 }

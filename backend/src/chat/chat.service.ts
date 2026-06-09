@@ -44,4 +44,14 @@ export class ChatService {
       .sort({ createdAt: 1 })
       .exec();
   }
+
+  // DELETE ALL MESSAGES BETWEEN TWO USERS
+  async deleteConversation(user1: string, user2: string) {
+    return this.messageModel.deleteMany({
+      $or: [
+        { senderId: user1, receiverId: user2 },
+        { senderId: user2, receiverId: user1 },
+      ],
+    }).exec();
+  }
 }
