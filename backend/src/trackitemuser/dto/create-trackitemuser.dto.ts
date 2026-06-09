@@ -32,4 +32,24 @@ export class CreateTrackItemUserDto {
   @IsOptional()
   @IsIn(['active', 'completed', 'failed'])
   transactionStatus?: 'active' | 'completed' | 'failed';
+
+  @IsOptional()
+  @IsString()
+  paymentMethod?: string;
+
+  @IsOptional()
+  @IsNumber()
+  serviceFee?: number;
+
+  @IsOptional()
+  @IsNumber()
+  deposit?: number;
+
+  @IsOptional()
+  @IsNumber()
+  totalPaid?: number;
+
+  @IsOptional()
+  @IsString()
+  paymentSlip?: string;
 }

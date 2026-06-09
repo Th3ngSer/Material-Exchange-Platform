@@ -4,85 +4,85 @@
 
     <div class="content">
       <section class="header-section">
-        <div>
-          <p class="section-label">{{ languageStore.t('myPosts') }}</p>
-          <h1 class="page-title">{{ languageStore.t('myPosts') }}</h1>
+          <div>
+            <p class="section-label">{{ languageStore.t('myPosts') }}</p>
+            <h1 class="page-title">{{ languageStore.t('myPosts') }}</h1>
+          </div>
+
+          <div class="header-actions">
+            <span class="posts-count">{{ total }} {{ languageStore.t('postsSaved') || 'Posts' }}</span>
+            <button class="btn-refresh" type="button" @click="loadPosts">{{ languageStore.t('refresh') || 'Refresh' }}</button>
+          </div>
+        </section>
+
+        <div v-if="isLoading" class="message-panel">{{ languageStore.t('loading') || 'Loading posts...' }}</div>
+        <div v-else-if="errorMessage" class="message-panel error">{{ errorMessage }}</div>
+        <div v-else-if="!hasPosts" class="message-panel empty">{{ languageStore.t('noPosts') || 'You have no posts yet.' }}</div>
+
+        <div v-else class="post-groups">
+          <section v-if="postsByType.sell.length > 0" class="category-block">
+            <div class="category-heading">
+              <span class="category-emoji">📦</span>
+              <h2>{{ languageStore.t('forSale') || 'For Sale' }}</h2>
+            </div>
+            <div class="post-grid">
+              <article v-for="post in postsByType.sell" :key="post._id" class="post-card">
+                <router-link :to="`/posts/${post._id}`" class="post-link">
+                  <img v-if="post.images?.[0]" :src="imageUrl(post.images[0])" :alt="post.title" class="post-image" />
+                  <div v-else class="post-image-placeholder">📷</div>
+                </router-link>
+                <div class="post-meta">
+                  <router-link :to="`/posts/${post._id}`" class="post-title">{{ post.title }}</router-link>
+                  <p class="post-detail">{{ post.category }} · {{ post.location }}</p>
+                  <p class="post-price">{{ formatPrice(post) }}</p>
+                  <button class="btn-delete" type="button" @click="deletePost(post._id, post.title)">{{ languageStore.t('delete') || 'Delete' }}</button>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section v-if="postsByType.exchange.length > 0" class="category-block">
+            <div class="category-heading">
+              <span class="category-emoji">🔄</span>
+              <h2>For Exchange</h2>
+            </div>
+            <div class="post-grid">
+              <article v-for="post in postsByType.exchange" :key="post._id" class="post-card">
+                <router-link :to="`/posts/${post._id}`" class="post-link">
+                  <img v-if="post.images?.[0]" :src="imageUrl(post.images[0])" :alt="post.title" class="post-image" />
+                  <div v-else class="post-image-placeholder">📷</div>
+                </router-link>
+                <div class="post-meta">
+                  <router-link :to="`/posts/${post._id}`" class="post-title">{{ post.title }}</router-link>
+                  <p class="post-detail">{{ post.category }} · {{ post.location }}</p>
+                  <p class="post-price">{{ formatPrice(post) }}</p>
+                  <button class="btn-delete" type="button" @click="deletePost(post._id, post.title)">{{ languageStore.t('delete') || 'Delete' }}</button>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section v-if="postsByType.lend.length > 0" class="category-block">
+            <div class="category-heading">
+              <span class="category-emoji">🤝</span>
+              <h2>For Lend</h2>
+            </div>
+            <div class="post-grid">
+              <article v-for="post in postsByType.lend" :key="post._id" class="post-card">
+                <router-link :to="`/posts/${post._id}`" class="post-link">
+                  <img v-if="post.images?.[0]" :src="imageUrl(post.images[0])" :alt="post.title" class="post-image" />
+                  <div v-else class="post-image-placeholder">📷</div>
+                </router-link>
+                <div class="post-meta">
+                  <router-link :to="`/posts/${post._id}`" class="post-title">{{ post.title }}</router-link>
+                  <p class="post-detail">{{ post.category }} · {{ post.location }}</p>
+                  <p class="post-price">{{ formatPrice(post) }}</p>
+                  <button class="btn-delete" type="button" @click="deletePost(post._id, post.title)">{{ languageStore.t('delete') || 'Delete' }}</button>
+                </div>
+              </article>
+            </div>
+          </section>
         </div>
-
-        <div class="header-actions">
-          <span class="posts-count">{{ total }} {{ languageStore.t('postsSaved') || 'Posts' }}</span>
-          <button class="btn-refresh" type="button" @click="loadPosts">{{ languageStore.t('refresh') || 'Refresh' }}</button>
-        </div>
-      </section>
-
-      <div v-if="isLoading" class="message-panel">{{ languageStore.t('loading') || 'Loading posts...' }}</div>
-      <div v-else-if="errorMessage" class="message-panel error">{{ errorMessage }}</div>
-      <div v-else-if="!hasPosts" class="message-panel empty">{{ languageStore.t('noPosts') || 'You have no posts yet.' }}</div>
-
-      <div v-else class="post-groups">
-        <section v-if="postsByType.sell.length > 0" class="category-block">
-          <div class="category-heading">
-            <span class="category-emoji">📦</span>
-            <h2>{{ languageStore.t('forSale') || 'For Sale' }}</h2>
-          </div>
-          <div class="post-grid">
-            <article v-for="post in postsByType.sell" :key="post._id" class="post-card">
-              <router-link :to="`/posts/${post._id}`" class="post-link">
-                <img v-if="post.images?.[0]" :src="imageUrl(post.images[0])" :alt="post.title" class="post-image" />
-                <div v-else class="post-image-placeholder">📷</div>
-              </router-link>
-              <div class="post-meta">
-                <router-link :to="`/posts/${post._id}`" class="post-title">{{ post.title }}</router-link>
-                <p class="post-detail">{{ post.category }} · {{ post.location }}</p>
-                <p class="post-price">{{ formatPrice(post) }}</p>
-                <button class="btn-delete" type="button" @click="deletePost(post._id, post.title)">{{ languageStore.t('delete') || 'Delete' }}</button>
-              </div>
-            </article>
-          </div>
-        </section>
-
-        <section v-if="postsByType.exchange.length > 0" class="category-block">
-          <div class="category-heading">
-            <span class="category-emoji">🔄</span>
-            <h2>For Exchange</h2>
-          </div>
-          <div class="post-grid">
-            <article v-for="post in postsByType.exchange" :key="post._id" class="post-card">
-              <router-link :to="`/posts/${post._id}`" class="post-link">
-                <img v-if="post.images?.[0]" :src="imageUrl(post.images[0])" :alt="post.title" class="post-image" />
-                <div v-else class="post-image-placeholder">📷</div>
-              </router-link>
-              <div class="post-meta">
-                <router-link :to="`/posts/${post._id}`" class="post-title">{{ post.title }}</router-link>
-                <p class="post-detail">{{ post.category }} · {{ post.location }}</p>
-                <p class="post-price">{{ formatPrice(post) }}</p>
-                <button class="btn-delete" type="button" @click="deletePost(post._id, post.title)">{{ languageStore.t('delete') || 'Delete' }}</button>
-              </div>
-            </article>
-          </div>
-        </section>
-
-        <section v-if="postsByType.lend.length > 0" class="category-block">
-          <div class="category-heading">
-            <span class="category-emoji">🤝</span>
-            <h2>For Lend</h2>
-          </div>
-          <div class="post-grid">
-            <article v-for="post in postsByType.lend" :key="post._id" class="post-card">
-              <router-link :to="`/posts/${post._id}`" class="post-link">
-                <img v-if="post.images?.[0]" :src="imageUrl(post.images[0])" :alt="post.title" class="post-image" />
-                <div v-else class="post-image-placeholder">📷</div>
-              </router-link>
-              <div class="post-meta">
-                <router-link :to="`/posts/${post._id}`" class="post-title">{{ post.title }}</router-link>
-                <p class="post-detail">{{ post.category }} · {{ post.location }}</p>
-                <p class="post-price">{{ formatPrice(post) }}</p>
-                <button class="btn-delete" type="button" @click="deletePost(post._id, post.title)">{{ languageStore.t('delete') || 'Delete' }}</button>
-              </div>
-            </article>
-          </div>
-        </section>
-      </div>
     </div>
   </div>
 </template>

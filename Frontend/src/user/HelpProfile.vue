@@ -5,67 +5,67 @@
 
     <!-- Main Content -->
     <div class="content">
-      <section class="troubleshoot">
-        <h1>{{ languageStore.t('troubleshoot') }} </h1>
-        <p>{{ languageStore.t('troubleshootDescription') }} </p>
-      </section>
+        <section class="troubleshoot">
+          <h1>{{ languageStore.t('troubleshoot') }} </h1>
+          <p>{{ languageStore.t('troubleshootDescription') }} </p>
+        </section>
 
-      <section class="support">
-        <h2>{{ languageStore.t('support') }}</h2>
-        <p>{{ languageStore.t('supportDescription') }}</p>
-      </section>
+        <section class="support">
+          <h2>{{ languageStore.t('support') }}</h2>
+          <p>{{ languageStore.t('supportDescription') }}</p>
+        </section>
 
-      <section class="contact-form">
-        <h2>{{ languageStore.t('contactUs') }}</h2>
+        <section class="contact-form">
+          <h2>{{ languageStore.t('contactUs') }}</h2>
 
-        <p v-if="submitted" class="success-msg">
-          {{ languageStore.t('successSubmit') }} 
-        </p>
+          <p v-if="submitted" class="success-msg">
+            {{ languageStore.t('successSubmit') }} 
+          </p>
 
-        <p v-if="reportedUser" class="report-target">
-          {{ languageStore.t('reportingUser') || 'Reporting user:' }}
-          <strong>{{ reportedUser }}</strong>
-        </p>
+          <p v-if="reportedUser" class="report-target">
+            {{ languageStore.t('reportingUser') || 'Reporting user:' }}
+            <strong>{{ reportedUser }}</strong>
+          </p>
 
-        <form v-if="!submitted" @submit.prevent="submitForm">
-          <div class="form-row">
+          <form v-if="!submitted" @submit.prevent="submitForm">
+            <div class="form-row">
+              <label>
+                {{ languageStore.t('firstName') }} 
+                <input type="text" v-model="form.firstName" />
+              </label>
+
+              <label>
+                {{ languageStore.t('lastName') }} 
+                <input type="text" v-model="form.lastName" />
+              </label>
+            </div>
+
+            <div class="form-row">
+              <label>
+                {{ languageStore.t('emailAddress') }} 
+                <input type="email" v-model="form.email" />
+              </label>
+
+              <label>
+                {{ languageStore.t('phoneNumber') }} 
+                <input type="tel" v-model="form.phone" />
+              </label>
+            </div>
+
             <label>
-              {{ languageStore.t('firstName') }} 
-              <input type="text" v-model="form.firstName" />
+              {{ languageStore.t('howCanWeHelp') }} 
+              <textarea v-model="form.message"></textarea>
             </label>
 
             <label>
-              {{ languageStore.t('lastName') }} 
-              <input type="text" v-model="form.lastName" />
-            </label>
-          </div>
-
-          <div class="form-row">
-            <label>
-              {{ languageStore.t('emailAddress') }} 
-              <input type="email" v-model="form.email" />
+              {{ languageStore.t('whatCanWeProvide') }} 
+              <textarea v-model="form.request"></textarea>
             </label>
 
-            <label>
-              {{ languageStore.t('phoneNumber') }} 
-              <input type="tel" v-model="form.phone" />
-            </label>
-          </div>
-
-          <label>
-            {{ languageStore.t('howCanWeHelp') }} 
-            <textarea v-model="form.message"></textarea>
-          </label>
-
-          <label>
-            {{ languageStore.t('whatCanWeProvide') }} 
-            <textarea v-model="form.request"></textarea>
-          </label>
-
-          <button type="submit" class="submit-btn" :disabled="!isFormValid"> {{ languageStore.t('submit') }} </button>
-        </form>
-      </section>
-    </div>
+            <button type="submit" class="submit-btn" :disabled="!isFormValid"> {{ languageStore.t('submit') }} </button>
+          </form>
+        </section>
+      </div>
   </div>
 </template>
 

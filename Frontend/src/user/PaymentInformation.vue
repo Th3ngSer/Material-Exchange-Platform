@@ -7,41 +7,41 @@
     <div class="content">
       <h2 class="title">{{ languageStore.t('paymentMethod') }}</h2>
 
-      <div class="payment-options">
-        <!-- Bank Transfer -->
-        <div class="option">
-          <div class="option-row">
-            <!-- LEFT: icon + title -->
-            <div class="title-with-icon">
-              <img class="method-icon" src="/userprofileImage/bank.png" alt="Bank Icon" />
-              <h3>{{ languageStore.t('bankTransfer') }}</h3>
-            </div>
+        <div class="payment-options">
+          <!-- Bank Transfer -->
+          <div class="option">
+            <div class="option-row">
+              <!-- LEFT: icon + title -->
+              <div class="title-with-icon">
+                <img class="method-icon" src="/userprofileImage/bank.png" alt="Bank Icon" />
+                <h3>{{ languageStore.t('bankTransfer') }}</h3>
+              </div>
 
-            <!-- RIGHT: bank logos -->
-            <div class="icons">
-              <img src="/userprofileImage/aba.png" alt="ABA Bank" />
-              <img src="/userprofileImage/acleda.png" alt="ACLEDA Bank" />
-              <img src="/userprofileImage/canadia.png" alt="Canadia Bank" />
+              <!-- RIGHT: bank logos -->
+              <div class="icons">
+                <img src="/userprofileImage/aba.png" alt="ABA Bank" />
+                <img src="/userprofileImage/acleda.png" alt="ACLEDA Bank" />
+                <img src="/userprofileImage/canadia.png" alt="Canadia Bank" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Payment -->
+          <div class="option">
+            <div class="option-row">
+              <!-- LEFT: icon + title -->
+              <div class="title-with-icon">
+                <img class="method-icon" src="/userprofileImage/card.png" alt="Card Icon" />
+                <h3>{{ languageStore.t('cardPayment') }}</h3>
+              </div>
+
+              <!-- RIGHT: visa -->
+              <div class="icons">
+                <img src="/userprofileImage/visa.png" alt="VISA" />
+              </div>
             </div>
           </div>
         </div>
-
-        <!-- Card Payment -->
-        <div class="option">
-          <div class="option-row">
-            <!-- LEFT: icon + title -->
-            <div class="title-with-icon">
-              <img class="method-icon" src="/userprofileImage/card.png" alt="Card Icon" />
-              <h3>{{ languageStore.t('cardPayment') }}</h3>
-            </div>
-
-            <!-- RIGHT: visa -->
-            <div class="icons">
-              <img src="/userprofileImage/visa.png" alt="VISA" />
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>

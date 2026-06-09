@@ -1,11 +1,8 @@
 <template>
-  <div class="personal-page">
-    <Header v-if="!isOwnProfile" />
+  <div class="personal-info">
+    <Sidebar v-if="isOwnProfile" />
 
-    <div class="personal-info">
-      <Sidebar v-if="isOwnProfile" />
-
-      <div class="content">
+    <div class="content">
       <div v-if="!isOwnProfile" class="back-button-container">
         <button class="back-btn" @click="goBack">← {{ languageStore.t('back') || 'Back' }}</button>
       </div>
@@ -143,7 +140,6 @@
 
       <RatingModal v-if="showRatingModal && profileUser" :user-id="profileUser.id" :user-name="profileUser.name" @submit="handleRatingSubmit" @close="showRatingModal = false" />
     </div>
-  </div>
 
     <Footer v-if="!isOwnProfile" />
   </div>
@@ -154,7 +150,6 @@ import { reactive, onMounted, computed, ref, watch, onBeforeUnmount, nextTick } 
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
-import Header from '@/components/layout/Header.vue'
 import Footer from '@/components/layout/Footer.vue'
 import RatingStats from '@/components/RatingStats.vue'
 import RatingModal from '@/components/RatingModal.vue'
@@ -581,15 +576,9 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.personal-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
 .personal-info {
   display: flex;
-  flex: 1;
+  min-height: 100vh;
 }
 
 .content {

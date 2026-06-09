@@ -28,9 +28,12 @@ type Transaction = {
   seller: string
   item: string
   amount: string
+  commission: string
   type: string
   status: string
   date: string
+  rawType: string
+  rawAmount: number
 }
 
 type TransactionApi = {
@@ -46,8 +49,6 @@ type TransactionApi = {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
-
-
 const transactions = ref<Transaction[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
@@ -57,6 +58,30 @@ const formatDate = (value?: string): string => {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value ?? '---'
   return date.toISOString().split('T')[0] ?? '---'
+}
+
+const calculateCommission = (type: string, amount: number | undefined): string => {
+  if (amount === undefined || Number.isNaN(amount)) return '---'
+  const t = type.toLowerCase()
+  if (t === 'borrow') {
+    return `$${(amount * 0.10).toFixed(2)} (10%)`
+  }
+  if (t === 'sell') {
+    return `$${(amount * 0.05).toFixed(2)} (5%)`
+  }
+  if (t === 'exchange') {
+    return '$1.00 (Flat)'
+  }
+  return '---'
+}
+
+const rawCommission = (type: string, amount: number | undefined): number => {
+  if (amount === undefined || Number.isNaN(amount)) return 0
+  const t = type.toLowerCase()
+  if (t === 'borrow') return amount * 0.10
+  if (t === 'sell') return amount * 0.05
+  if (t === 'exchange') return 1.00
+  return 0
 }
 
 const fetchTransactions = async () => {
@@ -84,9 +109,12 @@ const fetchTransactions = async () => {
       seller: item.sellerName,
       item: item.itemTitle,
       amount: item.amount !== undefined ? `$${Number(item.amount).toFixed(2)}` : '---',
+      commission: calculateCommission(item.type, item.amount),
       type: item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : '---',
       status: item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Active',
       date: formatDate(item.createdAt),
+      rawType: item.type || '',
+      rawAmount: item.amount || 0,
     }))
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Failed to load transactions'
@@ -103,10 +131,10 @@ const filteredTransactions = computed(() => {
     const q = searchQuery.value.toLowerCase().trim()
     list = list.filter(
       (item) =>
-        item.buyer.toLowerCase().includes(q) ||
-        item.seller.toLowerCase().includes(q) ||
-        item.item.toLowerCase().includes(q) ||
-        item.id.toLowerCase().includes(q),
+          item.buyer.toLowerCase().includes(q) ||
+          item.seller.toLowerCase().includes(q) ||
+          item.item.toLowerCase().includes(q) ||
+          item.id.toLowerCase().includes(q),
     )
   }
 
@@ -129,6 +157,22 @@ const filteredTransactions = computed(() => {
   }
 
   return list
+})
+
+const totalVolume = computed(() => {
+  const sum = transactions.value.reduce((acc, curr) => acc + (curr.rawAmount || 0), 0)
+  return `$${sum.toFixed(2)}`
+})
+
+const totalCommission = computed(() => {
+  const sum = transactions.value.reduce((acc, curr) => {
+    return acc + rawCommission(curr.rawType, curr.rawAmount)
+  }, 0)
+  return `$${sum.toFixed(2)}`
+})
+
+const activeCount = computed(() => {
+  return transactions.value.filter((t) => t.status.toLowerCase() === 'active').length
 })
 
 onMounted(fetchTransactions)
@@ -159,6 +203,31 @@ onMounted(fetchTransactions)
           <button class="primary">Select</button>
         </div>
 
+        <!-- Summary Cards Grid -->
+        <div class="summary-cards">
+          <div class="summary-card">
+            <div class="card-icon volume">💼</div>
+            <div class="card-info">
+              <span class="card-label">Total Volume</span>
+              <span class="card-value">{{ totalVolume }}</span>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="card-icon commission">📈</div>
+            <div class="card-info">
+              <span class="card-label">Total Commission</span>
+              <span class="card-value">{{ totalCommission }}</span>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="card-icon active-tx">🔄</div>
+            <div class="card-info">
+              <span class="card-label">Active Transacts</span>
+              <span class="card-value">{{ activeCount }}</span>
+            </div>
+          </div>
+        </div>
+
         <div class="filters">
           <label class="search">
             <span class="search-icon"></span>
@@ -179,6 +248,7 @@ onMounted(fetchTransactions)
             <span>Seller</span>
             <span>Item</span>
             <span>Amount</span>
+            <span>Commission</span>
             <span>Type</span>
             <span>Status</span>
             <span>Date</span>
@@ -189,6 +259,7 @@ onMounted(fetchTransactions)
             <span>{{ transaction.seller }}</span>
             <span>{{ transaction.item }}</span>
             <span>{{ transaction.amount }}</span>
+            <span>{{ transaction.commission }}</span>
             <span>{{ transaction.type }}</span>
             <span class="status" :class="transaction.status.toLowerCase()">{{ transaction.status }}</span>
             <span>{{ transaction.date }}</span>
@@ -382,15 +453,72 @@ select {
   color: #ef4444;
 }
 
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.card-icon.volume {
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.card-icon.commission {
+  background: rgba(22, 163, 74, 0.1);
+}
+
+.card-icon.active-tx {
+  background: rgba(234, 179, 8, 0.1);
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-label {
+  font-size: 12px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.card-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
 .table-row {
   display: grid;
-  grid-template-columns: 0.7fr 1fr 1fr 1.6fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 0.7fr 1fr 1fr 1.6fr 1fr 1.2fr 1fr 1fr 1fr;
   gap: 8px;
   font-size: 13px;
   padding: 10px 0;
   align-items: center;
   border-bottom: 1px solid #e2e8f0;
-  min-width: 850px;
+  min-width: 950px;
 }
 
 .table-row.header {

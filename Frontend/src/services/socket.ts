@@ -21,20 +21,21 @@ export function connectSocket() {
     ;(window as any).__socket = socket
   } catch {}
 
-  if (!(socket as any).__initialized) {
-    socket.on('connect', () => {
-      if (!socket.id) return 
-      console.log('Socket connected', socket?.id)
-      try { window.dispatchEvent(new CustomEvent('socketConnected', { detail: { id: socket?.id } })) } catch {}
+  const curr = socket
+  if (curr && !(curr as any).__initialized) {
+    curr.on('connect', () => {
+      if (!curr.id) return 
+      console.log('Socket connected', curr.id)
+      try { window.dispatchEvent(new CustomEvent('socketConnected', { detail: { id: curr.id } })) } catch {}
     })
 
-    socket.on('disconnect', (reason) => {
+    curr.on('disconnect', (reason) => {
       console.log('Socket disconnected', reason)
       try { window.dispatchEvent(new CustomEvent('socketDisconnected', { detail: { reason } })) } catch {}
     })
 
     // Relay profile updates to the app via a CustomEvent so views can update caches
-    socket.on('profileUpdated', (payload: { userId: string; avatar: string; username?: string }) => {
+    curr.on('profileUpdated', (payload: { userId: string; avatar: string; username?: string }) => {
       try {
         window.dispatchEvent(new CustomEvent('profileUpdated', { detail: payload }))
       } catch (err) {
@@ -42,7 +43,7 @@ export function connectSocket() {
       }
     })
 
-    ;(socket as any).__initialized = true
+    ;(curr as any).__initialized = true
     console.log('Socket initialized (connecting)...')
   }
 

@@ -238,6 +238,127 @@ const detailStats = computed(() => [
 ])
 
 const contactInfo = computed(() => extractContact(currentPost.value as MaterialItem & { contact?: string }))
+
+// Checkout modal state
+const showCheckoutModal = ref(false)
+const paymentMethod = ref<'card' | 'qr'>('card')
+
+const cardNo = ref('')
+const cardExpiry = ref('')
+const cardCvv = ref('')
+const cardName = ref('')
+
+const slipFile = ref<File | null>(null)
+const slipPreview = ref('')
+
+const itemPrice = computed(() => {
+  return Number(String(currentPost.value?.price || '').replace(/[^0-9.]/g, '')) || 0
+})
+
+const categoryRates: Record<string, number> = {
+  electronics: 0.10, // 10%
+  vehicles: 0.10,    // 10%
+  furniture: 0.08,   // 8%
+  'home & garden': 0.08, // 8%
+  sports: 0.07,      // 7%
+  clothing: 0.05,    // 5%
+  books: 0.05,       // 5%
+  toys: 0.05,        // 5%
+  default: 0.05      // 5%
+}
+
+const commissionRate = computed<number>(() => {
+  const cat = String(currentPost.value?.category || '').toLowerCase()
+  const rate = categoryRates[cat]
+  return typeof rate === 'number' ? rate : 0.05
+})
+
+const platformFee = computed(() => {
+  return Number((itemPrice.value * commissionRate.value).toFixed(2))
+})
+
+const securityDeposit = computed(() => {
+  const typeStr = String(currentPost.value?.type || '').toLowerCase()
+  if (typeStr === 'borrow' || typeStr === 'exchange') {
+    return Number((itemPrice.value * 0.5).toFixed(2)) // 50% deposit
+  }
+  return 0
+})
+
+const totalAmount = computed(() => {
+  return Number((itemPrice.value + platformFee.value + securityDeposit.value).toFixed(2))
+})
+
+async function handleTransactionClick() {
+  if (!authStore.isAuthenticated) {
+    void router.push({ name: 'login', query: { redirect: route.fullPath } })
+    return
+  }
+  showCheckoutModal.value = true
+}
+
+function handleSlipUpload(event: Event) {
+  const target = event.target as HTMLInputElement
+  if (target.files && target.files[0]) {
+    slipFile.value = target.files[0]
+    slipPreview.value = URL.createObjectURL(target.files[0])
+  }
+}
+
+async function processCheckout() {
+  if (paymentMethod.value === 'card') {
+    if (!cardNo.value || !cardExpiry.value || !cardCvv.value || !cardName.value) {
+      alert('Please fill in all credit card fields.')
+      return
+    }
+    const cleanNo = cardNo.value.replace(/\s+/g, '')
+    if (cleanNo.length < 15 || cleanNo.length > 16) {
+      alert('Invalid credit card number format.')
+      return
+    }
+  } else {
+    if (!slipFile.value) {
+      alert('Please upload your payment slip receipt.')
+      return
+    }
+  }
+
+  try {
+    const token = getToken()
+    const payload = {
+      name: currentPost.value.title,
+      status: paymentMethod.value === 'card' ? 'Accepted' : 'Pending',
+      buyerName: authStore.user?.username || authStore.user?.name || 'Buyer',
+      sellerName: currentPost.value.seller || 'Seller',
+      itemTitle: currentPost.value.title,
+      amount: itemPrice.value,
+      type: currentPost.value.type.toLowerCase(),
+      transactionStatus: 'active',
+      paymentMethod: paymentMethod.value,
+      serviceFee: platformFee.value,
+      deposit: securityDeposit.value,
+      totalPaid: totalAmount.value,
+      paymentSlip: slipPreview.value || undefined
+    }
+
+    await axios.post(`${apiBaseUrl}/trackitemuser`, payload, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+
+    showCheckoutModal.value = false
+    void router.push({ name: 'trackItem' })
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const message = error.response?.data?.message
+      errorMessage.value = Array.isArray(message) ? message.join(', ') : (message ?? 'Failed to complete checkout payment.')
+    } else {
+      errorMessage.value = 'Failed to complete checkout payment.'
+    }
+  }
+}
 </script>
 
 <template>
@@ -306,19 +427,31 @@ const contactInfo = computed(() => extractContact(currentPost.value as MaterialI
           <!-- Action Button (shows only the relevant action per type) -->
           <div>
             <template v-if="currentPost.type === 'Sell'">
-              <button type="button" class="rounded-lg bg-[#1b1748] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#29255f]">
+              <button
+                type="button"
+                @click="handleTransactionClick"
+                class="rounded-lg bg-[#1b1748] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#29255f]"
+              >
                 {{ actionButtonText }}
               </button>
             </template>
 
             <template v-else-if="currentPost.type === 'Exchange'">
-              <button type="button" class="rounded-lg border-2 border-[#ff8c00] bg-[#fff6ef] px-4 py-3 text-sm font-bold text-[#ff8c00] transition hover:bg-orange-50">
+              <button
+                type="button"
+                @click="handleTransactionClick"
+                class="rounded-lg border-2 border-[#ff8c00] bg-[#fff6ef] px-4 py-3 text-sm font-bold text-[#ff8c00] transition hover:bg-orange-50"
+              >
                 {{ actionButtonText }}
               </button>
             </template>
 
             <template v-else>
-              <button type="button" class="rounded-lg border-2 border-[#17173d]/20 bg-white px-4 py-3 text-sm font-bold text-[#17173d] transition hover:bg-gray-50">
+              <button
+                type="button"
+                @click="handleTransactionClick"
+                class="rounded-lg border-2 border-[#17173d]/20 bg-white px-4 py-3 text-sm font-bold text-[#17173d] transition hover:bg-gray-50"
+              >
                 {{ actionButtonText }}
               </button>
             </template>
@@ -507,5 +640,133 @@ const contactInfo = computed(() => extractContact(currentPost.value as MaterialI
     </main>
 
     <Footer />
+
+    <!-- Payment Checkout Modal -->
+    <div v-if="showCheckoutModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl transition-all duration-300">
+        <div class="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
+          <h3 class="text-xl font-bold text-[#1b1748]">Secure Checkout</h3>
+          <button @click="showCheckoutModal = false" class="text-gray-400 hover:text-gray-600">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Platform Fee Notice -->
+        <div class="mb-4 rounded-xl bg-amber-50/70 border border-amber-200/80 p-3.5 flex gap-2.5 text-xs text-amber-900">
+          <span class="text-sm">ℹ️</span>
+          <div>
+            <strong class="font-bold">Platform Fee Notice:</strong> Commission rates are dynamically calculated based on the product category (10% for Electronics/Vehicles, 8% for Furniture/Home, 7% for Sports, and 5% for Toys/Clothing/Books).
+          </div>
+        </div>
+
+        <!-- Price Breakdown -->
+        <div class="mb-6 rounded-xl bg-gray-50 p-4">
+          <h4 class="mb-2 text-sm font-semibold uppercase tracking-wider text-gray-500">Order Summary</h4>
+          <div class="space-y-2 text-sm text-gray-600">
+            <div class="flex justify-between">
+              <span>{{ currentPost.title }}</span>
+              <span>${{ itemPrice.toFixed(2) }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Platform Commission Fee ({{ Math.round(commissionRate * 100) }}%)</span>
+              <span>${{ platformFee.toFixed(2) }}</span>
+            </div>
+            <div v-if="securityDeposit > 0" class="flex justify-between">
+              <span>Refundable Security Deposit (50%)</span>
+              <span>${{ securityDeposit.toFixed(2) }}</span>
+            </div>
+            <div class="border-t border-gray-200 pt-2 flex justify-between font-bold text-gray-900 text-base">
+              <span>Total Amount Due</span>
+              <span>${{ totalAmount.toFixed(2) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Method Selection -->
+        <div class="mb-6">
+          <label class="block text-sm font-bold text-gray-700 mb-2">Select Payment Method</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              @click="paymentMethod = 'card'"
+              :class="['flex items-center justify-center gap-2 rounded-lg border-2 py-3 text-sm font-bold transition', 
+                paymentMethod === 'card' ? 'border-[#ff8c00] bg-orange-50/50 text-[#ff8c00]' : 'border-gray-200 text-gray-600 hover:bg-gray-50']"
+            >
+              💳 Card
+            </button>
+            <button
+              type="button"
+              @click="paymentMethod = 'qr'"
+              :class="['flex items-center justify-center gap-2 rounded-lg border-2 py-3 text-sm font-bold transition', 
+                paymentMethod === 'qr' ? 'border-[#ff8c00] bg-orange-50/50 text-[#ff8c00]' : 'border-gray-200 text-gray-600 hover:bg-gray-50']"
+            >
+              📱 QR transfer
+            </button>
+          </div>
+        </div>
+
+        <!-- Payment Method Details Form -->
+        <div class="mb-6">
+          <!-- Credit Card Form -->
+          <div v-if="paymentMethod === 'card'" class="space-y-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cardholder Name</label>
+              <input v-model="cardName" type="text" placeholder="John Doe" class="w-full rounded-lg border border-gray-200 p-2.5 text-sm outline-none focus:border-[#ff8c00]" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Card Number</label>
+              <input v-model="cardNo" type="text" placeholder="xxxx xxxx xxxx xxxx" class="w-full rounded-lg border border-gray-200 p-2.5 text-sm outline-none focus:border-[#ff8c00]" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Expiry Date</label>
+                <input v-model="cardExpiry" type="text" placeholder="MM/YY" class="w-full rounded-lg border border-gray-200 p-2.5 text-sm outline-none focus:border-[#ff8c00]" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">CVV / CVC</label>
+                <input v-model="cardCvv" type="password" placeholder="123" class="w-full rounded-lg border border-gray-200 p-2.5 text-sm outline-none focus:border-[#ff8c00]" />
+              </div>
+            </div>
+          </div>
+
+          <!-- QR Transfer Form -->
+          <div v-else class="space-y-4 text-center">
+            <div class="mx-auto w-36 h-36 border-2 border-gray-200 rounded-lg p-2 bg-white flex items-center justify-center">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=MaterialExchangePlatform" alt="Payment QR" class="w-full h-full object-contain" />
+            </div>
+            <p class="text-xs text-gray-500">Scan QR code above with your mobile banking app to pay platform fee, then upload the receipt/slip below.</p>
+            <div>
+              <input type="file" @change="handleSlipUpload" accept="image/*" class="hidden" id="slip-file-input" />
+              <label for="slip-file-input" class="inline-flex items-center gap-2 rounded-lg bg-gray-100 hover:bg-gray-200 px-4 py-2 text-xs font-bold text-gray-700 cursor-pointer transition">
+                📁 {{ slipFile ? 'Change Slip' : 'Upload Payment Slip' }}
+              </label>
+              <div v-if="slipPreview" class="mt-3 mx-auto w-24 h-24 border border-dashed rounded overflow-hidden">
+                <img :src="slipPreview" class="w-full h-full object-cover" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Checkout Action Buttons -->
+        <div class="flex justify-end gap-3 border-t border-gray-100 pt-4">
+          <button
+            type="button"
+            class="rounded-lg bg-gray-100 px-5 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-200"
+            @click="showCheckoutModal = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="rounded-lg bg-[#1b1748] px-6 py-2.5 text-sm font-bold text-white transition hover:bg-[#29255f]"
+            @click="processCheckout"
+          >
+            {{ paymentMethod === 'card' ? 'Pay & Confirm' : 'Submit for Verification' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

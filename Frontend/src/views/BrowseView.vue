@@ -124,7 +124,7 @@ function mapPostToMaterial(post: PostRecord): MaterialItem {
 }
 
 function mergeMaterials(staticMaterials: MaterialItem[], backendMaterials: MaterialItem[]) {
-  const merged = [...staticMaterials, ...backendMaterials]
+  const merged = [...backendMaterials, ...staticMaterials]
   const seen = new Set<string>()
 
   return merged.filter((item) => {

@@ -51,6 +51,21 @@ export class TrackItemUser {
   @Prop()
   type?: string;
 
+  @Prop()
+  paymentMethod?: string;
+
+  @Prop()
+  serviceFee?: number;
+
+  @Prop()
+  deposit?: number;
+
+  @Prop()
+  totalPaid?: number;
+
+  @Prop()
+  paymentSlip?: string;
+
   @Prop([
     {
       status: String,

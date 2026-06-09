@@ -5,27 +5,27 @@
     <div class="content">
       <h2 class="title">{{ languageStore.t('language') }}</h2>
 
-      <form class="language-form" @submit.prevent="saveLanguage">
-        <!-- Khmer option -->
-        <label class="option">
-          <input type="radio" value="Khmer" v-model="selectedLanguage" />
-          <span>{{ languageStore.t('khmer') }}</span>
-        </label>
+        <form class="language-form" @submit.prevent="saveLanguage">
+          <!-- Khmer option -->
+          <label class="option">
+            <input type="radio" value="Khmer" v-model="selectedLanguage" />
+            <span>{{ languageStore.t('khmer') }}</span>
+          </label>
 
-        <!-- English option -->
-        <label class="option">
-          <input type="radio" value="English" v-model="selectedLanguage" />
-          <span>{{ languageStore.t('english') }}</span>
-        </label>
+          <!-- English option -->
+          <label class="option">
+            <input type="radio" value="English" v-model="selectedLanguage" />
+            <span>{{ languageStore.t('english') }}</span>
+          </label>
 
-        <!-- Save button -->
-        <div class="form-actions">
-          <button class="btn save" type="submit">{{ languageStore.t('save') }}</button>
-        </div>
-      </form>
+          <!-- Save button -->
+          <div class="form-actions">
+            <button class="btn save" type="submit">{{ languageStore.t('save') }}</button>
+          </div>
+        </form>
 
-      <!-- Visible feedback -->
-      <p v-if="message" class="feedback">{{ message }}</p>
+        <!-- Visible feedback -->
+        <p v-if="message" class="feedback">{{ message }}</p>
     </div>
   </div>
 </template>

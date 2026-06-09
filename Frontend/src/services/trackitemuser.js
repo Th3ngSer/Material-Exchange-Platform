@@ -41,3 +41,14 @@ export const createItem = async (data) => {
     throw err
   }
 }
+
+export const deleteItem = async (id) => {
+  try {
+    const response = await axios.delete(`${API}/${id}`, getAuthHeaders())
+    console.log('Item deleted:', response.data)
+    return response.data
+  } catch (err) {
+    console.error('Error deleting item:', err.response?.data || err.message)
+    throw err
+  }
+}
