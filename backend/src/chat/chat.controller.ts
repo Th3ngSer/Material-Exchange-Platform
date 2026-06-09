@@ -7,11 +7,11 @@ import {
   Req,
   UseGuards,
   Logger,
+  Delete,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { ChatGateway } from './chat.gateway';
 import { UsersService } from '../users/users.service';
-import { Delete } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SendMessageDto } from './dto/send-message.dto';
 import { GetConversationDto } from './dto/get-conversation.dto';
@@ -22,7 +22,7 @@ interface AuthenticatedRequest {
 }
 
 @Controller('chat')
-@UseGuards(JwtAuthGuard) // Protect all routes in this controller
+@UseGuards(JwtAuthGuard)
 export class ChatController {
   private readonly logger = new Logger(ChatController.name);
 
@@ -32,6 +32,7 @@ export class ChatController {
     private readonly usersService: UsersService,
   ) {}
 
+  // ✅ Send message
   @Post('send')
   async sendMessage(
     @Body() body: SendMessageDto,
@@ -43,11 +44,11 @@ export class ChatController {
       senderId,
       body.receiverId,
       body.content,
-      body.type, // supports text, image, voice
+      body.type,
     );
 
     this.logger.log(
-      `Stored message from ${senderId} to ${body.receiverId} type=${body.type}`,
+      `Message from ${senderId} to ${body.receiverId} type=${body.type}`,
     );
 
     this.chatGateway.sendToUser(String(senderId), 'message', message);
@@ -56,19 +57,19 @@ export class ChatController {
     return message;
   }
 
+  // ✅ Get users (exclude current user)
   @Get('users')
   async getUsers(@Req() req: AuthenticatedRequest): Promise<any[]> {
-    return await this.usersService.findAllExcept(req.user.id);
+    return this.usersService.findAllExcept(req.user.id);
   }
 
+  // ✅ Get chat history
   @Get('history')
   async getHistory(
     @Query() query: GetConversationDto,
     @Req() req: AuthenticatedRequest,
   ) {
-    const currentUserId = req.user.id;
-
-    return this.chatService.getHistory(currentUserId, query.userId);
+    return this.chatService.getHistory(req.user.id, query.userId);
   }
 
   @Delete('conversation')
@@ -77,22 +78,21 @@ export class ChatController {
     @Req() req: AuthenticatedRequest,
   ) {
     const currentUserId = req.user.id;
-    const result = await this.chatService.deleteConversation(currentUserId, userId);
-    // Add the other user to current user's hiddenChatUsers so they don't reappear after refresh
-    try {
-      const currentUser = await this.usersService.findById(currentUserId);
-      const existing: string[] = Array.isArray(currentUser?.hiddenChatUsers)
-        ? currentUser!.hiddenChatUsers.map(String)
-        : [];
-      if (!existing.includes(String(userId))) {
-        existing.push(String(userId));
-        await this.usersService.updateUser(currentUserId, { hiddenChatUsers: existing });
-      }
-    } catch (err) {
-      // ignore failures to update hidden list — still return deletion result
-      this.logger.warn(`Failed to update hiddenChatUsers for ${currentUserId}: ${err}`);
-    }
 
-    return { deletedCount: result.deletedCount ?? 0 };
+    // 1. Delete chat messages
+    const result = await this.chatService.deleteConversation(
+      currentUserId,
+      userId,
+    );
+
+    this.logger.log(
+      `Deleted conversation between ${currentUserId} and ${userId}`,
+    );
+
+
+
+    return {
+      deletedCount: result.deletedCount ?? 0,
+    };
   }
 }
