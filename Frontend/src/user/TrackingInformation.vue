@@ -5,8 +5,21 @@
     <div class="content">
       <h2 class="title">{{ languageStore.t('transactionOfItem') }} </h2>
 
-        <!-- ITEMS -->
-        <div v-for="item in items" :key="item.customId" class="item-card">
+      <!-- Tab Filtering -->
+      <div class="tabs-container">
+        <button 
+          v-for="tab in ['all', 'sell', 'exchange', 'borrow']" 
+          :key="tab"
+          type="button"
+          :class="['tab-btn', { active: activeTab === tab }]"
+          @click="activeTab = tab"
+        >
+          {{ tab === 'all' ? 'All' : tab === 'sell' ? 'Sell' : tab === 'exchange' ? 'Exchange' : 'Borrow' }}
+        </button>
+      </div>
+
+      <!-- ITEMS -->
+      <div v-for="item in filteredItems" :key="item.customId" class="item-card">
           <div class="card-header">
             <h3>{{ item.name }}</h3>
             <span :class="['role-badge', getRoleClass(item)]">
@@ -71,6 +84,24 @@
               </div>
             </div>
 
+            <!-- Deposit Refund Banner -->
+            <div v-if="item.deposit > 0" class="mt-4">
+              <div v-if="item.status === 'Completed'" class="deposit-refund-banner">
+                <span class="refund-icon">💸</span>
+                <div class="refund-content">
+                  <strong class="refund-title">Security Deposit Refunded</strong>
+                  <p class="refund-desc">The refundable security deposit of ${{ Number(item.deposit || 0).toFixed(2) }} (50%) has been successfully refunded to your account.</p>
+                </div>
+              </div>
+              <div v-else class="deposit-pending-banner">
+                <span class="refund-icon">⏳</span>
+                <div class="refund-content">
+                  <strong class="pending-title">Deposit Refund Pending</strong>
+                  <p class="pending-desc">Your security deposit of ${{ Number(item.deposit || 0).toFixed(2) }} (50%) will be automatically refunded once the lender confirms receiving the returned item.</p>
+                </div>
+              </div>
+            </div>
+
             <!-- Slip Upload Preview -->
             <div v-if="item.paymentSlip" class="slip-preview-container">
               <span class="field-label">Payment Receipt Slip:</span>
@@ -94,7 +125,7 @@
             </button>
 
             <button
-              v-if="item.status === 'Accepted' && item.type !== 'borrow'"
+              v-if="item.status === 'Accepted' && item.type !== 'borrow' && item.type !== 'lend'"
               class="btn btn-complete"
               @click="updateStatus(item, 'Completed')"
             >
@@ -103,7 +134,7 @@
 
             <!-- For Borrow/Lend, once the Borrower has marked it as Returned, the Lender can confirm completed! -->
             <button
-              v-if="item.status === 'Returned' && item.type === 'borrow'"
+              v-if="item.status === 'Returned' && (item.type === 'borrow' || item.type === 'lend')"
               class="btn btn-complete"
               @click="updateStatus(item, 'Completed')"
             >
@@ -129,7 +160,7 @@
           <template v-else-if="isBorrower(item)">
             <!-- If state is Accepted and it's borrow, borrower can mark it as Returned! -->
             <button
-              v-if="item.status === 'Accepted' && item.type === 'borrow'"
+              v-if="item.status === 'Accepted' && (item.type === 'borrow' || item.type === 'lend')"
               class="btn btn-complete"
               @click="updateStatus(item, 'Returned')"
             >
@@ -151,7 +182,7 @@
             <span v-if="item.status === 'Pending'" class="status-waiting-msg">
               Waiting for lender action...
             </span>
-            <span v-if="item.status === 'Accepted' && item.type !== 'borrow'" class="status-waiting-msg">
+            <span v-if="item.status === 'Accepted' && item.type !== 'borrow' && item.type !== 'lend'" class="status-waiting-msg">
               Waiting for lender action...
             </span>
             <span v-if="item.status === 'Returned'" class="status-waiting-msg">
@@ -246,7 +277,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
 import { getItems, updateStatus as apiUpdateStatus } from '@/services/trackitemuser'
 import { useLanguageStore } from '../stores/language'
@@ -314,6 +345,26 @@ const getTransactionTypeLabel = (item) => {
 
 /* STATE */
 const items = ref([])
+const activeTab = ref('all')
+
+const filteredItems = computed(() => {
+  if (activeTab.value === 'all') {
+    return items.value
+  }
+  return items.value.filter((item) => {
+    const t = String(item.type || '').toLowerCase()
+    if (activeTab.value === 'sell') {
+      return t === 'sell'
+    }
+    if (activeTab.value === 'exchange') {
+      return t === 'exchange'
+    }
+    if (activeTab.value === 'borrow') {
+      return t === 'borrow' || t === 'lend'
+    }
+    return true
+  })
+})
 const showCancelModal = ref(false)
 const selectedReason = ref('')
 const selectedItem = ref(null)
@@ -913,5 +964,92 @@ onMounted(loadItems)
   width: 100%;
   height: auto;
   display: block;
+}
+
+/* Deposit Refund Banners */
+.deposit-refund-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.refund-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.refund-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.refund-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #166534;
+}
+
+.refund-desc {
+  margin: 0;
+  font-size: 12px;
+  color: #15803d;
+  line-height: 1.4;
+}
+
+.deposit-pending-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.pending-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.pending-desc {
+  margin: 0;
+  font-size: 12px;
+  color: #b45309;
+  line-height: 1.4;
+}
+
+/* Tab Filtering */
+.tabs-container {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.tab-btn {
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #ffffff;
+  background-color: #1e1b4b; /* deep indigo */
+}
+
+.tab-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.tab-btn.active {
+  background-color: #ef4444; /* bright coral red */
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 </style>
