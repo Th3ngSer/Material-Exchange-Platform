@@ -262,11 +262,11 @@ const itemPrice = computed(() => {
 })
 
 const categoryRates: Record<string, number> = {
-  electronics: 0.05, // 5%
-  vehicles: 0.05,    // 5%
-  furniture: 0.05,   // 5%
-  'home & garden': 0.05, // 5%
-  sports: 0.05,      // 5%
+  electronics: 0.10, // 10%
+  vehicles: 0.10,    // 10%
+  furniture: 0.08,   // 8%
+  'home & garden': 0.08, // 8%
+  sports: 0.07,      // 7%
   clothing: 0.05,    // 5%
   books: 0.05,       // 5%
   toys: 0.05,        // 5%
@@ -668,7 +668,7 @@ async function processCheckout() {
         <div class="mb-4 rounded-xl bg-amber-50/70 border border-amber-200/80 p-3.5 flex gap-2.5 text-xs text-amber-900">
           <span class="text-sm">ℹ️</span>
           <div>
-            <strong class="font-bold">Platform Fee Notice:</strong> A flat 5% platform commission fee is calculated for all item categories.
+            <strong class="font-bold">Platform Fee Notice:</strong> Commission rates are dynamically calculated based on the product category (10% for Electronics/Vehicles, 8% for Furniture/Home, 7% for Sports, and 5% for Toys/Clothing/Books).
           </div>
         </div>
 
