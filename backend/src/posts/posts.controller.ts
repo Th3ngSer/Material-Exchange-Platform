@@ -15,6 +15,7 @@ import {
   Logger,
   UseGuards,
   Req,
+  BadRequestException,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { PostsService } from './posts.service';
@@ -79,9 +80,14 @@ export class PostsController {
     @UploadedFiles() files: Express.Multer.File[] = [],
     @Body() dto: CreatePostDto,
   ) {
-    const imageUrls = files && files.length > 0
-      ? await Promise.all(files.map((file) => this.cloudinaryService.uploadImage(file)))
-      : [];
+    let imageUrls: string[] = [];
+    try {
+      imageUrls = files && files.length > 0
+        ? await Promise.all(files.map((file) => this.cloudinaryService.uploadImage(file)))
+        : [];
+    } catch (error: any) {
+      throw new BadRequestException(`Cloudinary upload failed: ${error.message || error}`);
+    }
     return this.postsService.create(dto, imageUrls, req.user.id);
   }
 
@@ -117,9 +123,14 @@ export class PostsController {
     @Body() dto: UpdatePostDto,
     @UploadedFiles() files: Express.Multer.File[] = [],
   ) {
-    const imageUrls = files && files.length > 0
-      ? await Promise.all(files.map((file) => this.cloudinaryService.uploadImage(file)))
-      : [];
+    let imageUrls: string[] = [];
+    try {
+      imageUrls = files && files.length > 0
+        ? await Promise.all(files.map((file) => this.cloudinaryService.uploadImage(file)))
+        : [];
+    } catch (error: any) {
+      throw new BadRequestException(`Cloudinary upload failed: ${error.message || error}`);
+    }
     return this.postsService.update(id, dto, imageUrls, req.user.id);
   }
 
