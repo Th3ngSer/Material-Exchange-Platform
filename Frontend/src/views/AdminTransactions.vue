@@ -34,6 +34,7 @@ type Transaction = {
   date: string
   rawType: string
   rawAmount: number
+  rawServiceFee?: number
 }
 
 type TransactionApi = {
@@ -42,6 +43,7 @@ type TransactionApi = {
   sellerName: string
   itemTitle: string
   amount?: number
+  serviceFee?: number
   type: string
   status: string
   createdAt?: string
@@ -57,7 +59,14 @@ const formatDate = (value?: string): string => {
   if (!value) return '---'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value ?? '---'
-  return date.toISOString().split('T')[0] ?? '---'
+  
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  const hh = String(date.getHours()).padStart(2, '0')
+  const min = String(date.getMinutes()).padStart(2, '0')
+  const ss = String(date.getSeconds()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`
 }
 
 const calculateCommission = (type: string, amount: number | undefined): string => {
@@ -75,7 +84,8 @@ const calculateCommission = (type: string, amount: number | undefined): string =
   return '---'
 }
 
-const rawCommission = (type: string, amount: number | undefined): number => {
+const rawCommission = (type: string, amount: number | undefined, serviceFee: number | undefined): number => {
+  if (serviceFee !== undefined && serviceFee !== null) return serviceFee
   if (amount === undefined || Number.isNaN(amount)) return 0
   const t = type.toLowerCase()
   if (t === 'borrow') return amount * 0.10
@@ -109,12 +119,15 @@ const fetchTransactions = async () => {
       seller: item.sellerName,
       item: item.itemTitle,
       amount: item.amount !== undefined ? `$${Number(item.amount).toFixed(2)}` : '---',
-      commission: calculateCommission(item.type, item.amount),
+      commission: item.serviceFee !== undefined && item.serviceFee !== null
+        ? `$${Number(item.serviceFee).toFixed(2)}`
+        : calculateCommission(item.type, item.amount),
       type: item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : '---',
       status: item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Active',
       date: formatDate(item.createdAt),
       rawType: item.type || '',
       rawAmount: item.amount || 0,
+      rawServiceFee: item.serviceFee,
     }))
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Failed to load transactions'
@@ -166,7 +179,7 @@ const totalVolume = computed(() => {
 
 const totalCommission = computed(() => {
   const sum = transactions.value.reduce((acc, curr) => {
-    return acc + rawCommission(curr.rawType, curr.rawAmount)
+    return acc + rawCommission(curr.rawType, curr.rawAmount, curr.rawServiceFee)
   }, 0)
   return `$${sum.toFixed(2)}`
 })

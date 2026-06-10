@@ -15,6 +15,11 @@ export class CreateTransactionDto {
   @Min(0)
   amount?: number;
 
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  serviceFee?: number;
+
   @IsIn(['sell', 'exchange', 'borrow'])
   type!: 'sell' | 'exchange' | 'borrow';
 

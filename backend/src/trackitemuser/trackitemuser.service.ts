@@ -46,6 +46,7 @@ export class TrackitemuserService {
       amount: dto.amount,
       type: dto.type ?? 'sell',
       status: dto.transactionStatus ?? 'active',
+      serviceFee: dto.serviceFee,
     });
 
     return saved;

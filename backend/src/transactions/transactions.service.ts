@@ -16,7 +16,7 @@ export class TransactionsService {
   findAllForAdmin() {
     return this.transactionModel
       .find()
-      .select('buyerName sellerName itemTitle amount type status createdAt')
+      .select('buyerName sellerName itemTitle amount type status serviceFee createdAt')
       .sort({ createdAt: -1 })
       .lean()
       .exec();
@@ -30,6 +30,7 @@ export class TransactionsService {
       amount: input.amount,
       type: input.type,
       status: input.status ?? 'active',
+      serviceFee: input.serviceFee,
     });
   }
 

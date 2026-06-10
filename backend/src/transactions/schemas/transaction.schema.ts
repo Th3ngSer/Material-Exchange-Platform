@@ -20,6 +20,9 @@ export class Transaction {
   @Prop({ min: 0 })
   amount?: number;
 
+  @Prop({ min: 0 })
+  serviceFee?: number;
+
   @Prop({ type: String, enum: ['sell', 'exchange', 'borrow'] })
   type?: TransactionType;
 
