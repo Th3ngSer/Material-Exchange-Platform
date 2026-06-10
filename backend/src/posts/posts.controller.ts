@@ -25,7 +25,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { CloudinaryService } from './cloudinary.service';
-
+import { memoryStorage } from 'multer';
 
 @Controller('posts')
 export class PostsController {
@@ -74,20 +74,31 @@ export class PostsController {
   // ─── POST /posts ───────────────────────────────────────────────────────────
   @UseGuards(JwtAuthGuard)
   @Post()
-  @UseInterceptors(FilesInterceptor('images', 10))
+  @UseInterceptors(
+    FilesInterceptor('images', 10, { storage: memoryStorage() })
+  )
   async create(
     @Req() req: { user: { id: string } },
     @UploadedFiles() files: Express.Multer.File[] = [],
     @Body() dto: CreatePostDto,
   ) {
     let imageUrls: string[] = [];
-    try {
-      imageUrls = files && files.length > 0
-        ? await Promise.all(files.map((file) => this.cloudinaryService.uploadImage(file)))
-        : [];
-    } catch (error: any) {
-      throw new BadRequestException(`Cloudinary upload failed: ${error.message || error}`);
+    const safeFiles = files || [];
+
+    if (safeFiles.length > 0) {
+      try {
+        imageUrls = await Promise.all(
+          safeFiles.map((file) => this.cloudinaryService.uploadImage(file))
+        );
+      } catch (error: any) {
+        throw new BadRequestException(
+          `Cloudinary upload failed: ${error.message || error}`
+        );
+      }
+    } else {
+      imageUrls = ['https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg'];
     }
+
     return this.postsService.create(dto, imageUrls, req.user.id);
   }
 
