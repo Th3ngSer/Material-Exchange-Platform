@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
 const authStore = useAuthStore()
 const isFollowed = ref(false)
+const avatarUpdateTimestamp = ref(0)
 
 const toggleFollow = () => {
   isFollowed.value = !isFollowed.value
@@ -57,17 +58,29 @@ const getAvatarUrl = (avatar?: string) => {
   if (/^https?:\/\//i.test(normalized)) {
     // Add cache buster for http URLs
     const separator = normalized.includes('?') ? '&' : '?'
-    return `${normalized}${separator}t=${Date.now()}`
+    return `${normalized}${separator}t=${avatarUpdateTimestamp.value || Date.now()}`
   }
 
   const uploadBase = apiBaseUrl.replace(/\/api\/?$/, '')
   const clean = normalized.replace(/^\/+/, '')
   const basePath = clean.startsWith('uploads/') ? `${uploadBase}/${clean}` : `${uploadBase}/uploads/${clean}`
   // Add cache buster
-  return `${basePath}?t=${Date.now()}`
+  return `${basePath}?t=${avatarUpdateTimestamp.value || Date.now()}`
 }
 
-const avatarUrl = computed(() => getAvatarUrl(isCurrentUserProfile.value ? authStore.user?.avatar : props.avatar))
+const avatarUrl = computed(() => {
+  // Force recomputation when timestamp changes
+  const _ = avatarUpdateTimestamp.value
+  return getAvatarUrl(isCurrentUserProfile.value ? authStore.user?.avatar : props.avatar)
+})
+
+// Watch for auth store changes to update the timestamp
+watch(
+  () => authStore.user?.avatar,
+  () => {
+    avatarUpdateTimestamp.value = Date.now()
+  }
+)
 
 const handleAvatarError = (event: Event) => {
   const img = event.target as HTMLImageElement
@@ -78,12 +91,10 @@ const handleAvatarError = (event: Event) => {
 
 <template>
   <div class="rounded-[22px] border border-white/70 bg-white p-4 text-[#1e2058] shadow-[0_18px_50px_rgba(21,24,66,0.08)]">
-    <router-link
-      :to="profileLink"
-      class="flex items-center gap-3"
-    >
-      <div class="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-[#23216e] text-sm font-bold text-white">
+    <div class="flex items-center gap-3">
+      <div class="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-[#23216e] text-sm font-bold text-white relative">
         <img
+          :key="`avatar-${avatarUpdateTimestamp}`"
           :src="avatarUrl"
           :alt="displayName"
           class="h-full w-full object-cover"
@@ -91,7 +102,10 @@ const handleAvatarError = (event: Event) => {
         />
       </div>
 
-      <div class="min-w-0 flex-1">
+      <router-link
+        :to="profileLink"
+        class="flex-1 min-w-0"
+      >
         <div class="flex items-center gap-2">
           <h3 class="truncate text-sm font-extrabold">
             {{ displayName }}
@@ -105,7 +119,7 @@ const handleAvatarError = (event: Event) => {
         <p class="text-xs text-[#61658c]">
           {{ location }}
         </p>
-      </div>
+      </router-link>
 
       <div class="text-right text-xs font-semibold text-[#23216e]">
         <div class="flex items-center justify-end gap-1">
@@ -117,7 +131,7 @@ const handleAvatarError = (event: Event) => {
           {{ responseTime }}
         </p>
       </div>
-    </router-link>
+    </div>
 
     <div class="mt-4 grid grid-cols-2 gap-3">
       <button

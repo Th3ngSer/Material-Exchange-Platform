@@ -86,18 +86,25 @@ let filterVisibilityObserver: IntersectionObserver | null = null
 let pagingObserver: IntersectionObserver | null = null
 let isApplyingRouteSearch = false
 
-function imageUrl(image: string) {
+function imageUrl(image: string, cacheBust = false) {
   if (!image) {
     return 'https://via.placeholder.com/600x400?text=No+Image+Available'
   }
   if (/^https?:\/\//i.test(image)) {
-    return image
+    if (!cacheBust) return image
+    const sep = image.includes('?') ? '&' : '?'
+    return `${image}${sep}t=${Date.now()}`
   }
 
   const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '')
   const clean = image.replace(/^\/+/, '')
-  if (clean.startsWith('uploads/')) return `${uploadBaseUrl}/${clean}`
-  return `${uploadBaseUrl}/uploads/${clean}`
+  const url = clean.startsWith('uploads/')
+    ? `${uploadBaseUrl}/${clean}`
+    : `${uploadBaseUrl}/uploads/${clean}`
+
+  if (!cacheBust) return url
+  const sep = url.includes('?') ? '&' : '?'
+  return `${url}${sep}t=${Date.now()}`
 }
 
 function mapPostToMaterial(post: PostRecord): MaterialItem {
@@ -117,7 +124,7 @@ function mapPostToMaterial(post: PostRecord): MaterialItem {
     tone: type === 'Sell' ? 'orange' : type === 'Exchange' ? 'gold' : 'rose',
     category: post.category as MaterialItem['category'],
     images: Array.isArray(post.images) && post.images.length > 0
-      ? post.images.map(imageUrl)
+      ? post.images.map((img) => imageUrl(img))
       : ['https://via.placeholder.com/600x400?text=No+Image+Available'],
     postedTime: post.createdAt,
     description: post.description,
@@ -125,7 +132,7 @@ function mapPostToMaterial(post: PostRecord): MaterialItem {
     exchangeFor: post.exchangeFor,
     ownerId: post.ownerId,
     seller: post.listerName || 'Unknown',
-    avatar: post.listerAvatar ? imageUrl(post.listerAvatar) : undefined,
+    avatar: post.listerAvatar ? imageUrl(post.listerAvatar, true) : undefined,
   }
 }
 
@@ -166,6 +173,31 @@ async function loadBrowseMaterials() {
     setTimeout(() => {
       apiError.value = null
     }, 6000)
+  }
+}
+
+function handleProfileUpdated(e: Event) {
+  try {
+    const detail = (e as CustomEvent).detail as { userId?: string; avatar?: string; username?: string }
+    if (!detail) return
+
+    const { userId, avatar, username } = detail
+    if (!userId && !username) return
+
+    liveMaterials.value = liveMaterials.value.map((item) => {
+      const ownedById = userId && item.ownerId && String(item.ownerId) === String(userId)
+      const ownedByName = username && String(item.seller || '').trim().toLowerCase() === String(username).trim().toLowerCase()
+      if (ownedById || ownedByName) {
+        return {
+          ...item,
+          seller: username || item.seller,
+          avatar: avatar ? imageUrl(avatar, true) : item.avatar,
+        }
+      }
+      return item
+    })
+  } catch {
+    // ignore
   }
 }
 
@@ -526,6 +558,7 @@ onMounted(async () => {
   await nextTick()
   observeFilterTriggerVisibility()
   observePagingSentinel()
+  window.addEventListener('profileUpdated', handleProfileUpdated as EventListener)
   await nextTick()
 })
 
@@ -546,6 +579,8 @@ onBeforeUnmount(() => {
     pagingObserver.disconnect()
     pagingObserver = null
   }
+
+  window.removeEventListener('profileUpdated', handleProfileUpdated as EventListener)
 })
 
 watch(browseType, async () => {

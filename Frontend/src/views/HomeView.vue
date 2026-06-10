@@ -50,14 +50,20 @@ const selectedCategory = ref<Category>(props.categories?.[0] ?? 'All')
 const selectedSort = ref<SortOption>(props.sortOptions?.[0] ?? 'All')
 const liveMaterials = ref<MaterialItem[]>(props.materials)
 
-function imageUrl(image: string) {
+function imageUrl(image: string, cacheBust = false) {
   if (!image) return 'https://via.placeholder.com/600x400?text=No+Image+Available'
-  if (/^https?:\/\//i.test(image)) return image
+  if (/^https?:\/\//i.test(image)) {
+    if (!cacheBust) return image
+    const sep = image.includes('?') ? '&' : '?'
+    return `${image}${sep}t=${Date.now()}`
+  }
   const uploadBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '')
   const clean = image.replace(/^\/+/, '')
-  if (clean.startsWith('uploads/')) return `${uploadBaseUrl}/${clean}`
-  // Add cache-buster timestamp so updated avatars show immediately
-  const url = `${uploadBaseUrl}/uploads/${clean}`
+  const url = clean.startsWith('uploads/')
+    ? `${uploadBaseUrl}/${clean}`
+    : `${uploadBaseUrl}/uploads/${clean}`
+
+  if (!cacheBust) return url
   const sep = url.includes('?') ? '&' : '?'
   return `${url}${sep}t=${Date.now()}`
 }
@@ -79,7 +85,7 @@ function mapPostToMaterial(post: PostRecord): MaterialItem {
     tone: type === 'Sell' ? 'orange' : type === 'Exchange' ? 'gold' : 'rose',
     category: post.category as MaterialItem['category'],
     images: Array.isArray(post.images) && post.images.length > 0
-      ? post.images.map(imageUrl)
+      ? post.images.map((img) => imageUrl(img))
       : ['https://via.placeholder.com/600x400?text=No+Image+Available'],
     postedTime: post.createdAt,
     description: post.description,
@@ -87,7 +93,7 @@ function mapPostToMaterial(post: PostRecord): MaterialItem {
     exchangeFor: post.exchangeFor,
     ownerId: post.ownerId,
     seller: post.listerName || 'Unknown',
-    avatar: post.listerAvatar ? imageUrl(post.listerAvatar) : undefined,
+    avatar: post.listerAvatar ? imageUrl(post.listerAvatar, true) : undefined,
   }
 }
 
@@ -166,7 +172,7 @@ onMounted(() => {
         if (ownedById || ownedByName) {
           return {
             ...item,
-            avatar: avatar ? (avatar.startsWith('http') ? avatar : imageUrl(avatar)) : item.avatar,
+            avatar: avatar ? imageUrl(avatar, true) : item.avatar,
           }
         }
         return item

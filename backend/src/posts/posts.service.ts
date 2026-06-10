@@ -108,6 +108,61 @@ export class PostsService {
   async countDocuments(): Promise<number> {
     return this.postModel.countDocuments();
   }
+
+  private async enrichPostWithUserProfile(post: PostDocument): Promise<void> {
+    if (!post?.ownerId) return
+
+    try {
+      const owner = await this.usersService.findById(post.ownerId)
+      if (!owner) return
+
+      if (owner.avatar) {
+        post.listerAvatar = owner.avatar
+      }
+      const username = owner.username || owner.name
+      if (username) {
+        post.listerName = username
+      }
+    } catch {
+      // ignore missing or deleted users
+    }
+  }
+
+  private async enrichPostsWithUserProfiles(posts: PostDocument[]): Promise<void> {
+    const ownerIds = [...new Set(posts.filter((p) => p.ownerId).map((p) => p.ownerId))]
+    if (ownerIds.length === 0) return
+
+    const owners = await Promise.all(
+      ownerIds.map(async (ownerId) => {
+        try {
+          const user = await this.usersService.findById(ownerId)
+          return { ownerId, user }
+        } catch {
+          return { ownerId, user: null as any }
+        }
+      }),
+    )
+
+    const ownerMap = new Map(
+      owners
+        .filter((entry) => entry.user)
+        .map((entry) => [entry.ownerId, entry.user] as const),
+    )
+
+    posts.forEach((post) => {
+      const owner = ownerMap.get(post.ownerId)
+      if (!owner) return
+
+      if (owner.avatar) {
+        post.listerAvatar = owner.avatar
+      }
+      const username = owner.username || owner.name
+      if (username) {
+        post.listerName = username
+      }
+    })
+  }
+
   async findAllForAdmin() {
     try {
       this.logger.log('Fetching all posts for admin');
@@ -169,6 +224,8 @@ export class PostsService {
         .skip(skip)
         .limit(parseInt(limit));
 
+      await this.enrichPostsWithUserProfiles(posts)
+
       this.logger.log(`✅ Found ${posts.length} posts (total: ${total})`);
       return { total, page: parseInt(page), posts };
     } catch (error: unknown) {
@@ -195,6 +252,9 @@ export class PostsService {
         this.logger.warn(`Post not found: ${id}`);
         throw new NotFoundException(`Post #${id} not found`);
       }
+
+      await this.enrichPostWithUserProfile(post)
+
       this.logger.log(`✅ Post found: ${id}`);
       return post;
     } catch (error: unknown) {

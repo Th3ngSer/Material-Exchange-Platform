@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import api from '@/services/api'
@@ -61,7 +61,7 @@ async function loadPostById(id: string | number | undefined) {
     const p = data as any
     const uploadBase = apiBaseUrl.replace(/\/api\/?$/, '')
     let images = Array.isArray(p.images)
-      ? p.images.map((f: string) => (/^https?:\/\//i.test(f) ? f : `${uploadBase}/uploads/${String(f).replace(/^\/+/, '')}`))
+      ? p.images.map((f: string) => (/^https?:\/\//i.test(f) ? f : `${uploadBase}/uploads/${String(f).replace(/^\/+/, '')}?t=${Date.now()}`))
       : []
     if (images.length === 0) {
       images = ['https://via.placeholder.com/600x400?text=No+Image+Available']
@@ -80,9 +80,7 @@ async function loadPostById(id: string | number | undefined) {
       category: p.category,
       condition: p.condition === 'new' ? 'New' : 'Used',
       seller: p.listerName ?? 'Marketplace seller',
-      avatar: p.listerAvatar
-        ? (/^https?:\/\//i.test(p.listerAvatar) ? p.listerAvatar : `${uploadBase}/uploads/${String(p.listerAvatar).replace(/^\/+/, '')}`)
-        : undefined,
+      avatar: p.listerAvatar ? normalizeAvatarUrl(p.listerAvatar) : undefined,
       postedTime: p.createdAt ?? p.updatedAt,
       exchangeFor: p.exchangeFor,
       lat: p.lat !== undefined && p.lat !== null ? Number(p.lat) : undefined,
@@ -101,9 +99,44 @@ async function loadPostById(id: string | number | undefined) {
   }
 }
 
-onMounted(() => loadPostById(String(route.params.id)))
+function normalizeAvatarUrl(avatar: string) {
+  const uploadBase = apiBaseUrl.replace(/\/api\/?$/, '')
+  if (/^https?:\/\//i.test(avatar)) {
+    const separator = avatar.includes('?') ? '&' : '?'
+    return `${avatar}${separator}t=${Date.now()}`
+  }
+  const clean = String(avatar).replace(/^\/+/, '')
+  const basePath = clean.startsWith('uploads/') ? `${uploadBase}/${clean}` : `${uploadBase}/uploads/${clean}`
+  return `${basePath}?t=${Date.now()}`
+}
+
+const handleProfileUpdated = (e: Event) => {
+  try {
+    const detail = (e as CustomEvent).detail as { userId?: string; avatar?: string; username?: string }
+    if (!detail) return
+
+    const { userId, avatar, username } = detail
+    const ownedById = userId && String(post.value.ownerId) === String(userId)
+    const ownedByName = username && String(post.value.seller || '').trim().toLowerCase() === String(username).trim().toLowerCase()
+    if (ownedById || ownedByName) {
+      post.value.seller = username || post.value.seller
+      post.value.avatar = avatar ? normalizeAvatarUrl(avatar) : post.value.avatar
+    }
+  } catch {
+    // ignore
+  }
+}
+
+onMounted(() => {
+  loadPostById(String(route.params.id))
+  window.addEventListener('profileUpdated', handleProfileUpdated as EventListener)
+})
 
 watch(() => route.params.id, (id) => loadPostById(String(id)))
+
+onBeforeUnmount(() => {
+  window.removeEventListener('profileUpdated', handleProfileUpdated as EventListener)
+})
 
 const currentPost = computed(() => post.value as MaterialItem & { _id?: string; ownerId?: string })
 
