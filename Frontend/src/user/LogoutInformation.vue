@@ -65,6 +65,7 @@ const handleLogout = () => {
   flex: 1;
   padding: 32px;
   font-size: 14px;
+  margin-left: 350px;
 }
 
 .title {

@@ -63,6 +63,7 @@ const languageStore = useLanguageStore()
   flex: 1;
   padding: 32px;
   background: #fff;
+  margin-left: 350px;
 }
 
 .title {

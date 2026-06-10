@@ -255,6 +255,7 @@ onMounted(async () => {
 .content {
   flex: 1;
   padding: 32px;
+  margin-left: 350px;
   background: #fff;
 }
 

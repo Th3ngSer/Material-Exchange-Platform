@@ -169,6 +169,7 @@ const submitForm = async () => {
 
 .content {
   flex: 1;
+  margin-left: 350px; /* same width as sidebar */
   padding: 32px;
   background: #fff;
   font-size: 14px;

@@ -65,13 +65,22 @@ export default defineComponent({
 
 <style scoped>
 .sidebar {
-  width: 310px;
-  min-height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  width: 350px;
+  height: 100vh;
+
   background: #1e1b4b;
   color: white;
+
   display: flex;
   flex-direction: column;
-  padding: 20px 15px;
+  padding: 10px 10px;
+
+  overflow-y: auto;
+  z-index: 1000;
 }
 
 /* menu layout */

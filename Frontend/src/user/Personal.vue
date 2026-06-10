@@ -5,7 +5,10 @@
     <div class="personal-info">
       <Sidebar v-if="isOwnProfile" />
 
-      <div class="content">
+      <div class="content" :class="{ 'with-sidebar': isOwnProfile }">
+        <h2 class="title">
+           {{ languageStore.t('personalInformation') || 'Personal Information' }}
+        </h2>
         <!-- Back Button -->
         <div v-if="!isOwnProfile" class="back-button-container">
           <button class="back-btn" @click="goBack">← {{ languageStore.t('back') || 'Back' }}</button>
@@ -644,6 +647,12 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 24px;
+  color: #000000;
+}
 .personal-page {
   display: flex;
   flex-direction: column;
@@ -656,9 +665,13 @@ onBeforeUnmount(() => {
   flex: 1;
 }
 
+.with-sidebar {
+  margin-left: 340px; /* sidebar width + some spacing */
+}
 .content {
   flex: 1;
   padding: 32px;
+  
 }
 
 .back-button-container {
