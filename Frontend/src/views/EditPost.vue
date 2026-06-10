@@ -118,7 +118,10 @@ const displayPrice = computed(() => {
     return form.price
       ? `$${parseFloat(form.price).toFixed(2)}${languageStore.t('perDay')}`
       : `$0.00${languageStore.t('perDay')}`
-  if (form.type === 'Exchange') return languageStore.t('openToTrade')
+  if (form.type === 'Exchange') {
+    const priceVal = parseFloat(form.price)
+    return priceVal > 0 ? `${languageStore.t('openToTrade')} (Value: $${priceVal.toFixed(2)})` : languageStore.t('openToTrade')
+  }
   return ''
 })
 
@@ -152,13 +155,16 @@ function validate(): boolean {
 
   if (!form.category.trim()) errors.category = languageStore.t('categoryRequired')
 
-  if (form.type !== 'Exchange') {
-    if (!form.price)
-      errors.price = `${languageStore.t('priceRequiredFor')} ${listingTypeLabel(form.type)}`
-    else if (isNaN(Number(form.price)) || Number(form.price) < 0)
-      errors.price = languageStore.t('enterValidPrice')
-  } else if (!form.exchangeFor.trim()) {
-    errors.exchangeFor = languageStore.t('exchangeForRequired')
+  if (!form.price) {
+    errors.price = `${languageStore.t('priceRequiredFor')} ${listingTypeLabel(form.type)}`
+  } else if (isNaN(Number(form.price)) || Number(form.price) < 0) {
+    errors.price = languageStore.t('enterValidPrice')
+  }
+
+  if (form.type === 'Exchange') {
+    if (!form.exchangeFor.trim()) {
+      errors.exchangeFor = languageStore.t('exchangeForRequired')
+    }
   }
 
   const hasPhone = form.phone.trim().length > 0
@@ -468,9 +474,9 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div v-if="form.type !== 'Exchange'" id="field-price">
+        <div id="field-price">
           <label class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5">
-            {{ form.type === 'Lend' ? languageStore.t('dailyRate') : languageStore.t('price') }} <span class="text-red-400">*</span>
+            {{ form.type === 'Exchange' ? 'Estimated Value' : form.type === 'Lend' ? languageStore.t('dailyRate') : languageStore.t('price') }} <span class="text-red-400">*</span>
           </label>
           <div class="relative">
             <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm"

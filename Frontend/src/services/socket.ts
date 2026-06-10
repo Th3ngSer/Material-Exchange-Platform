@@ -14,7 +14,7 @@ export function connectSocket() {
 
   socket = io(base, {
     auth: { token },
-    transports: ['websocket'],
+    transports: ['polling', 'websocket'],
   })
   // Avoid re-initializing handlers if socket already initialized
   try {

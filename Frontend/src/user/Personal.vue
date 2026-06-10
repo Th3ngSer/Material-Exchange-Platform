@@ -1,6 +1,9 @@
 <template>
-  <div class="personal-info">
-    <Sidebar v-if="isOwnProfile" />
+  <div>
+    <Header v-if="!isOwnProfile" />
+
+    <div class="personal-info">
+      <Sidebar v-if="isOwnProfile" />
 
     <div class="content">
       <div v-if="!isOwnProfile" class="back-button-container">
@@ -36,7 +39,7 @@
                 @click="goToChat"
                 class="profile-action-button chat"
               >
-                {{ languageStore.t('message' as any) || 'Message' }}
+                {{ languageStore.t('message') || 'Message' }}
               </button>
             </div>
           </div>
@@ -50,7 +53,7 @@
       </div>
 
       <div v-if="!isOwnProfile" class="posts-section">
-        <div class="posts-title">{{ languageStore.t('userPosts' as any) || 'Posts' }}</div>
+        <div class="posts-title">{{ languageStore.t('userPosts') || 'Posts' }}</div>
 
         <div v-if="isLoadingPosts" class="message-panel">{{ languageStore.t('loading') || 'Loading posts...' }}</div>
         <div v-else-if="postsError" class="message-panel error">{{ postsError }}</div>
@@ -74,7 +77,7 @@
           </section>
 
           <section v-if="postsByType.exchange.length > 0" class="post-category-section">
-            <div class="category-title"><span>🔄</span> {{ languageStore.t('forExchange' as any) || 'For Exchange' }}</div>
+            <div class="category-title"><span>🔄</span> {{ languageStore.t('forExchange') || 'For Exchange' }}</div>
             <div class="posts-grid">
               <article v-for="post in postsByType.exchange" :key="post._id" class="post-card">
                 <router-link :to="`/posts/${post._id}`" class="post-image-link">
@@ -90,7 +93,7 @@
           </section>
 
           <section v-if="postsByType.lend.length > 0" class="post-category-section">
-            <div class="category-title"><span>🤝</span> {{ languageStore.t('forLend' as any) || 'For Lend' }}</div>
+            <div class="category-title"><span>🤝</span> {{ languageStore.t('forLend') || 'For Lend' }}</div>
             <div class="posts-grid">
               <article v-for="post in postsByType.lend" :key="post._id" class="post-card">
                 <router-link :to="`/posts/${post._id}`" class="post-image-link">
@@ -140,6 +143,7 @@
 
       <RatingModal v-if="showRatingModal && profileUser" :user-id="profileUser.id" :user-name="profileUser.name" @submit="handleRatingSubmit" @close="showRatingModal = false" />
     </div>
+    </div>
 
     <Footer v-if="!isOwnProfile" />
   </div>
@@ -150,6 +154,7 @@ import { reactive, onMounted, computed, ref, watch, onBeforeUnmount, nextTick } 
 import { useRouter, useRoute } from 'vue-router'
 import api from '@/services/api'
 import Sidebar from '../userprofileComponent/Sidebar.vue'
+import Header from '@/components/layout/Header.vue'
 import Footer from '@/components/layout/Footer.vue'
 import RatingStats from '@/components/RatingStats.vue'
 import RatingModal from '@/components/RatingModal.vue'

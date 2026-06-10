@@ -3,7 +3,7 @@ import AdminLayout from '@/components/Admin/AdminLayout.vue'
 import DropDownMenu from '@/components/DropDownMenu.vue'
 import { authFetch } from '@/utils/authFetch'
 import { getToken } from '@/utils/tokenStorage'
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, watch } from 'vue'
 
 const searchQuery = ref('')
 const sortBy = ref('A-Z')
@@ -34,6 +34,8 @@ type Transaction = {
   date: string
   rawType: string
   rawAmount: number
+  rawServiceFee?: number
+  dbId: string
 }
 
 type TransactionApi = {
@@ -42,6 +44,7 @@ type TransactionApi = {
   sellerName: string
   itemTitle: string
   amount?: number
+  serviceFee?: number
   type: string
   status: string
   createdAt?: string
@@ -52,12 +55,45 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const transactions = ref<Transaction[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
+const isDeleting = ref(false)
+
+// Pagination & Selection state
+const page = ref(1)
+const limit = ref(5)
+
+const selectMode = ref(false)
+const selectedIds = ref<Set<string>>(new Set())
+const showConfirmModal = ref(false)
+
+const toggleSelectMode = () => {
+  selectMode.value = !selectMode.value
+  if (!selectMode.value) {
+    selectedIds.value = new Set()
+  }
+}
+
+const toggleSelect = (dbId: string) => {
+  const next = new Set(selectedIds.value)
+  if (next.has(dbId)) {
+    next.delete(dbId)
+  } else {
+    next.add(dbId)
+  }
+  selectedIds.value = next
+}
 
 const formatDate = (value?: string): string => {
   if (!value) return '---'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value ?? '---'
-  return date.toISOString().split('T')[0] ?? '---'
+  
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  const hh = String(date.getHours()).padStart(2, '0')
+  const min = String(date.getMinutes()).padStart(2, '0')
+  const ss = String(date.getSeconds()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`
 }
 
 const calculateCommission = (type: string, amount: number | undefined): string => {
@@ -75,7 +111,8 @@ const calculateCommission = (type: string, amount: number | undefined): string =
   return '---'
 }
 
-const rawCommission = (type: string, amount: number | undefined): number => {
+const rawCommission = (type: string, amount: number | undefined, serviceFee: number | undefined): number => {
+  if (serviceFee !== undefined && serviceFee !== null) return serviceFee
   if (amount === undefined || Number.isNaN(amount)) return 0
   const t = type.toLowerCase()
   if (t === 'borrow') return amount * 0.10
@@ -109,12 +146,16 @@ const fetchTransactions = async () => {
       seller: item.sellerName,
       item: item.itemTitle,
       amount: item.amount !== undefined ? `$${Number(item.amount).toFixed(2)}` : '---',
-      commission: calculateCommission(item.type, item.amount),
+      commission: item.serviceFee !== undefined && item.serviceFee !== null
+        ? `$${Number(item.serviceFee).toFixed(2)}`
+        : calculateCommission(item.type, item.amount),
       type: item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : '---',
       status: item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Active',
       date: formatDate(item.createdAt),
       rawType: item.type || '',
       rawAmount: item.amount || 0,
+      rawServiceFee: item.serviceFee,
+      dbId: item._id,
     }))
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Failed to load transactions'
@@ -159,6 +200,87 @@ const filteredTransactions = computed(() => {
   return list
 })
 
+// Pagination computed properties
+const total = computed(() => filteredTransactions.value.length)
+const lastPage = computed(() => Math.ceil(total.value / limit.value) || 1)
+
+const paginatedTransactions = computed(() => {
+  const start = (page.value - 1) * limit.value
+  return filteredTransactions.value.slice(start, start + limit.value)
+})
+
+const isAllSelected = computed(
+  () => paginatedTransactions.value.length > 0 && paginatedTransactions.value.every((item) => selectedIds.value.has(item.dbId))
+)
+
+const toggleSelectAll = () => {
+  const next = new Set(selectedIds.value)
+  if (isAllSelected.value) {
+    paginatedTransactions.value.forEach((item) => {
+      next.delete(item.dbId)
+    })
+  } else {
+    paginatedTransactions.value.forEach((item) => {
+      next.add(item.dbId)
+    })
+  }
+  selectedIds.value = next
+}
+
+const openConfirmModal = () => {
+  if (selectedIds.value.size === 0) return
+  showConfirmModal.value = true
+}
+
+const closeConfirmModal = () => {
+  showConfirmModal.value = false
+}
+
+const confirmBulkDelete = async () => {
+  isDeleting.value = true
+  try {
+    const token = getToken()
+    const deletePromises = Array.from(selectedIds.value).map(async (dbId) => {
+      const response = await authFetch(`${API_BASE_URL}/transactions/${dbId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      })
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}))
+        throw new Error(error.message || `Failed to delete transaction ${dbId}`)
+      }
+    })
+
+    await Promise.all(deletePromises)
+
+    transactions.value = transactions.value.filter((item) => !selectedIds.value.has(item.dbId))
+    selectedIds.value = new Set()
+    selectMode.value = false
+    showConfirmModal.value = false
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to delete transactions'
+    alert(message)
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+const canGoPrev = computed(() => page.value > 1)
+const canGoNext = computed(() => page.value < lastPage.value)
+
+const goPrev = () => {
+  if (!canGoPrev.value) return
+  page.value -= 1
+}
+
+const goNext = () => {
+  if (!canGoNext.value) return
+  page.value += 1
+}
+
 const totalVolume = computed(() => {
   const sum = transactions.value.reduce((acc, curr) => acc + (curr.rawAmount || 0), 0)
   return `$${sum.toFixed(2)}`
@@ -166,13 +288,17 @@ const totalVolume = computed(() => {
 
 const totalCommission = computed(() => {
   const sum = transactions.value.reduce((acc, curr) => {
-    return acc + rawCommission(curr.rawType, curr.rawAmount)
+    return acc + rawCommission(curr.rawType, curr.rawAmount, curr.rawServiceFee)
   }, 0)
   return `$${sum.toFixed(2)}`
 })
 
 const activeCount = computed(() => {
   return transactions.value.filter((t) => t.status.toLowerCase() === 'active').length
+})
+
+watch([searchQuery, sortBy, statusFilter], () => {
+  page.value = 1
 })
 
 onMounted(fetchTransactions)
@@ -200,7 +326,33 @@ onMounted(fetchTransactions)
             <p class="section-label">Monitor all platform transactions</p>
             <p class="section-subtitle">Track the flow of payments and exchanges across listings.</p>
           </div>
-          <button class="primary">Select</button>
+          <div class="header-actions">
+            <button
+              v-if="selectMode"
+              class="btn-cancel"
+              type="button"
+              @click="toggleSelectMode"
+            >
+              Cancel
+            </button>
+            <button
+              v-if="!selectMode"
+              class="primary"
+              type="button"
+              @click="toggleSelectMode"
+            >
+              Select
+            </button>
+            <button
+              v-else
+              class="btn-remove"
+              type="button"
+              :disabled="selectedIds.size === 0"
+              @click="openConfirmModal"
+            >
+              Remove{{ selectedIds.size > 0 ? ` (${selectedIds.size})` : '' }}
+            </button>
+          </div>
         </div>
 
         <!-- Summary Cards Grid -->
@@ -242,7 +394,14 @@ onMounted(fetchTransactions)
         <div class="table">
           <p v-if="isLoading" class="table-note">Loading transactions...</p>
           <p v-else-if="errorMessage" class="table-note error">{{ errorMessage }}</p>
-          <div class="table-row header">
+          <div class="table-row header" :class="{ 'with-checkbox': selectMode }">
+            <label v-if="selectMode" class="checkbox-cell" @click.stop>
+              <input
+                type="checkbox"
+                :checked="isAllSelected"
+                @change="toggleSelectAll"
+              />
+            </label>
             <span>ID</span>
             <span>Buyer</span>
             <span>Seller</span>
@@ -253,7 +412,19 @@ onMounted(fetchTransactions)
             <span>Status</span>
             <span>Date</span>
           </div>
-          <div v-for="transaction in filteredTransactions" :key="transaction.id" class="table-row body">
+          <div
+            v-for="transaction in paginatedTransactions"
+            :key="transaction.id"
+            class="table-row body"
+            :class="{ 'with-checkbox': selectMode, selected: selectedIds.has(transaction.dbId) }"
+          >
+            <label v-if="selectMode" class="checkbox-cell" @click.stop>
+              <input
+                type="checkbox"
+                :checked="selectedIds.has(transaction.dbId)"
+                @change="toggleSelect(transaction.dbId)"
+              />
+            </label>
             <span>{{ transaction.id }}</span>
             <span>{{ transaction.buyer }}</span>
             <span>{{ transaction.seller }}</span>
@@ -265,7 +436,51 @@ onMounted(fetchTransactions)
             <span>{{ transaction.date }}</span>
           </div>
         </div>
+
+        <div class="pagination">
+          <button class="ghost" type="button" :disabled="!canGoPrev" @click="goPrev">
+            Previous
+          </button>
+          <span class="page-meta">Page {{ page }} of {{ lastPage }} · {{ total }} transactions</span>
+          <button class="ghost" type="button" :disabled="!canGoNext" @click="goNext">
+            Next
+          </button>
+        </div>
       </section>
+
+      <!-- ─── Confirm Delete Modal ─────────────────────────────────────────── -->
+      <Teleport to="body">
+        <Transition name="modal-fade">
+          <div v-if="showConfirmModal" class="modal-overlay" @click.self="closeConfirmModal">
+            <div class="modal-card">
+              <div class="modal-icon-wrap">
+                <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                </svg>
+              </div>
+              <h3 class="modal-title">Delete Transactions</h3>
+              <p class="modal-body">
+                Are you sure you want to delete
+                <strong>{{ selectedIds.size }}</strong>
+                {{ selectedIds.size === 1 ? 'transaction' : 'transactions' }}?
+                This action cannot be undone.
+              </p>
+              <div class="modal-actions">
+                <button class="modal-btn cancel" type="button" :disabled="isDeleting" @click="closeConfirmModal">
+                  Cancel
+                </button>
+                <button class="modal-btn confirm" type="button" :disabled="isDeleting" @click="confirmBulkDelete">
+                  {{ isDeleting ? 'Deleting...' : 'Yes, Delete' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </Teleport>
   </AdminLayout>
 </template>
 
@@ -521,6 +736,15 @@ select {
   min-width: 950px;
 }
 
+.table-row.with-checkbox {
+  grid-template-columns: 36px 0.7fr 1fr 1fr 1.6fr 1fr 1.2fr 1fr 1fr 1fr;
+}
+
+.table-row.body.selected {
+  background: rgba(239, 68, 68, 0.06);
+  border-radius: 8px;
+}
+
 .table-row.header {
   color: #64748b;
   text-transform: uppercase;
@@ -549,6 +773,219 @@ select {
 
 .status.failed {
   color: #ef4444;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.btn-remove {
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  background: #ef4444;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.btn-remove:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(220, 38, 38, 0.35);
+}
+
+.btn-remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-cancel {
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  background: #fff;
+  color: #475569;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-cancel:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.checkbox-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.checkbox-cell input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: #1e1b4b;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.pagination {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.page-meta {
+  font-weight: 600;
+}
+
+.ghost {
+  border: 1px solid #cbd5e1;
+  background: transparent;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #475569;
+}
+
+.ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Confirm Delete Modal ───────────────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.modal-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px 28px 28px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+  text-align: center;
+  animation: modal-pop 0.25s ease;
+}
+
+@keyframes modal-pop {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fee2e2;
+  margin-bottom: 16px;
+}
+
+.modal-icon {
+  width: 28px;
+  height: 28px;
+  color: #ef4444;
+}
+
+.modal-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.modal-body {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.modal-body strong {
+  color: #0f172a;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modal-btn {
+  padding: 10px 22px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.modal-btn.cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.modal-btn.cancel:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.modal-btn.confirm {
+  background: #ef4444;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25);
+}
+
+.modal-btn.confirm:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── Modal transition ───────────────────────────────────────────────── */
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
 }
 
 .ambient {
@@ -601,6 +1038,17 @@ select {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+  }
+
+  .header-actions {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+  }
+
+  .header-actions button {
+    flex: 1;
+    text-align: center;
   }
 
   .filters {

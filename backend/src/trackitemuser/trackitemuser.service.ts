@@ -46,6 +46,7 @@ export class TrackitemuserService {
       amount: dto.amount,
       type: dto.type ?? 'sell',
       status: dto.transactionStatus ?? 'active',
+      serviceFee: dto.serviceFee,
     });
 
     return saved;
@@ -66,7 +67,7 @@ export class TrackitemuserService {
   }
 
   async updateByCustomId(id: number, dto: UpdateTrackStatusUserDto) {
-    return this.trackModel.findOneAndUpdate(
+    const updated = await this.trackModel.findOneAndUpdate(
       { customId: id },
       {
         status: dto.status,
@@ -80,6 +81,17 @@ export class TrackitemuserService {
       },
       { new: true },
     );
+
+    if (updated && (dto.status === 'Completed' || dto.status === 'Cancelled')) {
+      await this.transactionsService.updateStatusByDetails(
+        updated.buyerName ?? '',
+        updated.sellerName ?? '',
+        updated.itemTitle ?? '',
+        dto.status
+      );
+    }
+
+    return updated;
   }
 
   async removeByCustomId(id: number) {

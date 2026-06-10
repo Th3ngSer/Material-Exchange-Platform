@@ -86,7 +86,7 @@ export class PostsService {
         ownerId,
         listerName,
         listerAvatar,
-        price: dto.type === 'exchange' ? 0 : dto.price,
+        price: dto.price,
         images,
       });
       this.logger.log(`✅ Post created with ID: ${String(post._id)}`);
@@ -309,7 +309,7 @@ export class PostsService {
         id,
         {
           ...dto,
-          price: dto.type === 'exchange' ? 0 : dto.price,
+          price: dto.price,
           images,
         },
         { new: true, runValidators: true },
@@ -474,4 +474,5 @@ export class PostsService {
       throw new BadRequestException(`Invalid ${label} id: ${id}`);
     }
   }
+
 }

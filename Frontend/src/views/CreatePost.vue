@@ -261,13 +261,16 @@ function validate(): boolean {
 
   if (!form.category.trim()) errors.category = languageStore.t('categoryRequired')
 
-  if (form.type !== 'Exchange') {
-    if (!form.price)
-      errors.price = `${languageStore.t('priceRequiredFor')} ${listingTypeLabel(form.type)}`
-    else if (isNaN(Number(form.price)) || Number(form.price) < 0)
-      errors.price = languageStore.t('enterValidPrice')
-  } else if (!form.exchangeFor.trim()) {
-    errors.exchangeFor = languageStore.t('exchangeForRequired')
+  if (!form.price) {
+    errors.price = `${languageStore.t('priceRequiredFor')} ${listingTypeLabel(form.type)}`
+  } else if (isNaN(Number(form.price)) || Number(form.price) < 0) {
+    errors.price = languageStore.t('enterValidPrice')
+  }
+
+  if (form.type === 'Exchange') {
+    if (!form.exchangeFor.trim()) {
+      errors.exchangeFor = languageStore.t('exchangeForRequired')
+    }
   }
 
   const hasPhone = form.phone.trim().length > 0
@@ -603,11 +606,11 @@ watch(
           </div>
           <!-- </div> -->
 
-          <div v-if="form.type !== 'Exchange'" id="field-price">
+          <div id="field-price">
             <label
               class="block text-xs font-semibold text-black-500 uppercase tracking-wide mb-1.5"
             >
-              {{ languageStore.t('price') }}
+              {{ form.type === 'Exchange' ? 'Estimated Value' : form.type === 'Lend' ? 'Rental Price' : languageStore.t('price') }}
               <span class="text-red-400">*</span>
             </label>
             <div class="relative">

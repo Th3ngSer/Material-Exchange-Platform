@@ -16,7 +16,7 @@ export class TransactionsService {
   findAllForAdmin() {
     return this.transactionModel
       .find()
-      .select('buyerName sellerName itemTitle amount type status createdAt')
+      .select('buyerName sellerName itemTitle amount type status serviceFee createdAt')
       .sort({ createdAt: -1 })
       .lean()
       .exec();
@@ -30,7 +30,16 @@ export class TransactionsService {
       amount: input.amount,
       type: input.type,
       status: input.status ?? 'active',
+      serviceFee: input.serviceFee,
     });
+  }
+
+  async updateStatusByDetails(buyerName: string, sellerName: string, itemTitle: string, status: string) {
+    const nextStatus = status.toLowerCase() === 'completed' ? 'completed' : status.toLowerCase() === 'cancelled' ? 'failed' : 'active';
+    await this.transactionModel.findOneAndUpdate(
+      { buyerName, sellerName, itemTitle, status: 'active' },
+      { status: nextStatus }
+    ).exec();
   }
 
   //  Add the Strict trancsaction logic and Save audit log
@@ -86,5 +95,9 @@ export class TransactionsService {
       .select('itemId')
       .lean()
       .exec();
+  }
+
+  async remove(id: string) {
+    return this.transactionModel.findByIdAndDelete(id).exec();
   }
 }
