@@ -88,4 +88,8 @@ export class TransactionsService {
       .lean()
       .exec();
   }
+
+  async remove(id: string) {
+    return this.transactionModel.findByIdAndDelete(id).exec();
+  }
 }
