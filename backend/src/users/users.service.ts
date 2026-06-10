@@ -47,7 +47,7 @@ export class UsersService {
     const nameRegex = new RegExp(`^${safe}$`, 'i');
     return this.userModel
       .findOne({
-        $or: [{ name: nameRegex }, { username: nameRegex }],
+        $or: [{ name: nameRegex }, { username: nameRegex }, { email: nameRegex }],
       })
       .exec();
   }

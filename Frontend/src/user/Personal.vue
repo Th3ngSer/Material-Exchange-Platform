@@ -1,149 +1,212 @@
 <template>
-  <div>
+  <div class="personal-page">
     <Header v-if="!isOwnProfile" />
 
     <div class="personal-info">
       <Sidebar v-if="isOwnProfile" />
 
-    <div class="content">
-      <div v-if="!isOwnProfile" class="back-button-container">
-        <button class="back-btn" @click="goBack">← {{ languageStore.t('back') || 'Back' }}</button>
-      </div>
+      <div class="content">
+        <!-- Back Button -->
+        <div v-if="!isOwnProfile" class="back-button-container">
+          <button class="back-btn" @click="goBack">← {{ languageStore.t('back') || 'Back' }}</button>
+        </div>
 
-      <div v-if="displayUser && !isOwnProfile" class="profile-hero rounded-lg bg-white p-6 shadow-sm mb-6">
-        <div class="hero-inner flex items-center gap-6">
-          <div class="hero-avatar flex-shrink-0">
-            <img :src="avatarUrl" alt="profile photo" class="w-36 h-36 rounded-full object-cover" @error="onAvatarError" />
+        <!-- Own Profile Layout -->
+        <template v-if="isOwnProfile">
+          <div class="info-form">
+            <div class="form-column">
+              <div class="field"><span>{{ languageStore.t('firstName') }}</span><p>{{ form.firstName }}</p></div>
+              <div class="field"><span>{{ languageStore.t('birthDate') }}</span><p>{{ form.birthDate }}</p></div>
+              <div class="field"><span>{{ languageStore.t('nationality') }}</span><p>{{ form.nationality }}</p></div>
+              <div class="field"><span>{{ languageStore.t('username') }}</span><p>{{ form.username }}</p></div>
+            </div>
+
+            <div class="form-column">
+              <div class="field"><span>{{ languageStore.t('lastName') }}</span><p>{{ form.lastName }}</p></div>
+              <div class="field"><span>{{ languageStore.t('gender') }}</span><p>{{ form.gender }}</p></div>
+              <div class="field"><span>{{ languageStore.t('phoneNumber') }}</span><p>{{ form.phone }}</p></div>
+              <div class="field"><span>{{ languageStore.t('email') }}</span><p>{{ form.email }}</p></div>
+            </div>
           </div>
 
-          <div class="hero-meta">
-            <h1 class="text-3xl font-extrabold text-slate-900">{{ displayFirstName }} {{ displayLastName }}</h1>
-            <p class="mt-1 text-sm text-slate-600">@{{ displayUsername }}</p>
+          <div class="form-actions">
+            <button class="btn edit" type="button" @click="goToEdit">{{ languageStore.t('editProfile') }}</button>
+          </div>
+        </template>
 
-            <div class="profile-rating-summary mt-4 flex flex-wrap items-center gap-3">
-              <div class="rating-score flex items-end gap-1">
-                <span class="rating-value">{{ ratingValue }}</span>
-                <span class="rating-out-of">/5</span>
+        <!-- Other User Profile Layout (Two-Column Grid) -->
+        <template v-else>
+          <div class="profile-layout">
+            <!-- Left Column: Seller Card -->
+            <aside class="profile-sidebar">
+              <div v-if="displayUser" class="profile-card">
+                <!-- Avatar & Basic Meta -->
+                <div class="profile-card-header">
+                  <div class="avatar-container">
+                    <img :src="avatarUrl" alt="profile photo" class="avatar-image" @error="onAvatarError" />
+                  </div>
+                  <h1 class="profile-name">{{ displayFirstName }} {{ displayLastName }}</h1>
+                  <p class="profile-username">@{{ displayUsername }}</p>
+
+                  <!-- Ratings badge -->
+                  <div class="profile-rating-badge">
+                    <span class="star-icon">★</span>
+                    <span class="rating-num">{{ ratingValue }}</span>
+                    <span class="rating-max">/ 5.0</span>
+                  </div>
+                </div>
+
+                <!-- Contact & Bio Info -->
+                <div class="profile-card-details">
+                  <div class="detail-item">
+                    <span class="detail-icon">✉</span>
+                    <div class="detail-content">
+                      <p class="detail-label">Email</p>
+                      <p class="detail-value truncate">{{ displayUser?.email || '-' }}</p>
+                    </div>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-icon">📞</span>
+                    <div class="detail-content">
+                      <p class="detail-label">Phone</p>
+                      <p class="detail-value">{{ displayUser?.phone || '-' }}</p>
+                    </div>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-icon">🌐</span>
+                    <div class="detail-content">
+                      <p class="detail-label">Nationality</p>
+                      <p class="detail-value">{{ displayUser?.nationality || '-' }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="profile-card-actions">
+                  <button
+                    type="button"
+                    @click="goToChat"
+                    class="action-btn chat-btn"
+                  >
+                    <span class="btn-icon">💬</span>
+                    <span>{{ languageStore.t('message') || 'Message' }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    @click="handleRateClick"
+                    class="action-btn rate-btn"
+                  >
+                    <span class="btn-icon">★</span>
+                    <span>Rate Seller</span>
+                  </button>
+                </div>
+              </div>
+            </aside>
+
+            <!-- Right Column: Posts & Reviews -->
+            <div class="profile-main">
+              <!-- Posts Section -->
+              <div class="posts-section-custom">
+                <h2 class="section-title">
+                  <span>📋</span>
+                  <span>{{ languageStore.t('userPosts') || 'Posts' }}</span>
+                </h2>
+
+                <div v-if="isLoadingPosts" class="message-panel loading-panel">{{ languageStore.t('loading') || 'Loading posts...' }}</div>
+                <div v-else-if="postsError" class="message-panel error-panel">{{ postsError }}</div>
+                <div v-else-if="!hasProfilePosts" class="message-panel empty-panel">
+                  <span class="empty-icon">📦</span>
+                  <p>{{ languageStore.t('noPosts') || 'This user has no posts yet.' }}</p>
+                </div>
+
+                <div v-else class="posts-container">
+                  <!-- Sell Group -->
+                  <section v-if="postsByType.sell.length > 0" class="post-category-section">
+                    <h3 class="category-title">
+                      <span>📦</span> {{ languageStore.t('forSale') || 'For Sale' }}
+                    </h3>
+                    <div class="posts-grid">
+                      <article v-for="post in postsByType.sell" :key="post._id" class="post-card">
+                        <router-link :to="`/posts/${post._id}`" class="post-image-link">
+                          <img v-if="post.images?.[0]" :src="imageUrl(post.images[0])" :alt="post.title" class="post-image" />
+                          <div v-else class="post-image-placeholder">📷</div>
+                        </router-link>
+                        <div class="post-meta p-4">
+                          <router-link :to="`/posts/${post._id}`" class="post-title">{{ post.title }}</router-link>
+                          <p class="post-detail">{{ post.category }} · {{ post.location }}</p>
+                          <p class="post-price">{{ formatPrice(post) }}</p>
+                        </div>
+                      </article>
+                    </div>
+                  </section>
+
+                  <!-- Exchange Group -->
+                  <section v-if="postsByType.exchange.length > 0" class="post-category-section">
+                    <h3 class="category-title">
+                      <span>🔄</span> {{ languageStore.t('forExchange') || 'For Exchange' }}
+                    </h3>
+                    <div class="posts-grid">
+                      <article v-for="post in postsByType.exchange" :key="post._id" class="post-card">
+                        <router-link :to="`/posts/${post._id}`" class="post-image-link">
+                          <img v-if="post.images?.[0]" :src="imageUrl(post.images[0])" :alt="post.title" class="post-image" />
+                          <div v-else class="post-image-placeholder">📷</div>
+                        </router-link>
+                        <div class="post-meta p-4">
+                          <router-link :to="`/posts/${post._id}`" class="post-title">{{ post.title }}</router-link>
+                          <p class="post-detail">{{ post.category }} · {{ post.location }}</p>
+                          <p class="post-price">{{ formatPrice(post) }}</p>
+                        </div>
+                      </article>
+                    </div>
+                  </section>
+
+                  <!-- Lend Group -->
+                  <section v-if="postsByType.lend.length > 0" class="post-category-section">
+                    <h3 class="category-title">
+                      <span>🤝</span> {{ languageStore.t('forLend') || 'For Lend' }}
+                    </h3>
+                    <div class="posts-grid">
+                      <article v-for="post in postsByType.lend" :key="post._id" class="post-card">
+                        <router-link :to="`/posts/${post._id}`" class="post-image-link">
+                          <img v-if="post.images?.[0]" :src="imageUrl(post.images[0])" :alt="post.title" class="post-image" />
+                          <div v-else class="post-image-placeholder">📷</div>
+                        </router-link>
+                        <div class="post-meta p-4">
+                          <router-link :to="`/posts/${post._id}`" class="post-title">{{ post.title }}</router-link>
+                          <p class="post-detail">{{ post.category }} · {{ post.location }}</p>
+                          <p class="post-price">{{ formatPrice(post) }}</p>
+                        </div>
+                      </article>
+                    </div>
+                  </section>
+                </div>
               </div>
 
-              <span v-for="star in 5" :key="star" class="rating-star" :class="{ filled: star <= Math.round(displayUser?.rating || 0) }">★</span>
-
-              <div class="rating-stat text-sm text-slate-500">{{ ratingText }}</div>
-
-              <button v-if="!isOwnProfile" class="btn-rate-user" @click="handleRateClick">★ Rate this seller</button>
-            </div>
-
-            <div v-if="!isOwnProfile" class="profile-action-buttons mt-4 flex flex-wrap gap-3">
-              <button
-                type="button"
-                @click="goToChat"
-                class="profile-action-button chat"
-              >
-                {{ languageStore.t('message') || 'Message' }}
-              </button>
+              <!-- Reviews Section -->
+              <section id="recent-reviews" class="reviews-section-card">
+                <RatingStats
+                  v-if="profileUser"
+                  :stats="ratingStats"
+                  :is-loading="isLoadingRatings"
+                  :show-recent-reviews="true"
+                  :expanded="showAllReviews"
+                  @rate="handleRateClick"
+                  @see-more="handleSeeMore"
+                />
+              </section>
             </div>
           </div>
-        </div>
-
-        <div class="extra-info mt-6 grid grid-cols-1 gap-2 text-sm text-slate-700">
-          <div><strong>{{ languageStore.t('email') }}:</strong> {{ displayUser?.email || '-' }}</div>
-          <div><strong>{{ languageStore.t('phoneNumber') }}:</strong> {{ displayUser?.phone || '-' }}</div>
-          <div><strong>{{ languageStore.t('nationality') }}:</strong> {{ displayUser?.nationality || '-' }}</div>
-        </div>
+        </template>
       </div>
-
-      <div v-if="!isOwnProfile" class="posts-section">
-        <div class="posts-title">{{ languageStore.t('userPosts') || 'Posts' }}</div>
-
-        <div v-if="isLoadingPosts" class="message-panel">{{ languageStore.t('loading') || 'Loading posts...' }}</div>
-        <div v-else-if="postsError" class="message-panel error">{{ postsError }}</div>
-        <div v-else-if="!hasProfilePosts" class="message-panel empty">{{ languageStore.t('noPosts') || 'This user has no posts yet.' }}</div>
-
-        <div v-else>
-          <section v-if="postsByType.sell.length > 0" class="post-category-section">
-            <div class="category-title"><span>📦</span> {{ languageStore.t('forSale') || 'For Sale' }}</div>
-            <div class="posts-grid">
-              <article v-for="post in postsByType.sell" :key="post._id" class="post-card">
-                <router-link :to="`/posts/${post._id}`" class="post-image-link">
-                  <img v-if="post.images?.[0]" :src="imageUrl(post.images[0])" :alt="post.title" class="post-image" />
-                </router-link>
-                <div class="post-meta p-4">
-                  <router-link :to="`/posts/${post._id}`" class="post-title">{{ post.title }}</router-link>
-                  <p class="post-detail">{{ post.category }} · {{ post.location }}</p>
-                  <p class="post-price">{{ formatPrice(post) }}</p>
-                </div>
-              </article>
-            </div>
-          </section>
-
-          <section v-if="postsByType.exchange.length > 0" class="post-category-section">
-            <div class="category-title"><span>🔄</span> {{ languageStore.t('forExchange') || 'For Exchange' }}</div>
-            <div class="posts-grid">
-              <article v-for="post in postsByType.exchange" :key="post._id" class="post-card">
-                <router-link :to="`/posts/${post._id}`" class="post-image-link">
-                  <img v-if="post.images?.[0]" :src="imageUrl(post.images[0])" :alt="post.title" class="post-image" />
-                </router-link>
-                <div class="post-meta p-4">
-                  <router-link :to="`/posts/${post._id}`" class="post-title">{{ post.title }}</router-link>
-                  <p class="post-detail">{{ post.category }} · {{ post.location }}</p>
-                  <p class="post-price">{{ formatPrice(post) }}</p>
-                </div>
-              </article>
-            </div>
-          </section>
-
-          <section v-if="postsByType.lend.length > 0" class="post-category-section">
-            <div class="category-title"><span>🤝</span> {{ languageStore.t('forLend') || 'For Lend' }}</div>
-            <div class="posts-grid">
-              <article v-for="post in postsByType.lend" :key="post._id" class="post-card">
-                <router-link :to="`/posts/${post._id}`" class="post-image-link">
-                  <img v-if="post.images?.[0]" :src="imageUrl(post.images[0])" :alt="post.title" class="post-image" />
-                </router-link>
-                <div class="post-meta p-4">
-                  <router-link :to="`/posts/${post._id}`" class="post-title">{{ post.title }}</router-link>
-                  <p class="post-detail">{{ post.category }} · {{ post.location }}</p>
-                  <p class="post-price">{{ formatPrice(post) }}</p>
-                </div>
-              </article>
-            </div>
-          </section>
-        </div>
-      </div>
-
-      <section id="recent-reviews">
-        <RatingStats
-          v-if="!isOwnProfile && profileUser"
-          :stats="ratingStats"
-          :is-loading="isLoadingRatings"
-          :show-recent-reviews="true"
-          :expanded="showAllReviews"
-          class="mb-8"
-          @rate="handleRateClick"
-          @see-more="handleSeeMore"
-        />
-      </section>
-
-      <div v-if="isOwnProfile" class="info-form">
-        <div class="form-column">
-          <div class="field"><span>{{ languageStore.t('firstName') }}</span><p>{{ form.firstName }}</p></div>
-          <div class="field"><span>{{ languageStore.t('birthDate') }}</span><p>{{ form.birthDate }}</p></div>
-          <div class="field"><span>{{ languageStore.t('nationality') }}</span><p>{{ form.nationality }}</p></div>
-          <div class="field"><span>{{ languageStore.t('username') }}</span><p>{{ form.username }}</p></div>
-        </div>
-
-        <div class="form-column">
-          <div class="field"><span>{{ languageStore.t('lastName') }}</span><p>{{ form.lastName }}</p></div>
-          <div class="field"><span>{{ languageStore.t('gender') }}</span><p>{{ form.gender }}</p></div>
-          <div class="field"><span>{{ languageStore.t('phoneNumber') }}</span><p>{{ form.phone }}</p></div>
-          <div class="field"><span>{{ languageStore.t('email') }}</span><p>{{ form.email }}</p></div>
-        </div>
-      </div>
-
-      <div class="form-actions"><button v-if="isOwnProfile" class="btn edit" type="button" @click="goToEdit">{{ languageStore.t('editProfile') }}</button></div>
-
-      <RatingModal v-if="showRatingModal && profileUser" :user-id="profileUser.id" :user-name="profileUser.name" @submit="handleRatingSubmit" @close="showRatingModal = false" />
     </div>
-    </div>
+
+    <RatingModal
+      v-if="showRatingModal && profileUser"
+      :userId="profileUser.id"
+      :userName="profileUser.name || profileUser.username"
+      @close="showRatingModal = false"
+      @submit="handleRatingSubmit"
+    />
 
     <Footer v-if="!isOwnProfile" />
   </div>
@@ -581,9 +644,16 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.personal-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f8fafc;
+}
+
 .personal-info {
   display: flex;
-  min-height: 100vh;
+  flex: 1;
 }
 
 .content {
@@ -874,5 +944,249 @@ onBeforeUnmount(() => {
   text-align: center;
   padding: 40px 20px;
   color: #64748b;
+}
+
+/* Layout and Spacing */
+.profile-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .profile-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+}
+
+.profile-sidebar {
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .profile-sidebar {
+    position: sticky;
+    top: 90px;
+    z-index: 10;
+  }
+}
+
+.profile-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-width: 0;
+}
+
+/* Seller Profile Card */
+.profile-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  padding: 24px;
+}
+
+.profile-card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.avatar-container {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  margin-bottom: 16px;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  object-fit: cover;
+  border: 4px solid #f8fafc;
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+}
+
+.profile-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.profile-username {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  margin: 4px 0 0 0;
+}
+
+.profile-rating-badge {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #fef3c7;
+  color: #b45309;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 4px 12px;
+  border-radius: 9999px;
+}
+
+.star-icon {
+  color: #d97706;
+}
+
+.rating-num {
+  font-weight: 700;
+}
+
+.rating-max {
+  color: rgba(180, 83, 9, 0.6);
+  font-weight: 400;
+}
+
+.profile-card-details {
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.detail-icon {
+  font-size: 1.125rem;
+  color: #94a3b8;
+  width: 20px;
+  text-align: center;
+}
+
+.detail-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.detail-value {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+  margin: 2px 0 0 0;
+}
+
+.profile-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  border: none;
+}
+
+.chat-btn {
+  background-color: #201f62;
+  color: white;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.chat-btn:hover {
+  background-color: #ff4b42;
+}
+
+.rate-btn {
+  background-color: #f8fafc;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.rate-btn:hover {
+  background-color: #f1f5f9;
+}
+
+/* Custom Posts Section */
+.posts-section-custom {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.section-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 24px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loading-panel, .error-panel, .empty-panel {
+  background-color: #f8fafc;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.empty-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.posts-container {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.reviews-section-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 </style>
