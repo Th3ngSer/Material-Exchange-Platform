@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useLanguageStore } from '../stores/language'
 import type { ChatUser } from '../types/chat'
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
@@ -15,11 +16,12 @@ const emit = defineEmits<{
   (e: 'delete-users', userIds: string[]): void
 }>()
 
+const languageStore = useLanguageStore()
 const selectedUserIds = ref<string[]>([])
 const selectedUserCount = computed(() => selectedUserIds.value.length)
 const isSelectMode = ref(false)
 const showDeleteConfirm = ref(false)
-const actionLabel = computed(() => 'Select')
+const actionLabel = computed(() => languageStore.t('select') || 'Select')
 
 const normalizeAvatarUrl = (value: string | undefined | null, name = 'User') => {
   const avatarValue = String(value || '').trim()
@@ -108,7 +110,7 @@ const deleteSpecificUser = (user: ChatUser) => {
   <aside class="sidebar">
 
     <div class="sidebar-header">
-      <h3>ប្រអប់សារ</h3>
+      <h3>{{ languageStore.t('inboxes') }}</h3>
 
       <div class="header-controls">
         <template v-if="isSelectMode">
@@ -116,12 +118,12 @@ const deleteSpecificUser = (user: ChatUser) => {
             :disabled="selectedUserCount === 0"
             class="remove-selected-btn"
             @click="confirmDelete"
-            title="Remove selected chats"
+            :title="languageStore.t('removeSelectedChats') || 'Remove selected chats'"
           >
-            Remove
+            {{ languageStore.t('remove') || 'Remove' }}
           </button>
           <button class="header-cancel-btn" @click="toggleSelectMode">
-            Cancel
+            {{ languageStore.t('cancel') || 'Cancel' }}
           </button>
         </template>
 
@@ -129,7 +131,7 @@ const deleteSpecificUser = (user: ChatUser) => {
           <button 
             class="select-btn"
             @click="toggleSelectMode"
-            title="Select"
+            :title="languageStore.t('select') || 'Select'"
           >
             {{ actionLabel }}
           </button>

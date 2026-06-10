@@ -231,6 +231,14 @@ export type TranslationKey =
   | 'enterValidPrice'
   | 'exchangeForRequired'
   | 'savedListings'
+  | 'typeMessage'
+  | 'remove'
+  | 'removeSelectedChats'
+  | 'voiceMessage'
+  | 'sentImage'
+  | 'sentVoiceMessage'
+  | 'recordVoiceMessage'
+  | 'sendMessage'
   | 'browseSavedPosts'
   | 'createPost'
   | 'mypost'
@@ -286,6 +294,14 @@ export type TranslationKey =
   | 'myPosts'
   | 'noPosts'
   | 'loading'
+  | 'typeMessage'
+  | 'remove'
+  | 'removeSelectedChats'
+  | 'voiceMessage'
+  | 'sentImage'
+  | 'sentVoiceMessage'
+  | 'recordVoiceMessage'
+  | 'sendMessage'
 
 const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = {
   English: {
@@ -457,6 +473,14 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     good: 'Good',
     fair: 'Fair',
     used: 'Used',
+    typeMessage: 'Type your message...',
+    remove: 'Remove',
+    removeSelectedChats: 'Remove selected chats',
+    voiceMessage: 'Voice message',
+    sentImage: 'Sent an image',
+    sentVoiceMessage: 'Sent a voice message',
+    recordVoiceMessage: 'Record voice message',
+    sendMessage: 'Send message',
     price: 'Price',
     exchangeFor: 'Exchange for',
     tellWhatWantExchange: 'Tell people what item you want in exchange',

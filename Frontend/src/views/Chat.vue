@@ -2,6 +2,7 @@
 import { ref, onMounted, watch, computed } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { useAuthStore } from '../stores/auth'
+import { useLanguageStore } from '@/stores/language'
 import LoginPromptModal from '../components/LoginPromptModal.vue'
 import { connectSocket, getSocket, disconnectSocket, sendMessageViaSocket } from '../services/socket'
 import { chatApi } from '../services/chat'
@@ -23,6 +24,7 @@ const showLoginPrompt = ref(false)
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const API_URL = apiBaseUrl.replace(/\/api\/?$/, '')
+const languageStore = useLanguageStore()
 
 /* ---------------- STORAGE KEYS ---------------- */
 const storageKey = computed(() => `chat_users_${auth.user?.id ?? 'guest'}`)
@@ -297,7 +299,7 @@ const loadConversationHistory = async (userId: string) => {
       const type = String(msg.type || '').toLowerCase()
       const sender: 'me' | 'them' = String(msg.senderId) === currentUserId ? 'me' : 'them'
       return {
-        text: type === 'text' ? String(msg.content || '') : type === 'voice' ? 'Voice message' : type === 'image' ? 'Sent an image' : '',
+        text: type === 'text' ? String(msg.content || '') : type === 'voice' ? languageStore.t('voiceMessage') : type === 'image' ? languageStore.t('sentImage') : '',
         sender,
         time: new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         type: type === 'voice' ? 'voice' : type === 'image' ? 'image' : 'text',
@@ -486,7 +488,7 @@ const sendImage = async (file: File) => {
 
   // Push real data URL into UI immediately so it shows right away
   selectedUser.value.chat.push({ text: '', sender: 'me', time, type: 'image', imageUrl })
-  selectedUser.value.message = 'Sent an image'
+  selectedUser.value.message = languageStore.t('sentImage')
   selectedUser.value.time = time
 
   // saveUsers() will automatically move base64 → idb://
@@ -518,8 +520,8 @@ const sendVoice = async (audioBlob: Blob) => {
   const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   const receiverId = String(selectedUser.value.id)
 
-  selectedUser.value.chat.push({ text: 'Voice message', sender: 'me', time, type: 'voice', audioUrl })
-  selectedUser.value.message = 'Sent a voice message'
+  selectedUser.value.chat.push({ text: languageStore.t('voiceMessage'), sender: 'me', time, type: 'voice', audioUrl })
+  selectedUser.value.message = languageStore.t('sentVoiceMessage')
   selectedUser.value.time = time
 
   await moveUserToTop(receiverId)
@@ -566,7 +568,7 @@ const handleIncomingMessage = async (msg: any) => {
 
   const type = String(msg.type || '').toLowerCase()
   const chatEntry: ChatMessage = {
-    text: type === 'text' ? String(msg.content ?? '') : type === 'voice' ? 'Voice message' : 'Sent an image',
+    text: type === 'text' ? String(msg.content ?? '') : type === 'voice' ? languageStore.t('voiceMessage') : languageStore.t('sentImage'),
     sender: 'them',
     time: new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     type: type === 'voice' ? 'voice' : type === 'image' ? 'image' : 'text',

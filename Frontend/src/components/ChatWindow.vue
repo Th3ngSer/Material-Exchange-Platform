@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from "vue"
 import { useAuthStore } from "../stores/auth"
+import { useLanguageStore } from '@/stores/language'
 import type { ChatMessage, ChatUser } from '@/types/chat'
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
@@ -34,6 +35,7 @@ let recordingInterval: number | null = null
 const shouldSendRecording = ref(true)
 
 const authStore = useAuthStore()
+const languageStore = useLanguageStore()
 const currentUserName = computed(() => authStore.user?.name || 'You')
 const normalizeAvatarUrl = (value: string | undefined | null, fallbackName = 'User') => {
   const normalized = String(value || '').trim()
@@ -440,7 +442,7 @@ const playVoice = (msg: ChatMessage, index: number) => {
             type="button"
             class="voice-btn"
             :class="{ recording: isRecording }"
-            title="Record voice message"
+            :title="languageStore.t('recordVoiceMessage') || 'Record voice message'"
           >
             <!-- Mic icon (Telegram style) -->
             <svg
@@ -468,11 +470,11 @@ const playVoice = (msg: ChatMessage, index: number) => {
             :value="props.newMessage"
             @input="updateNewMessage"
             @keyup.enter="emit('send-message')"
-            placeholder="វាយសារ"
+            :placeholder="languageStore.t('typeMessage') || 'Type your message...'"
             class="text-input"
           />
 
-          <button @click="emit('send-message')" type="button" class="send-icon-btn" title="Send message">
+          <button @click="emit('send-message')" type="button" class="send-icon-btn" :title="languageStore.t('sendMessage') || 'Send message'">
             <!-- Send Icon (same style as voice icon) -->
             <svg
               xmlns="http://www.w3.org/2000/svg"
