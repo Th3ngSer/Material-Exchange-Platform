@@ -50,7 +50,7 @@
             <h4 class="payment-title">Payment & Transaction Summary</h4>
             <div class="payment-grid">
               <div class="payment-field">
-                <span class="field-label">Listing Price / Rate:</span>
+                <span class="field-label">{{ String(item.type || '').toLowerCase() === 'exchange' ? 'Estimated Value:' : 'Listing Price / Rate:' }}</span>
                 <span class="field-value">${{ Number(item.amount || 0).toFixed(2) }}</span>
               </div>
               <div class="payment-field">
@@ -94,11 +94,20 @@
             </button>
 
             <button
-              v-if="item.status === 'Accepted'"
+              v-if="item.status === 'Accepted' && item.type !== 'borrow'"
               class="btn btn-complete"
               @click="updateStatus(item, 'Completed')"
             >
               Confirm Completed
+            </button>
+
+            <!-- For Borrow/Lend, once the Borrower has marked it as Returned, the Lender can confirm completed! -->
+            <button
+              v-if="item.status === 'Returned' && item.type === 'borrow'"
+              class="btn btn-complete"
+              @click="updateStatus(item, 'Completed')"
+            >
+              Confirm Return Received
             </button>
 
             <button
@@ -118,6 +127,15 @@
 
           <!-- If current user is the Borrower (Buyer) -->
           <template v-else-if="isBorrower(item)">
+            <!-- If state is Accepted and it's borrow, borrower can mark it as Returned! -->
+            <button
+              v-if="item.status === 'Accepted' && item.type === 'borrow'"
+              class="btn btn-complete"
+              @click="updateStatus(item, 'Returned')"
+            >
+              Return Item
+            </button>
+
             <button
               class="btn btn-cancel"
               @click="openCancelModal(item)"
@@ -130,8 +148,14 @@
             >
               💬 Chat
             </button>
-            <span class="status-waiting-msg">
+            <span v-if="item.status === 'Pending'" class="status-waiting-msg">
               Waiting for lender action...
+            </span>
+            <span v-if="item.status === 'Accepted' && item.type !== 'borrow'" class="status-waiting-msg">
+              Waiting for lender action...
+            </span>
+            <span v-if="item.status === 'Returned'" class="status-waiting-msg">
+              Waiting for lender to confirm return receipt...
             </span>
           </template>
         </div>
@@ -462,6 +486,7 @@ const statusClass = (status) => ({
   available: status === 'Available',
   pending: status === 'Pending',
   accepted: status === 'Accepted',
+  returned: status === 'Returned',
   completed: status === 'Completed',
   cancelled: status === 'Cancelled',
 })
@@ -471,6 +496,7 @@ const translateStatus = (status) => {
     available: 'Available',
     pending: 'Pending',
     accepted: 'Accepted',
+    returned: 'Returned',
     completed: 'Completed',
     cancelled: 'Cancelled'
   }
@@ -606,6 +632,11 @@ onMounted(loadItems)
 .status-badge.cancelled {
   background-color: #fee2e2;
   color: #991b1b;
+}
+
+.status-badge.returned {
+  background-color: #fae8ff;
+  color: #86198f;
 }
 
 /* BUTTONS */

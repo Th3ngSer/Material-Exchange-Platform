@@ -214,15 +214,17 @@ const isAllSelected = computed(
 )
 
 const toggleSelectAll = () => {
+  const next = new Set(selectedIds.value)
   if (isAllSelected.value) {
     paginatedListings.value.forEach((item) => {
-      selectedIds.value.delete(item.id)
+      next.delete(item.id)
     })
   } else {
     paginatedListings.value.forEach((item) => {
-      selectedIds.value.add(item.id)
+      next.add(item.id)
     })
   }
+  selectedIds.value = next
 }
 
 const openConfirmModal = () => {

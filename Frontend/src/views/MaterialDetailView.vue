@@ -149,7 +149,10 @@ function titleCase(value: string) {
 }
 
 function formatPrice(post: MaterialItem) {
-  if (post.type === 'Exchange') return languageStore.t('openToTrade')
+  if (post.type === 'Exchange') {
+    const priceVal = Number(post.price || 0)
+    return priceVal > 0 ? `${languageStore.t('openToTrade')} (Value: $${priceVal.toFixed(2)})` : languageStore.t('openToTrade')
+  }
   if (post.type === 'Borrow') return post.price ? `$${Number(post.price || 0).toFixed(2)}/wk` : languageStore.t('openToBorrow')
   return `$${Number(post.price || 0).toFixed(2)}`
 }
@@ -256,6 +259,7 @@ const cardName = ref('')
 
 const slipFile = ref<File | null>(null)
 const slipPreview = ref('')
+const exchangeItemValue = ref<number | ''>('')
 
 const itemPrice = computed(() => {
   return Number(String(currentPost.value?.price || '').replace(/[^0-9.]/g, '')) || 0
@@ -280,18 +284,27 @@ const commissionRate = computed<number>(() => {
 })
 
 const platformFee = computed(() => {
+  const typeStr = String(currentPost.value?.type || '').toLowerCase()
+  if (typeStr === 'exchange') {
+    const valueToUse = Number(exchangeItemValue.value) || 0
+    return Number((valueToUse * commissionRate.value).toFixed(2))
+  }
   return Number((itemPrice.value * commissionRate.value).toFixed(2))
 })
 
 const securityDeposit = computed(() => {
   const typeStr = String(currentPost.value?.type || '').toLowerCase()
-  if (typeStr === 'borrow' || typeStr === 'exchange') {
+  if (typeStr === 'borrow') {
     return Number((itemPrice.value * 0.5).toFixed(2)) // 50% deposit
   }
   return 0
 })
 
 const totalAmount = computed(() => {
+  const typeStr = String(currentPost.value?.type || '').toLowerCase()
+  if (typeStr === 'exchange') {
+    return platformFee.value
+  }
   return Number((itemPrice.value + platformFee.value + securityDeposit.value).toFixed(2))
 })
 
@@ -299,6 +312,9 @@ async function handleTransactionClick() {
   if (!authStore.isAuthenticated) {
     void router.push({ name: 'login', query: { redirect: route.fullPath } })
     return
+  }
+  if (currentPost.value.type === 'Exchange') {
+    exchangeItemValue.value = itemPrice.value || ''
   }
   showCheckoutModal.value = true
 }
@@ -312,6 +328,14 @@ function handleSlipUpload(event: Event) {
 }
 
 async function processCheckout() {
+  if (currentPost.value.type === 'Exchange') {
+    const valueToUse = Number(exchangeItemValue.value) || 0
+    if (valueToUse <= 0) {
+      alert('Please enter a valid estimated value for the item you wish to exchange.')
+      return
+    }
+  }
+
   if (paymentMethod.value === 'card') {
     if (!cardNo.value || !cardExpiry.value || !cardCvv.value || !cardName.value) {
       alert('Please fill in all credit card fields.')
@@ -336,7 +360,7 @@ async function processCheckout() {
       buyerName: authStore.user?.username || authStore.user?.name || 'Buyer',
       sellerName: currentPost.value.seller || 'Seller',
       itemTitle: currentPost.value.title,
-      amount: itemPrice.value,
+      amount: currentPost.value.type === 'Exchange' ? (Number(exchangeItemValue.value) || 0) : itemPrice.value,
       type: currentPost.value.type.toLowerCase(),
       transactionStatus: 'active',
       paymentMethod: paymentMethod.value,
@@ -672,16 +696,35 @@ async function processCheckout() {
           </div>
         </div>
 
+        <!-- Exchange Item Value Input -->
+        <div v-if="currentPost.type === 'Exchange'" class="mb-4">
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1.5">
+            Estimated Value of Your Exchange Item ($) <span class="text-red-400">*</span>
+          </label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">$</span>
+            <input
+              v-model="exchangeItemValue"
+              type="number"
+              min="0.01"
+              step="0.01"
+              placeholder="Enter value of your item..."
+              class="w-full rounded-lg border border-gray-200 pl-7 pr-3 py-2.5 text-sm outline-none focus:border-[#ff8c00] transition"
+            />
+          </div>
+        </div>
+
         <!-- Price Breakdown -->
         <div class="mb-6 rounded-xl bg-gray-50 p-4">
           <h4 class="mb-2 text-sm font-semibold uppercase tracking-wider text-gray-500">Order Summary</h4>
           <div class="space-y-2 text-sm text-gray-600">
             <div class="flex justify-between">
               <span>{{ currentPost.title }}</span>
-              <span>${{ itemPrice.toFixed(2) }}</span>
+              <span>${{ currentPost.type === 'Exchange' ? '0.00' : itemPrice.toFixed(2) }}</span>
             </div>
             <div class="flex justify-between">
-              <span>Platform Commission Fee ({{ Math.round(commissionRate * 100) }}%)</span>
+              <span v-if="currentPost.type === 'Exchange'">Platform Commission Fee ({{ Math.round(commissionRate * 100) }}% of ${{ (Number(exchangeItemValue) || 0).toFixed(2) }})</span>
+              <span v-else>Platform Commission Fee ({{ Math.round(commissionRate * 100) }}%)</span>
               <span>${{ platformFee.toFixed(2) }}</span>
             </div>
             <div v-if="securityDeposit > 0" class="flex justify-between">

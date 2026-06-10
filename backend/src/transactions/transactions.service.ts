@@ -34,6 +34,14 @@ export class TransactionsService {
     });
   }
 
+  async updateStatusByDetails(buyerName: string, sellerName: string, itemTitle: string, status: string) {
+    const nextStatus = status.toLowerCase() === 'completed' ? 'completed' : status.toLowerCase() === 'cancelled' ? 'failed' : 'active';
+    await this.transactionModel.findOneAndUpdate(
+      { buyerName, sellerName, itemTitle, status: 'active' },
+      { status: nextStatus }
+    ).exec();
+  }
+
   //  Add the Strict trancsaction logic and Save audit log
   async completeP2PTransaction(
     trackId: string,
