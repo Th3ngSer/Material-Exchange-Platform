@@ -2,20 +2,37 @@ import { io, Socket } from 'socket.io-client'
 import { getToken } from '@/utils/tokenStorage'
 
 let socket: Socket | null = null
+let currentSocketToken: string | null = null
 
 export function connectSocket() {
-  if (socket?.connected) return socket
-
   const token = getToken()
   const base =
     import.meta.env.VITE_API_URL
       ? String(import.meta.env.VITE_API_URL).replace(/\/api\/?$/, '')
       : 'http://localhost:3000'
 
+  if (socket) {
+    if (currentSocketToken !== token) {
+      currentSocketToken = token
+      socket.auth = { token }
+      console.log('Socket token changed. Reconnecting socket...')
+      socket.disconnect().connect()
+    } else if (!socket.connected) {
+      console.log('Socket not connected. Connecting socket...')
+      socket.connect()
+    }
+    return socket
+  }
+
+  currentSocketToken = token
   socket = io(base, {
     auth: { token },
-    transports: ['polling', 'websocket'],
+    transports: ['websocket'],
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
   })
+
   // Avoid re-initializing handlers if socket already initialized
   try {
     ;(window as any).__socket = socket
@@ -59,6 +76,7 @@ export function disconnectSocket() {
     socket.removeAllListeners()
     socket.disconnect()
     socket = null
+    currentSocketToken = null
   }
 }
 

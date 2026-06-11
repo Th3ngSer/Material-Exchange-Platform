@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 const authStore = useAuthStore()
 const isFollowed = ref(false)

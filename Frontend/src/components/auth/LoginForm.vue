@@ -6,7 +6,7 @@
  */
 
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { validateEmail } from '@/utils/validation'
 import type { LoginCredentials } from '@/types/auth'
@@ -14,6 +14,7 @@ import Logo from '@/assets/images/Logo.png'
 import { useLanguageStore } from '@/stores/language'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const languageStore = useLanguageStore()
 
@@ -76,8 +77,11 @@ async function handleSubmit() {
     password.value = ''
 
     // Redirect based on role
+    const redirectPath = route.query.redirect as string | undefined
     if (authStore.user?.role === 'admin') {
       await router.push({ name: 'SuperAdmin' })
+    } else if (redirectPath) {
+      await router.push(redirectPath)
     } else {
       await router.push({ name: 'home' })
     }

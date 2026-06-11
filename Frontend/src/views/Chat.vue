@@ -6,6 +6,7 @@ import { useLanguageStore } from '@/stores/language'
 import LoginPromptModal from '../components/LoginPromptModal.vue'
 import { connectSocket, getSocket, disconnectSocket, sendMessageViaSocket } from '../services/socket'
 import { chatApi } from '../services/chat'
+import api from '../services/api'
 import type { ChatUser, ChatMessage } from '../types/chat'
 
 import ChatSidebar from "../components/ChatSidebar.vue"
@@ -335,15 +336,22 @@ const selectSellerFromRoute = async () => {
   }
 
   let resolvedId = sellerId
-  if (sellerId === sellerName) {
+  if (sellerId === sellerName || sellerId.length !== 24) {
     try {
-      const { data } = await chatApi.getUsers()
-      const matched = (data as any[]).find(item => {
-        const itemName = String(item.name || item.username || item.email || '').trim()
-        return itemName === sellerName
-      })
-      if (matched?._id) resolvedId = String(matched._id)
-    } catch { /* ignore */ }
+      const { data } = await api.get(`/auth/user/${encodeURIComponent(sellerName)}`)
+      if (data && (data.id || data._id)) {
+        resolvedId = String(data.id || data._id)
+      }
+    } catch {
+      try {
+        const { data } = await chatApi.getUsers()
+        const matched = (data as any[]).find(item => {
+          const itemName = String(item.name || item.username || item.email || '').trim()
+          return itemName === sellerName
+        })
+        if (matched?._id) resolvedId = String(matched._id)
+      } catch { /* ignore */ }
+    }
   }
 
   const sellerUser: ChatUser = {
@@ -665,7 +673,7 @@ watch(() => auth.isAuthenticated, async (val) => {
 
       <LoginPromptModal
         v-if="showLoginPrompt"
-        @login="() => router.push({ name: 'login', query: { redirect: '/chat' } })"
+        @login="() => router.push({ name: 'login', query: { redirect: route.fullPath } })"
         @close="showLoginPrompt = false"
       />
     </div>
