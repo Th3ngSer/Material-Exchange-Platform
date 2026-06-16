@@ -302,11 +302,11 @@ export type TranslationKey =
   | 'sentVoiceMessage'
   | 'recordVoiceMessage'
   | 'sendMessage'
+  | 'reviews'
   | 'message'
   | 'userPosts'
   | 'forExchange'
   | 'forLend'
-  | 'reviews'
 
 const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = {
   English: {
@@ -898,9 +898,9 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     recordVoiceMessage: 'ថតសារសំឡេង',
     sendMessage: 'ផ្ញើសារ',
     message: 'សារ',
-    userPosts: 'ការចុះផ្សាយ',
-    forExchange: 'សម្រាប់ដូរ',
-    forLend: 'សម្រាប់ជួល',
+    userPosts: 'ការប្រកាស',
+    forExchange: 'សម្រាប់ផ្លាស់ប្តូរ',
+    forLend: 'សម្រាប់ខ្ចី',
     reviews: 'ការវាយតម្លៃ',
   },
 }

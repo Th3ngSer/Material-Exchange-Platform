@@ -1,7 +1,6 @@
 <template>
   <div class="user-reviews-page">
     <Header v-if="!isOwnProfile" />
-
     <div class="personal-info">
       <Sidebar v-if="isOwnProfile" />
 
