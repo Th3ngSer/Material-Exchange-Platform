@@ -302,6 +302,11 @@ export type TranslationKey =
   | 'sentVoiceMessage'
   | 'recordVoiceMessage'
   | 'sendMessage'
+  | 'reviews'
+  | 'message'
+  | 'userPosts'
+  | 'forExchange'
+  | 'forLend'
 
 const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = {
   English: {
@@ -595,6 +600,11 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     myPosts: 'My Posts',
     noPosts: 'No posts yet',
     loading: 'Loading...',
+    message: 'Message',
+    userPosts: 'Posts',
+    forExchange: 'For Exchange',
+    forLend: 'For Lend',
+    reviews: 'Reviews',
   },
   Khmer: {
     personalInformation: 'ព័ត៌មានផ្ទាល់ខ្លួន',
@@ -879,6 +889,19 @@ const translations: Record<SupportedLanguage, Record<TranslationKey, string>> = 
     myPosts: 'ប្រកាសរបស់ខ្ញុំ',
     noPosts: 'មិនមានប្រកាសឡើយ',
     loading: 'កំពុងផ្ទុក...',
+    typeMessage: 'វាយសាររបស់អ្នក...',
+    remove: 'លុប',
+    removeSelectedChats: 'លុបការសន្ទនាដែលបានជ្រើសរើស',
+    voiceMessage: 'សារសំឡេង',
+    sentImage: 'បានផ្ញើរូបភាព',
+    sentVoiceMessage: 'បានផ្ញើសារសំឡេង',
+    recordVoiceMessage: 'ថតសារសំឡេង',
+    sendMessage: 'ផ្ញើសារ',
+    message: 'សារ',
+    userPosts: 'ការប្រកាស',
+    forExchange: 'សម្រាប់ផ្លាស់ប្តូរ',
+    forLend: 'សម្រាប់ខ្ចី',
+    reviews: 'ការវាយតម្លៃ',
   },
 }
 
