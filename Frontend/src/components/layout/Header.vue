@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLanguageStore } from '@/stores/language'
+import { notificationService } from '@/services/notification'
 // use the provided logo variant for consistent branding
 import Logo from '@/assets/images/Logo.png'
 
@@ -47,6 +48,39 @@ async function submitHeaderSearch() {
 const goToNotifications = () => {
   void router.push('/notifications')
 }
+
+const unreadCount = ref(0)
+let pollInterval: ReturnType<typeof setInterval> | null = null
+
+async function fetchUnreadCount() {
+  if (!authStore.isAuthenticated) {
+    unreadCount.value = 0
+    return
+  }
+  try {
+    const res = await notificationService.getUnreadCount()
+    unreadCount.value = res.count || 0
+  } catch (err) {
+    console.warn('Failed to fetch unread notification count:', err)
+  }
+}
+
+watch(() => authStore.isAuthenticated, (val) => {
+  if (val) {
+    fetchUnreadCount()
+  } else {
+    unreadCount.value = 0
+  }
+})
+
+onMounted(() => {
+  fetchUnreadCount()
+  pollInterval = setInterval(fetchUnreadCount, 15000)
+})
+
+onBeforeUnmount(() => {
+  if (pollInterval) clearInterval(pollInterval)
+})
 </script>
 
 <template>
@@ -195,7 +229,7 @@ const goToNotifications = () => {
         <RouterLink
           to="/notifications"
           :class="[
-            'grid h-[34px] w-[34px] place-items-center rounded-full transition-colors duration-200',
+            'relative grid h-[34px] w-[34px] place-items-center rounded-full transition-colors duration-200',
             router.currentRoute.value.path.startsWith('/notifications')
               ? 'bg-[#f0f1ff] text-[#ff4b42]'
               : 'bg-transparent text-[#201f62] hover:bg-[#f0f1ff]'
@@ -208,6 +242,12 @@ const goToNotifications = () => {
               d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm8-6V11a8 8 0 1 0-16 0v5L2 18v1h20v-1l-2-2Zm-2 0H6v-5a6 6 0 1 1 12 0v5Z"
             />
           </svg>
+          <span
+            v-if="unreadCount > 0"
+            class="absolute top-[3px] right-[3px] flex h-2.5 w-2.5 rounded-full bg-[#ff4b42] border-2 border-white"
+          >
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#ff4b42] opacity-75"></span>
+          </span>
         </RouterLink>
         <RouterLink
           v-if="!isAuthenticated"

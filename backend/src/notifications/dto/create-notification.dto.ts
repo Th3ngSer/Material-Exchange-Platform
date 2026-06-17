@@ -13,7 +13,7 @@ export class CreateNotificationDto {
   message?: string;
 
   @IsOptional()
-  @IsEnum(['message', 'exchange', 'review', 'following', 'order', 'alert'])
+  @IsEnum(['message', 'exchange', 'borrow', 'review', 'following', 'order', 'alert'])
   type?: string;
 
   @IsOptional()

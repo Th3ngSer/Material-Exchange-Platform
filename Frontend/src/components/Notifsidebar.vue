@@ -10,7 +10,8 @@
         :class="{ active: active === item.key }"
       >
         <a href="#" @click.prevent="$emit('update:active', item.key)">
-          {{ item.label }}
+          <span class="sidebar-icon">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
           <span v-if="item.count" class="count-badge">{{ item.count }}</span>
         </a>
       </li>
@@ -83,6 +84,14 @@ defineEmits<{
   text-decoration: none;
   transition: all 0.2s ease;
   position: relative;
+}
+
+.sidebar-icon {
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
 }
 
 .sidebar-menu li a:hover {

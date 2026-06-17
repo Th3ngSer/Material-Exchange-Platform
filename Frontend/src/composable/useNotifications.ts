@@ -35,14 +35,23 @@ const toDateLabel = (createdAt: string | number | undefined): string => {
 const isValidObjectId = (id: string | number): boolean =>
   typeof id === 'string' && /^[0-9a-fA-F]{24}$/.test(id)
 
-// ── Normalize raw API notification → Notification shape ───
+const resolveAvatarUrl = (avatar?: string | null): string | undefined => {
+  if (!avatar) return undefined
+  if (avatar.startsWith('http')) return avatar
+  const apiBaseUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+  const baseUrl = apiBaseUrl.replace(/\/api\/?$/, '')
+  return `${baseUrl}/${avatar}`
+}
 
 export function normalizeNotification(raw: any): Notification {
+  const relatedUserObj = raw.relatedUserId && typeof raw.relatedUserId === 'object' ? raw.relatedUserId : null
+  const senderName = raw.sender?.username ?? raw.sender?.name ?? raw.sender ?? relatedUserObj?.username ?? relatedUserObj?.name
+  const senderId = raw.sender?._id?.toString?.() ?? raw.sender?.toString?.() ?? relatedUserObj?._id?.toString?.() ?? (!relatedUserObj && raw.relatedUserId?.toString?.()) ?? undefined
+
   return {
     id:              raw.id ?? raw._id?.toString(),
     type:            (raw.type || 'alert') as NotifType,
-    // Use username if available, fall back to name, then title — never a generic label
-    sender:          raw.sender?.username ?? raw.sender?.name ?? raw.sender ?? raw.title ?? 'Notification',
+    sender:          senderName ?? raw.title ?? 'Notification',
     text:            raw.text ?? raw.message ?? '',
     richText:        raw.richText ?? undefined,
     time:            raw.time ?? toDateLabel(raw.createdAt ?? raw.timestamp),
@@ -51,16 +60,13 @@ export function normalizeNotification(raw: any): Notification {
                        ? raw.actions
                        : defaultActions(raw.type || 'alert'),
     isMock:          raw.isMock === true,
-    // Store real IDs so other pages can look up the correct user/post
-    relatedUserId:   raw.relatedUserId?.toString?.()
-                       ?? raw.sender?._id?.toString?.()
-                       ?? undefined,
-    relatedUsername: raw.sender?.username ?? raw.senderUsername ?? undefined,
+    relatedUserId:   senderId,
+    relatedUsername: raw.sender?.username ?? raw.senderUsername ?? relatedUserObj?.username ?? relatedUserObj?.name ?? undefined,
     relatedPostId:   raw.relatedPostId?.toString?.() ?? undefined,
     actionUrl:       raw.actionUrl ?? undefined,
     title:           raw.title ?? undefined,
     message:         raw.message ?? undefined,
-    imageUrl:        raw.imageUrl ?? undefined,
+    imageUrl:        raw.imageUrl ?? resolveAvatarUrl(relatedUserObj?.avatar) ?? undefined,
   }
 }
 

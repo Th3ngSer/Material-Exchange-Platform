@@ -57,7 +57,7 @@
 
                   <p v-if="r.comment" class="review-comment">{{ r.comment }}</p>
 
-                  <div v-if="r.tags && r.tags.length" class="review-tags">
+                  <div v-if="r.tags && r.tags.length" class="review-tags">                                                  
                     <span v-for="tag in r.tags" :key="tag" class="tag-pill">{{ tag }}</span>
                   </div>
                 </div>

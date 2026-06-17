@@ -15,7 +15,7 @@ export class Notification {
   message?: string;
 
   @Prop({
-    enum: ['message', 'exchange', 'review', 'following', 'order', 'alert'],
+    enum: ['message', 'exchange', 'borrow', 'review', 'following', 'order', 'alert'],
     default: 'alert',
   })
   type!: string;
@@ -26,7 +26,7 @@ export class Notification {
   @Prop()
   relatedPostId?: Types.ObjectId;
 
-  @Prop()
+  @Prop({ type: Types.ObjectId, ref: 'User' })
   relatedUserId?: Types.ObjectId;
 
   @Prop()

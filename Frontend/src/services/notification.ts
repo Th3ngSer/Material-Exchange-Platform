@@ -40,6 +40,15 @@ export const notificationService = {
     return parseResponse(response)
   },
 
+  async getUnreadCount() {
+    const response = await fetch(`${API_BASE_URL}/notifications/unread-count`, {
+      method: 'GET',
+      headers: buildHeaders(),
+      credentials: 'include',
+    })
+    return parseResponse(response)
+  },
+
   async getOne(id: string | number) {
     const response = await fetch(`${API_BASE_URL}/notifications/${id}`, {
       method: 'GET',

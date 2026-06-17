@@ -52,4 +52,20 @@ export class CreateTrackItemUserDto {
   @IsOptional()
   @IsString()
   paymentSlip?: string;
+
+  @IsOptional()
+  @IsString()
+  buyerId?: string;
+
+  @IsOptional()
+  @IsString()
+  sellerId?: string;
+
+  @IsOptional()
+  @IsString()
+  itemId?: string;
+
+  @IsOptional()
+  @IsString()
+  ownerId?: string;
 }

@@ -37,6 +37,12 @@ export class NotificationController {
     return { success: true, count }
   }
 
+  @Get(':id')
+  async findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    const notif = await this.svc.findOne(id, user._id ?? user.id)
+    return { success: true, data: notif }
+  }
+
   @Patch('read-all')
   async markAllRead(@CurrentUser() user: AuthUser) {
     await this.svc.markAllRead(user._id ?? user.id)
@@ -92,7 +98,7 @@ export const getNotifications = async (req: Request, res: Response): Promise<voi
     if (req.query.unread !== undefined) filter.unread = req.query.unread === 'true'
 
     const [data, total] = await Promise.all([
-      NotifModel().find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      NotifModel().find(filter).populate('relatedUserId').sort({ createdAt: -1 }).skip(skip).limit(limit),
       NotifModel().countDocuments(filter),
     ])
 
@@ -124,7 +130,7 @@ export const markAsRead = async (req: Request, res: Response): Promise<void> => 
       { _id: req.params.id, userId: (req as any).user?.id },
       { unread: false },
       { new: true },
-    )
+    ).populate('relatedUserId')
     if (!notif) { res.status(404).json({ success: false, message: 'Notification not found.' }); return }
     res.json({ success: true, data: notif })
   } catch {

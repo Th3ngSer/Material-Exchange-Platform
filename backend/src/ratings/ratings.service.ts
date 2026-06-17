@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { Rating, RatingDocument } from './schemas/rating.schema';
 import { User, UserDocument } from '../users/schemas/user.schema';
 import { UsersService } from '../users/users.service';
+import { NotificationService } from '../notifications/service/notificationService';
 
 export interface CreateRatingDto {
   userId: string; // user being rated
@@ -32,6 +33,7 @@ export class RatingsService {
     @InjectModel(User.name)
     private readonly userModel: Model<UserDocument>,
     private readonly usersService: UsersService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   // CREATE OR UPDATE A RATING
@@ -64,6 +66,21 @@ export class RatingsService {
         raterName,
         raterAvatar,
       });
+    }
+
+    // CREATE NOTIFICATION FOR THE USER BEING RATED
+    try {
+      await this.notificationService.create({
+        userId,
+        title: `New Review Received`,
+        message: `${raterName || 'Someone'} rated you ${score} stars${comment ? `: "${comment}"` : ''}`,
+        type: 'review',
+        relatedUserId: raterId as any,
+        action: 'View Reviews',
+        actionUrl: `/profile/reviews`,
+      });
+    } catch (err) {
+      console.error('Failed to create notification on rating create:', err);
     }
 
     // Update user's average rating

@@ -31,6 +31,57 @@ export class NotificationService {
 
   // ── Find all for user (paginated) ────────────────────────
 
+  async seedMockNotifications(userId: string): Promise<void> {
+    const mocks = [
+      {
+        userId: new Types.ObjectId(userId),
+        title: 'New Borrow Request',
+        message: 'John Doe requested to borrow your "Heavy Duty Ladder"',
+        type: 'borrow',
+        unread: true,
+        relatedUserId: new Types.ObjectId('65c000000000000000000001'),
+        action: 'Accept Request',
+        actionUrl: '/profile/tracker',
+      },
+      {
+        userId: new Types.ObjectId(userId),
+        title: 'New Exchange Request',
+        message: 'Jane Smith wants to exchange your "Industrial Scrap Metal" for "Plastic Pallets"',
+        type: 'exchange',
+        unread: true,
+        relatedUserId: new Types.ObjectId('65c000000000000000000002'),
+        action: 'View Details',
+        actionUrl: '/profile/tracker',
+      },
+      {
+        userId: new Types.ObjectId(userId),
+        title: 'New Review Received',
+        message: 'Michael Scott rated you 5 stars: "Excellent communicator, product was exactly as described!"',
+        type: 'review',
+        unread: true,
+        relatedUserId: new Types.ObjectId('65c000000000000000000003'),
+        action: 'View Review',
+        actionUrl: '/profile/reviews',
+      },
+      {
+        userId: new Types.ObjectId(userId),
+        title: 'New Follower',
+        message: 'Sarah started following your profile.',
+        type: 'following',
+        unread: true,
+        relatedUserId: new Types.ObjectId('65c000000000000000000004'),
+        action: 'View Profile',
+        actionUrl: '/profile?user=Sarah',
+      },
+    ];
+
+    try {
+      await this.notificationModel.insertMany(mocks);
+    } catch (err) {
+      console.error('Failed to seed notifications:', err);
+    }
+  }
+
   async findAllForUser(
     userId: string,
     page  = 1,
@@ -39,14 +90,18 @@ export class NotificationService {
     const filter = { userId: new Types.ObjectId(userId) }
     const skip   = (page - 1) * limit
 
-    const [data, total] = await Promise.all([
-      this.notificationModel
-        .find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit),
-      this.notificationModel.countDocuments(filter),
-    ])
+    let total = await this.notificationModel.countDocuments(filter)
+    if (total === 0 && page === 1) {
+      await this.seedMockNotifications(userId)
+      total = await this.notificationModel.countDocuments(filter)
+    }
+
+    const data = await this.notificationModel
+      .find(filter)
+      .populate('relatedUserId')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
 
     return { data, total }
   }
@@ -67,7 +122,7 @@ export class NotificationService {
       { _id: id, userId: new Types.ObjectId(userId) },
       { unread: false },
       { new: true },
-    )
+    ).populate('relatedUserId')
     if (!notif) throw new NotFoundException('Notification not found.')
     return notif
   }
@@ -79,6 +134,15 @@ export class NotificationService {
       { userId: new Types.ObjectId(userId), unread: true },
       { unread: false },
     )
+  }
+
+  async findOne(id: string, userId: string): Promise<NotificationDocument> {
+    const notif = await this.notificationModel.findOne({
+      _id: id,
+      userId: new Types.ObjectId(userId)
+    }).populate('relatedUserId')
+    if (!notif) throw new NotFoundException('Notification not found.')
+    return notif
   }
 
   // ── Delete one ───────────────────────────────────────────
