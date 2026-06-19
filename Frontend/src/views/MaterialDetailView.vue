@@ -389,9 +389,12 @@ async function processCheckout() {
   try {
     const payload = {
       name: currentPost.value.title,
-      status: (currentPost.value.type.toLowerCase() === 'lend' || currentPost.value.type.toLowerCase() === 'exchange')
+      status: ['lend', 'borrow', 'exchange'].includes(currentPost.value.type.toLowerCase())
         ? 'Pending'
         : (paymentMethod.value === 'card' ? 'Accepted' : 'Pending'),
+      buyerId: authStore.user?.id,
+      sellerId: currentPost.value.ownerId,
+      itemId: currentPost.value._id || currentPost.value.id,
       buyerName: authStore.user?.username || authStore.user?.name || 'Buyer',
       sellerName: currentPost.value.seller || 'Seller',
       itemTitle: currentPost.value.title,
