@@ -28,13 +28,25 @@ import { MessageType } from './schemas/message.schema';
             'http://localhost:3000',
           ];
 
+      const mainFrontendOrigin =
+        process.env.FRONTEND_ORIGIN ||
+        'https://material-exchange-platform.pages.dev';
+
       if (process.env.FRONTEND_ORIGIN) {
         allowedOriginsEnv.push(process.env.FRONTEND_ORIGIN.trim());
       }
 
       if (!origin) return callback(null, true);
 
-      const isAllowed = allowedOriginsEnv.some((pattern) => {
+      const isLocalhost =
+        origin.startsWith('http://localhost:') ||
+        origin.startsWith('http://127.0.0.1:');
+      const isMainFrontend = origin === mainFrontendOrigin;
+      const isCloudflarePreview = origin.endsWith(
+        '.material-exchange-platform.pages.dev',
+      );
+
+      const isAllowedByEnv = allowedOriginsEnv.some((pattern) => {
         if (pattern === origin) return true;
         if (pattern.includes('*')) {
           const regexPattern =
@@ -46,10 +58,15 @@ import { MessageType } from './schemas/message.schema';
         return false;
       });
 
-      if (isAllowed) {
+      if (
+        isLocalhost ||
+        isMainFrontend ||
+        isCloudflarePreview ||
+        isAllowedByEnv
+      ) {
         return callback(null, true);
       }
-      return callback(new Error('Not allowed by CORS'));
+      return callback(new Error(`CORS blocked: ${origin}`));
     },
     methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
     credentials: true,
